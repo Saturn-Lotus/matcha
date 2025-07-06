@@ -22,8 +22,10 @@
     "@types/pg": "^8.15.4",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^17.0.1",
     "eslint": "^9",
     "eslint-config-next": "15.3.5",
+    "node-pg-migrate": "^8.0.3",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
