@@ -1,0 +1,7 @@
+node_modules
+scripts
+.next
+Dockerfile
+compose.yaml
+.env
+README.md
