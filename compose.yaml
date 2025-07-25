@@ -4,10 +4,12 @@ services:
       context: .
       target: dev
       dockerfile: Dockerfile
+    platform: linux/arm64
     ports:
       - "3000:3000"
     volumes:
       - .:/app
+      - /app/node_modules
 
   postgresDb:
     image: postgres:latest
