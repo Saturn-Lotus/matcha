@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "lint:fix": "next lint --fix",
+    "format": "prettier --write .",
     "db:migrate": "node-pg-migrate up  --envPath .env"
   },
   "dependencies": {
@@ -27,6 +29,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.3.5",
     "node-pg-migrate": "^8.0.3",
+    "prettier": "3.6.2",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

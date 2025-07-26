@@ -3,9 +3,8 @@
  */
 export const shorthands = undefined;
 
-
 const sql = (strings, ...values) =>
-  strings.reduce((prev, curr, i) => prev + curr + (values[i] ?? ""), "");
+  strings.reduce((prev, curr, i) => prev + curr + (values[i] ?? ''), '');
 
 /**
  * @param pgm {import('node-pg-migrate').MigrationBuilder}
@@ -13,18 +12,18 @@ const sql = (strings, ...values) =>
  * @returns {Promise<void> | void}
  */
 export const up = (pgm) => {
-    pgm.sql(sql`
+  pgm.sql(sql`
 		CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 		CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 	`);
 
-    pgm.sql(sql`
+  pgm.sql(sql`
 		CREATE TYPE gender_t AS ENUM ('male', 'female');
 		CREATE TYPE sexual_preference_t AS ENUM ('male', 'female', 'both');
 	`);
 
-    pgm.sql(sql`
+  pgm.sql(sql`
 		-- Create the users table if it does not exist
 		CREATE TABLE IF NOT EXISTS users (
 			id UUID PRIMARY KEY DEFAULT uuid_generate_v4() NOT NULL UNIQUE,
@@ -39,7 +38,7 @@ export const up = (pgm) => {
 		);
 	`);
 
-    pgm.sql(sql`
+  pgm.sql(sql`
 		-- Create the user_profiles table if it does not exist
 		CREATE TABLE IF NOT EXISTS user_profiles (
 			user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
@@ -62,12 +61,12 @@ export const up = (pgm) => {
  * @returns {Promise<void> | void}
  */
 export const down = (pgm) => {
-    pgm.sql(sql`
+  pgm.sql(sql`
 		DROP TABLE IF EXISTS user_profiles;
 		DROP TABLE IF EXISTS users;
 		DROP TYPE IF EXISTS gender_t;
 	`);
-    pgm.sql(sql`
+  pgm.sql(sql`
 		DROP EXTENSION IF EXISTS "uuid-ossp";
 		DROP EXTENSION IF EXISTS pgcrypto;
 	`);
