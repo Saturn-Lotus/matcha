@@ -75,8 +75,8 @@
 		{
 			"id": "pointer:pointer",
 			"typeName": "pointer",
-			"x": 290.9470695198788,
-			"y": -552.5685404773668,
+			"x": 70.2798830378947,
+			"y": -2395.203952877481,
 			"lastActivityTimestamp": 0,
 			"meta": {}
 		},
@@ -157,12 +157,317 @@
 			"typeName": "shape"
 		},
 		{
-			"x": -290.9470695198788,
-			"y": 552.5685404773668,
-			"z": 0.4275735880726333,
+			"x": -70.2798830378947,
+			"y": 2395.203952877481,
+			"z": 0.10238089327062665,
 			"meta": {},
 			"id": "camera:page:page",
 			"typeName": "camera"
+		},
+		{
+			"x": 35.63791098292029,
+			"y": 30.080656665946208,
+			"rotation": 0,
+			"isLocked": false,
+			"opacity": 1,
+			"meta": {},
+			"id": "shape:QTA9MaimQfJfia1RFPKS-",
+			"type": "text",
+			"props": {
+				"color": "light-blue",
+				"size": "m",
+				"w": 304.16743726816895,
+				"font": "draw",
+				"textAlign": "start",
+				"autoSize": true,
+				"scale": 0.7378926893907781,
+				"richText": {
+					"type": "doc",
+					"content": [
+						{
+							"type": "paragraph",
+							"attrs": {
+								"dir": "auto"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "Proposed Modules"
+								}
+							]
+						},
+						{
+							"type": "bulletList",
+							"content": [
+								{
+									"type": "listItem",
+									"content": [
+										{
+											"type": "paragraph",
+											"attrs": {
+												"dir": "auto"
+											},
+											"content": [
+												{
+													"type": "text",
+													"text": "Auth"
+												}
+											]
+										},
+										{
+											"type": "bulletList",
+											"content": [
+												{
+													"type": "listItem",
+													"content": [
+														{
+															"type": "paragraph",
+															"attrs": {
+																"dir": "auto"
+															},
+															"content": [
+																{
+																	"type": "text",
+																	"text": "basic"
+																}
+															]
+														}
+													]
+												},
+												{
+													"type": "listItem",
+													"content": [
+														{
+															"type": "paragraph",
+															"attrs": {
+																"dir": "auto"
+															},
+															"content": [
+																{
+																	"type": "text",
+																	"text": "verification email"
+																}
+															]
+														}
+													]
+												}
+											]
+										}
+									]
+								},
+								{
+									"type": "listItem",
+									"content": [
+										{
+											"type": "paragraph",
+											"attrs": {
+												"dir": "auto"
+											},
+											"content": [
+												{
+													"type": "text",
+													"text": "DB"
+												}
+											]
+										},
+										{
+											"type": "bulletList",
+											"content": [
+												{
+													"type": "listItem",
+													"content": [
+														{
+															"type": "paragraph",
+															"attrs": {
+																"dir": "auto"
+															},
+															"content": [
+																{
+																	"type": "text",
+																	"text": "pg"
+																}
+															]
+														}
+													]
+												},
+												{
+													"type": "listItem",
+													"content": [
+														{
+															"type": "paragraph",
+															"attrs": {
+																"dir": "auto"
+															},
+															"content": [
+																{
+																	"type": "text",
+																	"text": "Neo4j"
+																}
+															]
+														}
+													]
+												}
+											]
+										}
+									]
+								},
+								{
+									"type": "listItem",
+									"content": [
+										{
+											"type": "paragraph",
+											"attrs": {
+												"dir": "auto"
+											},
+											"content": [
+												{
+													"type": "text",
+													"text": "Storage"
+												}
+											]
+										},
+										{
+											"type": "bulletList",
+											"content": [
+												{
+													"type": "listItem",
+													"content": [
+														{
+															"type": "paragraph",
+															"attrs": {
+																"dir": "auto"
+															},
+															"content": [
+																{
+																	"type": "text",
+																	"text": "local"
+																}
+															]
+														}
+													]
+												}
+											]
+										}
+									]
+								},
+								{
+									"type": "listItem",
+									"content": [
+										{
+											"type": "paragraph",
+											"attrs": {
+												"dir": "auto"
+											},
+											"content": [
+												{
+													"type": "text",
+													"text": "Search "
+												}
+											]
+										},
+										{
+											"type": "bulletList",
+											"content": [
+												{
+													"type": "listItem",
+													"content": [
+														{
+															"type": "paragraph",
+															"attrs": {
+																"dir": "auto"
+															},
+															"content": [
+																{
+																	"type": "text",
+																	"text": "Basic"
+																}
+															]
+														}
+													]
+												},
+												{
+													"type": "listItem",
+													"content": [
+														{
+															"type": "paragraph",
+															"attrs": {
+																"dir": "auto"
+															},
+															"content": [
+																{
+																	"type": "text",
+																	"text": "Recommandation engine"
+																}
+															]
+														}
+													]
+												}
+											]
+										}
+									]
+								},
+								{
+									"type": "listItem",
+									"content": [
+										{
+											"type": "paragraph",
+											"attrs": {
+												"dir": "auto"
+											},
+											"content": [
+												{
+													"type": "text",
+													"text": "Chat engine"
+												}
+											]
+										}
+									]
+								},
+								{
+									"type": "listItem",
+									"content": [
+										{
+											"type": "paragraph",
+											"attrs": {
+												"dir": "auto"
+											},
+											"content": [
+												{
+													"type": "text",
+													"text": "Notifcation system"
+												}
+											]
+										},
+										{
+											"type": "paragraph",
+											"attrs": {
+												"dir": "auto"
+											}
+										}
+									]
+								}
+							]
+						}
+					]
+				}
+			},
+			"parentId": "shape:Ch3oq8u2-lr1qpfwNkJm3",
+			"index": "a22Q1",
+			"typeName": "shape"
+		},
+		{
+			"x": 929.6289690610724,
+			"y": 1686.1660982633748,
+			"rotation": 0,
+			"isLocked": false,
+			"opacity": 1,
+			"meta": {},
+			"id": "shape:Ch3oq8u2-lr1qpfwNkJm3",
+			"type": "group",
+			"parentId": "page:page",
+			"index": "aQATM",
+			"props": {},
+			"typeName": "shape"
 		},
 		{
 			"x": 440.62890625,
@@ -551,8 +856,8 @@
 			"typeName": "shape"
 		},
 		{
-			"x": 1080.9878357737439,
-			"y": 294.6515581105123,
+			"x": 1081.1980571871895,
+			"y": 292.2016700999733,
 			"rotation": 0,
 			"isLocked": false,
 			"opacity": 1,
@@ -877,6 +1182,43 @@
 			"typeName": "shape"
 		},
 		{
+			"x": 0,
+			"y": 0,
+			"rotation": 0,
+			"isLocked": false,
+			"opacity": 1,
+			"meta": {},
+			"id": "shape:z6BfSNAKXcwbi_LZS-U0d",
+			"type": "geo",
+			"props": {
+				"w": 541.7304742040523,
+				"h": 390.73468424486765,
+				"geo": "rectangle",
+				"dash": "draw",
+				"growY": 0,
+				"url": "",
+				"scale": 0.7378926893907781,
+				"color": "light-blue",
+				"labelColor": "black",
+				"fill": "solid",
+				"size": "m",
+				"font": "draw",
+				"align": "middle",
+				"verticalAlign": "middle",
+				"richText": {
+					"type": "doc",
+					"content": [
+						{
+							"type": "paragraph"
+						}
+					]
+				}
+			},
+			"parentId": "shape:Ch3oq8u2-lr1qpfwNkJm3",
+			"index": "a1",
+			"typeName": "shape"
+		},
+		{
 			"x": 1332.5819668531033,
 			"y": 744.5051787276619,
 			"rotation": 0,
@@ -1086,8 +1428,8 @@
 			"screenBounds": {
 				"x": 0,
 				"y": 0,
-				"w": 925,
-				"h": 966
+				"w": 270.83331298828125,
+				"h": 715.8333129882812
 			},
 			"insets": [
 				false,
@@ -1102,7 +1444,7 @@
 			"isChatting": false,
 			"highlightedUserIds": [],
 			"isFocused": true,
-			"devicePixelRatio": 1,
+			"devicePixelRatio": 1.2000000476837158,
 			"isCoarsePointer": false,
 			"isHoveringCanvas": null,
 			"openMenus": [],
@@ -1339,8 +1681,8 @@
 			"typeName": "shape"
 		},
 		{
-			"x": 1475.6643328666703,
-			"y": 732.575600955334,
+			"x": 1516.2919295071583,
+			"y": 736.760813738902,
 			"rotation": 0,
 			"isLocked": false,
 			"opacity": 1,
