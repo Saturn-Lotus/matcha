@@ -1,4 +1,4 @@
-import { User } from '@/app/types';
+import { User } from '@/schemas';
 import BaseRepositoryClass from './base';
 import { PostgresDB } from '../db/postgres';
 
@@ -13,7 +13,7 @@ class UserRepository extends BaseRepositoryClass<User> {
   }
 
   async create(
-    item: Omit<User, 'id' | 'created_at' | 'updated_at' | 'is'>,
+    item: Omit<User, 'id' | 'created_at' | 'updated_at'>,
   ): Promise<User> {
     const rows = await this.db.query<User>(
       `INSERT INTO ${this.usersTable}(username, first_name, last_name, email, password_hash,is_verified)
