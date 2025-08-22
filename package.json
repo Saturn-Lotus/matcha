@@ -21,6 +21,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "@types/jest": "^30.0.0",
     "@types/node": "^20",
     "@types/pg": "^8.15.4",
     "@types/react": "^19",
@@ -28,9 +29,11 @@
     "dotenv": "^17.0.1",
     "eslint": "^9",
     "eslint-config-next": "15.3.5",
+    "jest": "^30.0.5",
     "node-pg-migrate": "^8.0.3",
     "prettier": "3.6.2",
     "tailwindcss": "^4",
+    "ts-jest": "^29.4.1",
     "typescript": "^5"
   }
 }
