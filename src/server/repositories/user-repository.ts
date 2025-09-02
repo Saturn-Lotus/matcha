@@ -2,7 +2,10 @@ import { User } from '@/schemas';
 import BaseRepositoryClass from './base';
 import { PostgresDB } from '../db/postgres';
 
-export type CreateUserInput = Omit<User, 'id' | 'created_at' | 'updated_at'>;
+export type CreateUserInput = Omit<
+  User,
+  'id' | 'createdAt' | 'updatedAt' | 'emailVerificationToken'
+>;
 
 export class UserRepository extends BaseRepositoryClass<User> {
   private readonly db: PostgresDB;
