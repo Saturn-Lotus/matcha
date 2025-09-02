@@ -1,4 +1,4 @@
-import { TypeValidationError } from './exceptions';
+import { MissingFieldError, TypeValidationError } from './exceptions';
 import {
   BooleanParser,
   DateParser,
@@ -59,13 +59,15 @@ export const Su = {
       if (typeof value !== 'object' || value === null || Array.isArray(value)) {
         throw new TypeValidationError(value, 'object');
       }
+
+      const obj = value as Record<string, unknown>;
+      const missingFields = Object.keys(schema).filter((key) => !(key in obj));
+      if (missingFields.length > 0) {
+        throw new MissingFieldError(missingFields);
+      }
+
       for (const key of Object.keys(schema)) {
-        const obj = value as Record<string, unknown>;
-        if (key in obj) {
-          schema[key].parse(obj[key]);
-        } else {
-          throw new TypeValidationError(value, 'object');
-        }
+        schema[key].parse(obj[key]);
       }
     }
     return {
@@ -77,3 +79,4 @@ export const Su = {
   },
 };
 export type SuInfer<T> = T extends Parser<any> ? ReturnType<T['parse']> : never;
+

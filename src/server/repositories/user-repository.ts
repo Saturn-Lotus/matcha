@@ -2,7 +2,9 @@ import { User } from '@/schemas';
 import BaseRepositoryClass from './base';
 import { PostgresDB } from '../db/postgres';
 
-class UserRepository extends BaseRepositoryClass<User> {
+export type CreateUserInput = Omit<User, 'id' | 'created_at' | 'updated_at'>;
+
+export class UserRepository extends BaseRepositoryClass<User> {
   private readonly db: PostgresDB;
   private readonly usersTable: string = 'users';
   // private readonly graphDb: IGraphDB;
@@ -12,21 +14,17 @@ class UserRepository extends BaseRepositoryClass<User> {
     this.db = db;
   }
 
-  async create(
-    item: Omit<User, 'id' | 'created_at' | 'updated_at'>,
-  ): Promise<User> {
+  async create(item: CreateUserInput): Promise<User> {
+    const cols = Object.keys(item)
+      .map((key) => `"${key}"`)
+      .join(', ');
+    const values = Object.values(item);
+
     const rows = await this.db.query<User>(
-      `INSERT INTO ${this.usersTable}(username, first_name, last_name, email, password_hash,is_verified)
+      `INSERT INTO ${this.usersTable}(${cols})
 			VALUES ($1, $2, $3, $4, crypt($5, gen_salt('bf')), $6) RETURNING *;
 			`,
-      [
-        item.username,
-        item.first_name,
-        item.last_name,
-        item.email,
-        item.password_hash,
-        item.is_verified ? true : false,
-      ],
+      values,
     );
     const user = rows[0];
     if (!user) {

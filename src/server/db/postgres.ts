@@ -24,7 +24,7 @@ export class PostgresDB implements IBaseDB {
     params?: any[],
   ): Promise<M[]> {
     const client = await pool.connect();
-    const result = await client.query<M>(text, params,);
+    const result = await client.query<M>(text, params);
     client.release();
     return result.rows;
   }

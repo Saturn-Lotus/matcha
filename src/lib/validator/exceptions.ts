@@ -14,3 +14,11 @@ export class CheckValidationError extends ValidationError {
     super(`Invalid value '${val}': value ${message}`);
   }
 }
+
+export class MissingFieldError extends ValidationError {
+  constructor(field: string | string[]) {
+    super(
+      `Missing required field: '${Array.isArray(field) ? field.join(', ') : field}'`,
+    );
+  }
+}
