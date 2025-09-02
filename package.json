@@ -9,11 +9,13 @@
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "format": "prettier --write .",
+    "db:create": "node-pg-migrate create --envPath .env",
     "db:migrate": "node-pg-migrate up  --envPath .env"
   },
   "dependencies": {
     "next": "15.3.5",
     "next-auth": "^4.24.11",
+    "nodemailer": "^7.0.5",
     "pg": "^8.16.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
@@ -23,6 +25,7 @@
     "@tailwindcss/postcss": "^4",
     "@types/jest": "^30.0.0",
     "@types/node": "^20",
+    "@types/nodemailer": "^7.0.1",
     "@types/pg": "^8.15.4",
     "@types/react": "^19",
     "@types/react-dom": "^19",

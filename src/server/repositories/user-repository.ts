@@ -18,16 +18,18 @@ export class UserRepository extends BaseRepositoryClass<User> {
   }
 
   async create(item: CreateUserInput): Promise<User> {
-    const cols = Object.keys(item)
-      .map((key) => `"${key}"`)
-      .join(', ');
-    const values = Object.values(item);
-
     const rows = await this.db.query<User>(
-      `INSERT INTO ${this.usersTable}(${cols})
+      `INSERT INTO ${this.usersTable}("username", "firstName", "lastName", "email", "passwordHash", "isVerified")
 			VALUES ($1, $2, $3, $4, crypt($5, gen_salt('bf')), $6) RETURNING *;
 			`,
-      values,
+      [
+        item.username,
+        item.firstName,
+        item.lastName,
+        item.email,
+        item.passwordHash,
+        item.isVerified,
+      ],
     );
     const user = rows[0];
     if (!user) {
@@ -45,6 +47,15 @@ export class UserRepository extends BaseRepositoryClass<User> {
     }
     return rows[0];
   }
+
+  async query(conditionsSql: string, params: any[]): Promise<User[]> {
+    const rows = await this.db.query<User>(
+      `SELECT * FROM ${this.usersTable} WHERE ${conditionsSql};`,
+      params,
+    );
+    return rows;
+  }
+
   async findAll(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     conditions: Record<string, any>,
@@ -57,7 +68,7 @@ export class UserRepository extends BaseRepositoryClass<User> {
   async update(id: string, item: Partial<User>): Promise<User> {
     const setClause = Object.entries(item)
       .map(([columnName, value]) => {
-        return `${columnName} = ${
+        return `"${columnName}" = ${
           typeof value === 'string' ? `'${value}'` : value
         }`;
       })

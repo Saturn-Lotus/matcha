@@ -30,8 +30,6 @@ export function assertDate(value: unknown): asserts value is Date {
   }
 }
 
-
-
 export class StringParser implements Parser<string> {
   private readonly checks: CheckFunc<string>[] = [];
 
@@ -59,6 +57,32 @@ export class StringParser implements Parser<string> {
       },
     ]);
   }
+
+  password() {
+    const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+    return new StringParser([
+      ...this.checks,
+      (value: string) => {
+        if (!passwordPattern.test(value)) {
+            const masked = '*'.repeat(value.length);
+            throw new CheckValidationError(masked, 'not a valid password');
+        }
+      },
+    ]);
+  }
+
+  username() {
+    const usernamePattern = /^[a-zA-Z0-9_]+$/;
+    return new StringParser([
+      ...this.checks,
+      (value: string) => {
+        if (!usernamePattern.test(value)) {
+          throw new CheckValidationError(value, 'not a valid username');
+        }
+      },
+    ]);
+  }
+
   length({ min, max, fix }: { min?: number; max?: number; fix?: number }) {
     return new StringParser([
       ...this.checks,
@@ -134,4 +158,3 @@ export class DateParser implements Parser<Date> {
     return value;
   }
 }
-
