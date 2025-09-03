@@ -34,6 +34,17 @@ export const Su = {
     };
   },
 
+  null<T>(parser: Parser<T>) {
+    return {
+      parse(value: unknown): T | null {
+        if (value === null) {
+          return null;
+        }
+        return parser.parse(value);
+      },
+    };
+  },
+
   array<P extends Parser<any>>(itemParser: P) {
     type T = ReturnType<P['parse']>;
     function validate(value: unknown): asserts value is T[] {
@@ -79,4 +90,3 @@ export const Su = {
   },
 };
 export type SuInfer<T> = T extends Parser<any> ? ReturnType<T['parse']> : never;
-

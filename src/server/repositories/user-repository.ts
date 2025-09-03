@@ -4,7 +4,11 @@ import { PostgresDB } from '../db/postgres';
 
 export type CreateUserInput = Omit<
   User,
-  'id' | 'createdAt' | 'updatedAt' | 'emailVerificationToken'
+  | 'id'
+  | 'createdAt'
+  | 'updatedAt'
+  | 'emailVerificationToken'
+  | 'passwordResetToken'
 >;
 
 export class UserRepository extends BaseRepositoryClass<User> {
@@ -68,11 +72,17 @@ export class UserRepository extends BaseRepositoryClass<User> {
   async update(id: string, item: Partial<User>): Promise<User> {
     const setClause = Object.entries(item)
       .map(([columnName, value]) => {
-        return `"${columnName}" = ${
-          typeof value === 'string' ? `'${value}'` : value
-        }`;
+        let v = value;
+        if (typeof value === 'string') {
+          v = `'${value}'`;
+          if (columnName === 'passwordHash') {
+            v = `crypt(${v}, gen_salt('bf'))`;
+          }
+        }
+        return `"${columnName}" = ${v}`;
       })
       .join(', ');
+
     const query = `UPDATE ${this.usersTable} SET ${setClause} WHERE id = $1 RETURNING *;`;
     const rows = await this.db.query<User>(query, [id]);
     if (rows.length === 0) {
@@ -80,6 +90,7 @@ export class UserRepository extends BaseRepositoryClass<User> {
     }
     return rows[0];
   }
+
   async delete(id: string): Promise<void> {
     await this.db.query<User>(`DELETE FROM ${this.usersTable} WHERE id = $1;`, [
       id,

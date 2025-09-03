@@ -10,7 +10,8 @@ export const UserSchema = Su.object({
   updatedAt: Su.optional(Su.date()),
   passwordHash: Su.string(),
   isVerified: Su.boolean(),
-  emailVerificationToken: Su.optional(Su.string()),
+  emailVerificationToken: Su.optional(Su.null(Su.string())),
+  passwordResetToken: Su.optional(Su.null(Su.string())),
 });
 
 export type User = SuInfer<typeof UserSchema>;
@@ -29,5 +30,8 @@ export const UserProfileSchema = Su.object({
 
 export type UserProfile = SuInfer<typeof UserProfileSchema>;
 
-export type UserWithProfile = Omit<User, 'passwordHash' | 'emailVerificationToken'> &
+export type UserWithProfile = Omit<
+  User,
+  'passwordHash' | 'emailVerificationToken' | 'passwordResetToken'
+> &
   Omit<UserProfile, 'userId' | 'createdAt' | 'updatedAt'>;
