@@ -11,3 +11,8 @@ export const RegisterUserSchema = Su.object({
 export const ResetPasswordSchema = Su.object({
   newPassword: Su.string().password(),
 });
+
+export const CredentialsSchema = Su.object({
+  username: Su.string(),
+  password: Su.string().password(),
+});

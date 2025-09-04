@@ -13,6 +13,7 @@
     "db:migrate": "node-pg-migrate up  --envPath .env"
   },
   "dependencies": {
+    "jose": "^6.1.0",
     "next": "15.3.5",
     "next-auth": "^4.24.11",
     "nodemailer": "^7.0.5",

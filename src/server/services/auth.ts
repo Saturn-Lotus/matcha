@@ -1,6 +1,7 @@
 import { IMailer } from '@/lib/mailer/Mailer';
 import { UserRepository } from '../repositories';
 import { randomBytes } from 'crypto';
+import { encrypt } from '@/lib/auth/session';
 
 export class InvalidVerificationTokenError extends Error {
   constructor(message = 'Invalid verification token') {
@@ -17,9 +18,18 @@ export class VerificationTokenExpiredError extends Error {
 }
 
 export class SimilarPasswordError extends Error {
-  constructor(message = 'New password must be different from the old password') {
+  constructor(
+    message = 'New password must be different from the old password',
+  ) {
     super(message);
     this.name = 'SimilarPasswordError';
+  }
+}
+
+export class InvalidCredentialsError extends Error {
+  constructor(message = 'Invalid username or password') {
+    super(message);
+    this.name = 'InvalidCredentialsError';
   }
 }
 
@@ -158,5 +168,25 @@ export class AuthService {
       console.error('Error updating user password:', error);
       throw new Error('Failed to update user password');
     }
+  }
+
+  async authenticate(username: string, password: string) {
+    const user = await this.userRepo.findByUsername(username);
+
+    if (!user) {
+      throw new InvalidCredentialsError('Invalid username');
+    }
+
+    if (user.passwordHash !== password) {
+      throw new InvalidCredentialsError('Invalid password');
+    }
+
+    return user;
+  }
+
+  async createSession(userId: string, email: string) {
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // expires in 7 days
+    const session = await encrypt({ userId, email, expiresAt });
+    return session;
   }
 }

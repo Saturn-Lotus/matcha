@@ -1,4 +1,5 @@
 import {
+  InvalidCredentialsError,
   InvalidVerificationTokenError,
   SimilarPasswordError,
   VerificationTokenExpiredError,
@@ -12,6 +13,7 @@ const errorCodeLookup: Record<string, number> = {
   [VerificationTokenExpiredError.name]: 410,
   [ValidationError.name]: 422,
   [SyntaxError.name]: 400,
+  [InvalidCredentialsError.name]: 401,
 };
 
 export const httpExceptionMapper = (
@@ -23,3 +25,5 @@ export const httpExceptionMapper = (
   }
   return [{ error: error.message }, { status }];
 };
+
+

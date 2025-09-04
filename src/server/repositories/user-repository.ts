@@ -41,10 +41,22 @@ export class UserRepository extends BaseRepositoryClass<User> {
     }
     return user;
   }
+
   async findById(id: string): Promise<User | null> {
     const rows = await this.db.query<User>(
       `SELECT TOP 1 * FROM ${this.usersTable} WHERE id = $1;`,
       [id],
+    );
+    if (rows.length === 0) {
+      return null;
+    }
+    return rows[0];
+  }
+
+  async findByUsername(username: string): Promise<User | null> {
+    const rows = await this.db.query<User>(
+      `SELECT TOP 1 * FROM ${this.usersTable} WHERE username = $1;`,
+      [username],
     );
     if (rows.length === 0) {
       return null;
