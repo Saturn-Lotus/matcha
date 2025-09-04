@@ -16,3 +16,7 @@ export const CredentialsSchema = Su.object({
   username: Su.string(),
   password: Su.string().password(),
 });
+
+export const ForgotPasswordSchema = Su.object({
+  email: Su.string().email(),
+});

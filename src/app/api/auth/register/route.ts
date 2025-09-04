@@ -7,6 +7,7 @@ import { UserRepository } from '@/server/repositories';
 import { AuthService } from '@/server/services/auth';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
+import bcrypt from 'bcrypt';
 
 const getUserRepository = () => {
   return new UserRepository(new PostgresDB());
@@ -28,18 +29,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const hashedPassword = await bcrypt.hash(data.password, 10);
     const user = await userRepository.create({
       username: data.username,
       email: data.email,
-      passwordHash: data.password,
+      passwordHash: hashedPassword,
       firstName: data.firstName,
       lastName: data.lastName,
       isVerified: false,
     });
 
     const auth = new AuthService(userRepository, new Mailer());
-    auth.sendVerificationEmail(data.email, user.id);
-
+    await auth.sendVerificationEmail(data.email, user.id);
+    
     const session = await auth.createSession(user.id, user.email);
     const cookieStore = await cookies();
     cookieStore.set('session', session);

@@ -13,7 +13,7 @@ const sql = (strings, ...values) =>
  */
 export const up = (pgm) => {
   pgm.sql(
-    sql`ALTER TABLE users ADD COLUMN "resetPasswordToken" VARCHAR(255) UNIQUE;`,
+    sql`ALTER TABLE users ADD COLUMN "passwordResetToken" VARCHAR(255) UNIQUE;`,
   );
 };
 
@@ -23,5 +23,5 @@ export const up = (pgm) => {
  * @returns {Promise<void> | void}
  */
 export const down = (pgm) => {
-  pgm.sql(sql`ALTER TABLE users DROP COLUMN "resetPasswordToken";`);
+  pgm.sql(sql`ALTER TABLE users DROP COLUMN "passwordResetToken";`);
 };

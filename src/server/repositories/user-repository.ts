@@ -24,7 +24,7 @@ export class UserRepository extends BaseRepositoryClass<User> {
   async create(item: CreateUserInput): Promise<User> {
     const rows = await this.db.query<User>(
       `INSERT INTO ${this.usersTable}("username", "firstName", "lastName", "email", "passwordHash", "isVerified")
-			VALUES ($1, $2, $3, $4, crypt($5, gen_salt('bf')), $6) RETURNING *;
+			VALUES ($1, $2, $3, $4, $5, $6) RETURNING *;
 			`,
       [
         item.username,
@@ -55,8 +55,19 @@ export class UserRepository extends BaseRepositoryClass<User> {
 
   async findByUsername(username: string): Promise<User | null> {
     const rows = await this.db.query<User>(
-      `SELECT TOP 1 * FROM ${this.usersTable} WHERE username = $1;`,
+      `SELECT * FROM ${this.usersTable} WHERE username = $1 LIMIT 1;`,
       [username],
+    );
+    if (rows.length === 0) {
+      return null;
+    }
+    return rows[0];
+  }
+
+  async findByEmail(email: string): Promise<User | null> {
+    const rows = await this.db.query<User>(
+      `SELECT * FROM ${this.usersTable} WHERE email = $1 LIMIT 1;`,
+      [email],
     );
     if (rows.length === 0) {
       return null;
@@ -84,14 +95,7 @@ export class UserRepository extends BaseRepositoryClass<User> {
   async update(id: string, item: Partial<User>): Promise<User> {
     const setClause = Object.entries(item)
       .map(([columnName, value]) => {
-        let v = value;
-        if (typeof value === 'string') {
-          v = `'${value}'`;
-          if (columnName === 'passwordHash') {
-            v = `crypt(${v}, gen_salt('bf'))`;
-          }
-        }
-        return `"${columnName}" = ${v}`;
+        return `"${columnName}" = ${typeof value === 'string' ? `'${value}'` : value}`;
       })
       .join(', ');
 

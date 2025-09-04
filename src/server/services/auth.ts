@@ -2,6 +2,7 @@ import { IMailer } from '@/lib/mailer/Mailer';
 import { UserRepository } from '../repositories';
 import { randomBytes } from 'crypto';
 import { encrypt } from '@/lib/auth/session';
+import bcrypt from 'bcrypt';
 
 export class InvalidVerificationTokenError extends Error {
   constructor(message = 'Invalid verification token') {
@@ -43,9 +44,9 @@ export class AuthService {
     return randomBytes(32).toString('hex');
   }
 
-  sendVerificationEmail(receiverEmail: string, userId: string) {
+  async sendVerificationEmail(receiverEmail: string, userId: string) {
     const token = this.generate32ByteToken();
-    this.userRepo.update(userId, { emailVerificationToken: token });
+    await this.userRepo.update(userId, { emailVerificationToken: token });
 
     if (process.env.NEXT_PUBLIC_CLIENT_URL === undefined) {
       throw new Error('NEXT_PUBLIC_CLIENT_URL is not defined');
@@ -76,21 +77,22 @@ export class AuthService {
     );
   }
 
-  sendResetPasswordEmail(receiverEmail: string, userId: string) {
+  async requestPasswordReset(receiverEmail: string) {
     const token = this.generate32ByteToken();
+    const user = await this.userRepo.findByEmail(receiverEmail);
+    if (user) {
+      await this.userRepo.update(user.id, { passwordResetToken: token });
 
-    this.userRepo.update(userId, { passwordResetToken: token });
+      if (process.env.NEXT_PUBLIC_CLIENT_URL === undefined) {
+        throw new Error('NEXT_PUBLIC_CLIENT_URL is not defined');
+      }
+      const link = `${process.env.NEXT_PUBLIC_CLIENT_URL}/reset-password?token=${token}`;
 
-    if (process.env.NEXT_PUBLIC_CLIENT_URL === undefined) {
-      throw new Error('NEXT_PUBLIC_CLIENT_URL is not defined');
-    }
-    const link = `${process.env.NEXT_PUBLIC_CLIENT_URL}/reset-password?token=${token}`;
-
-    this.mailer.sendEmail(
-      receiverEmail,
-      'Reset your password',
-      `
-      <div style="font-family: Arial, sans-serif; max-width: 480px; margin: auto; padding: 24px; border: 1px solid #eee; border-radius: 8px; background: #fafbfc;">
+      this.mailer.sendEmail(
+        receiverEmail,
+        'Reset your password',
+        `
+        <div style="font-family: Arial, sans-serif; max-width: 480px; margin: auto; padding: 24px; border: 1px solid #eee; border-radius: 8px; background: #fafbfc;">
         <h2 style="color: #333;">Reset your password</h2>
         <p style="font-size: 16px; color: #555;">
         We received a request to reset your password. Click the button below to reset it:
@@ -106,13 +108,14 @@ export class AuthService {
         <p style="font-size: 12px; color: #aaa;">
         If you did not request a password reset, you can safely ignore this email.
         </p>
-      </div>
-      `,
-    );
+        </div>
+        `,
+      );
+    }
   }
 
   async verifyUser(token: string) {
-    if (!token || !token.trim()) {
+    if (!token.trim()) {
       throw new InvalidVerificationTokenError('No token provided');
     }
 
@@ -154,14 +157,20 @@ export class AuthService {
     if (!user) {
       throw new InvalidVerificationTokenError('Token is invalid');
     }
+    const isPasswordMatched = await bcrypt.compare(
+      newPassword,
+      user.passwordHash,
+    );
 
-    if (user.passwordHash === newPassword) {
+    if (isPasswordMatched) {
       throw new SimilarPasswordError();
     }
 
     try {
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
       await this.userRepo.update(user.id, {
-        passwordHash: newPassword,
+        passwordHash: hashedPassword,
         passwordResetToken: null,
       });
     } catch (error: any) {
@@ -177,7 +186,9 @@ export class AuthService {
       throw new InvalidCredentialsError('Invalid username');
     }
 
-    if (user.passwordHash !== password) {
+    const isPasswordMatched = await bcrypt.compare(password, user.passwordHash);
+
+    if (!isPasswordMatched) {
       throw new InvalidCredentialsError('Invalid password');
     }
 
