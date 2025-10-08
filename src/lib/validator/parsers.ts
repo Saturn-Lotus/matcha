@@ -64,8 +64,8 @@ export class StringParser implements Parser<string> {
       ...this.checks,
       (value: string) => {
         if (!passwordPattern.test(value)) {
-            const masked = '*'.repeat(value.length);
-            throw new CheckValidationError(masked, 'not a valid password');
+          const masked = '*'.repeat(value.length);
+          throw new CheckValidationError(masked, 'not a valid password');
         }
       },
     ]);

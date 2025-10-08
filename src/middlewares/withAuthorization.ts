@@ -5,6 +5,7 @@ import { decrypt } from '@/lib/auth/session';
 
 const publicRoutes = [
   '/login',
+  '/register',
   '/signup',
   '/',
   '/api/auth/register',
@@ -12,8 +13,15 @@ const publicRoutes = [
   '/api/auth/register',
   '/api/auth/reset-password',
 ];
+
+const ENABLE_AUTH = process.env.ENABLE_AUTH === 'true';
+
 export const withAuthorization: MiddlewareFactory = (next) => {
   return async (request, event) => {
+    if (!ENABLE_AUTH) {
+      return next(request, event);
+    }
+    
     const path = request.nextUrl.pathname;
     const isPublicRoute = publicRoutes.includes(path);
     if (!isPublicRoute) {
