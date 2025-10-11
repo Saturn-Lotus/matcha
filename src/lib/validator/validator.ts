@@ -7,6 +7,22 @@ import {
   StringParser,
 } from './parsers';
 
+type Merge<T> = {
+  [Key in keyof T]: T[Key];
+};
+
+type InferSchemaType<Schema extends Record<string, Parser<any>>> = Merge<
+  {
+    [Key in keyof Schema as undefined extends ReturnType<Schema[Key]['parse']>
+      ? never
+      : Key]: ReturnType<Schema[Key]['parse']>;
+  } & {
+    [Key in keyof Schema as undefined extends ReturnType<Schema[Key]['parse']>
+      ? Key
+      : never]?: Exclude<ReturnType<Schema[Key]['parse']>, undefined>;
+  }
+>;
+// TODO: ensure all parsers are classes with parse method
 export const Su = {
   string: () => new StringParser(),
   number: () => new NumberParser(),
@@ -44,7 +60,6 @@ export const Su = {
       },
     };
   },
-
   array<P extends Parser<any>>(itemParser: P) {
     type T = ReturnType<P['parse']>;
     function validate(value: unknown): asserts value is T[] {
@@ -64,15 +79,17 @@ export const Su = {
     };
   },
   object<T, S extends Record<string, Parser<T>>>(schema: S) {
-    function validateSchema(value: unknown): asserts value is {
-      [K in keyof S]: ReturnType<S[K]['parse']>;
-    } {
+    function validateSchema(
+      value: unknown,
+    ): asserts value is InferSchemaType<S> {
       if (typeof value !== 'object' || value === null || Array.isArray(value)) {
         throw new TypeValidationError(value, 'object');
       }
 
       const obj = value as Record<string, unknown>;
-      const missingFields = Object.keys(schema).filter((key) => !(key in obj));
+      const missingFields = Object.keys(schema).filter(
+        (key) => !(key in obj) && !(schema[key] instanceof Su.optional),
+      );
       if (missingFields.length > 0) {
         throw new MissingFieldError(missingFields);
       }
