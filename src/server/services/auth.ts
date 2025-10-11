@@ -3,34 +3,34 @@ import { UserRepository } from '../repositories';
 import { randomBytes } from 'crypto';
 import { encrypt } from '@/lib/auth/session';
 import bcrypt from 'bcrypt';
+import { HTTPError } from '@/lib/exception-http-mapper';
 
+@HTTPError(400)
 export class InvalidVerificationTokenError extends Error {
   constructor(message = 'Invalid verification token') {
     super(message);
-    this.name = 'InvalidVerificationTokenError';
   }
 }
 
+@HTTPError(410)
 export class VerificationTokenExpiredError extends Error {
   constructor(message = 'Verification token already used or expired') {
     super(message);
-    this.name = 'VerificationTokenExpiredError';
   }
 }
 
+@HTTPError(400)
 export class SimilarPasswordError extends Error {
   constructor(
     message = 'New password must be different from the old password',
   ) {
     super(message);
-    this.name = 'SimilarPasswordError';
   }
 }
-
+@HTTPError(401)
 export class InvalidCredentialsError extends Error {
   constructor(message = 'Invalid username or password') {
     super(message);
-    this.name = 'InvalidCredentialsError';
   }
 }
 

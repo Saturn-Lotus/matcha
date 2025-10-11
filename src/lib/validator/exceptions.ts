@@ -1,3 +1,6 @@
+import { HTTPError } from '../exception-http-mapper';
+
+@HTTPError(422)
 export class ValidationError extends Error {
   constructor(message: string) {
     super(message);
