@@ -1,7 +1,7 @@
 /**
  * @type {import('node-pg-migrate').ColumnDefinitions | undefined}
  */
-export const shorthands = undefined;
+exports.shorthands = undefined;
 
 const sql = (strings, ...values) =>
   strings.reduce((prev, curr, i) => prev + curr + (values[i] ?? ''), '');
@@ -11,7 +11,7 @@ const sql = (strings, ...values) =>
  * @param run {() => void | undefined}
  * @returns {Promise<void> | void}
  */
-export const up = (pgm) => {
+exports.up = (pgm) => {
   pgm.sql(sql`
 		CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 		CREATE EXTENSION IF NOT EXISTS pgcrypto;
@@ -60,7 +60,7 @@ export const up = (pgm) => {
  * @param run {() => void | undefined}
  * @returns {Promise<void> | void}
  */
-export const down = (pgm) => {
+exports.down = (pgm) => {
   pgm.sql(sql`
 		DROP TABLE IF EXISTS user_profiles;
 		DROP TABLE IF EXISTS users;
