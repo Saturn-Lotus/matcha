@@ -1,4 +1,9 @@
-import { SuInfer, Su } from '../lib/validator';
+import { GENDERS, MAX_FILE_SIZE, SEXUAL_PREFERENCES } from '../config';
+import { SuInfer, Su } from '../../lib/validator';
+
+// ***********************************
+// DB Schema and Types
+// ***********************************
 
 export const UserSchema = Su.object({
   id: Su.string(),
@@ -19,8 +24,8 @@ export type User = SuInfer<typeof UserSchema>;
 export const UserProfileSchema = Su.object({
   userId: Su.string(),
   bio: Su.string(),
-  gender: Su.literal(['male', 'female']),
-  sexualPreference: Su.literal(['male', 'female', 'both']),
+  gender: Su.literal(GENDERS),
+  sexualPreference: Su.literal(SEXUAL_PREFERENCES),
   avatarUrl: Su.string(),
   interests: Su.array(Su.string()),
   pictures: Su.array(Su.string()),
@@ -35,3 +40,17 @@ export type UserWithProfile = Omit<
   'passwordHash' | 'emailVerificationToken' | 'passwordResetToken'
 > &
   Omit<UserProfile, 'userId' | 'createdAt' | 'updatedAt'>;
+
+// ***********************************
+// Input validation schemas and types
+// ***********************************
+
+export const CreateUserProfileSchema = Su.object({
+  gender: Su.literal(GENDERS),
+  sexualPreference: Su.literal(SEXUAL_PREFERENCES),
+  bio: Su.string(),
+  interests: Su.array(Su.string()),
+  pictures: Su.array(Su.file().image().sizeMax(MAX_FILE_SIZE)),
+});
+
+export type CreateUserProfile = SuInfer<typeof CreateUserProfileSchema>;

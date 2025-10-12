@@ -1,6 +1,6 @@
 import { httpExceptionMapper } from '@/lib/exception-http-mapper';
 import { Mailer } from '@/lib/mailer/Mailer';
-import { CredentialsSchema } from '@/schemas';
+import { CredentialsSchema } from '@/server/schemas';
 import { PostgresDB } from '@/server/db/postgres';
 import { UserRepository } from '@/server/repositories/user-repository';
 import { AuthService } from '@/server/services/auth';

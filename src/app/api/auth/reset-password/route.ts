@@ -1,6 +1,6 @@
 import { httpExceptionMapper } from '@/lib/exception-http-mapper';
 import { Mailer } from '@/lib/mailer/Mailer';
-import { ForgotPasswordSchema, ResetPasswordSchema } from '@/schemas';
+import { ForgotPasswordSchema, ResetPasswordSchema } from '@/server/schemas';
 import { PostgresDB } from '@/server/db/postgres';
 import { UserRepository } from '@/server/repositories';
 import { AuthService } from '@/server/services/auth';

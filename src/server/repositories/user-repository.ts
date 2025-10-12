@@ -1,4 +1,4 @@
-import { User } from '@/schemas';
+import { User } from '@/server/schemas';
 import BaseRepositoryClass from './base';
 import { PostgresDB } from '../db/postgres';
 
