@@ -1,19 +1,13 @@
-import { User } from '@/server/schemas';
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { User, UserProfile } from '@/server/schemas';
 import BaseRepositoryClass from './base';
 import { PostgresDB } from '../db/postgres';
-
-export type CreateUserInput = Omit<
-  User,
-  | 'id'
-  | 'createdAt'
-  | 'updatedAt'
-  | 'emailVerificationToken'
-  | 'passwordResetToken'
->;
+import { CreateUserInput, CreateUserProfile } from '../types';
 
 export class UserRepository extends BaseRepositoryClass<User> {
   private readonly db: PostgresDB;
   private readonly usersTable: string = 'users';
+  private readonly userProfilesTable: string = 'user_profiles';
   // private readonly graphDb: IGraphDB;
 
   constructor(db: PostgresDB) {
@@ -42,10 +36,43 @@ export class UserRepository extends BaseRepositoryClass<User> {
     return user;
   }
 
+  async profileCreate(item: CreateUserProfile): Promise<UserProfile> {
+    const rows = await this.db.query<UserProfile>(
+      `Insert INTO ${this.userProfilesTable}("gender", "sexualPreference", "bio", "interests", "pictures", "avatarUrl")
+      VALUES ($1, $2, $3, $4, $5, $6) RETURNING *;
+      `,
+      [
+        item.gender,
+        item.sexualPreference,
+        item.bio,
+        item.interests,
+        item.pictures,
+        item.avatarUrl,
+      ],
+    );
+
+    const profile = rows[0];
+    if (!profile) {
+      throw new Error('User profile creation failed');
+    }
+    return profile;
+  }
+
   async findById(id: string): Promise<User | null> {
     const rows = await this.db.query<User>(
       `SELECT TOP 1 * FROM ${this.usersTable} WHERE id = $1;`,
       [id],
+    );
+    if (rows.length === 0) {
+      return null;
+    }
+    return rows[0];
+  }
+
+  async findProfileByUserId(userId: string): Promise<UserProfile | null> {
+    const rows = await this.db.query<UserProfile>(
+      `SELECT * FROM ${this.userProfilesTable} WHERE userId = $1 LIMIT 1;`,
+      [userId],
     );
     if (rows.length === 0) {
       return null;
@@ -83,10 +110,19 @@ export class UserRepository extends BaseRepositoryClass<User> {
     return rows;
   }
 
+  async queryProfile(
+    conditionsSql: string,
+    params: any[],
+  ): Promise<UserProfile[]> {
+    const rows = await this.db.query<UserProfile>(
+      `SELECT * FROM ${this.userProfilesTable} WHERE ${conditionsSql};`,
+      params,
+    );
+    return rows;
+  }
+
   async findAll(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     conditions: Record<string, any>,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     limit?: number,
   ): Promise<User[]> {
     throw new Error('Method not implemented.');
@@ -107,10 +143,36 @@ export class UserRepository extends BaseRepositoryClass<User> {
     return rows[0];
   }
 
+  async updateProfile(
+    userId: string,
+    item: Partial<UserProfile>,
+  ): Promise<UserProfile> {
+    const setClause = Object.entries(item)
+      .map(([columnName, value]) => {
+        return `"${columnName}" = ${typeof value === 'string' ? `'${value}'` : value}`;
+      })
+      .join(', ');
+
+    const query = `UPDATE ${this.userProfilesTable} SET ${setClause} WHERE userId = $1 RETURNING *;`;
+    const rows = await this.db.query<UserProfile>(query, [userId]);
+    if (rows.length === 0) {
+      throw new Error(`User profile with userId ${userId} not found`);
+    }
+    return rows[0];
+  }
+
   async delete(id: string): Promise<void> {
     await this.db.query<User>(`DELETE FROM ${this.usersTable} WHERE id = $1;`, [
       id,
     ]);
+    // ! handle error if no rows were deleted
+  }
+
+  async deleteProfile(userId: string): Promise<void> {
+    await this.db.query<UserProfile>(
+      `DELETE FROM ${this.userProfilesTable} WHERE userId = $1;`,
+      [userId],
+    );
     // ! handle error if no rows were deleted
   }
 }

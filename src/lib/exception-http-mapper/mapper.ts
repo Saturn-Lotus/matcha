@@ -19,7 +19,6 @@ class HTTPExceptionMapper {
   }
 
   mapException(error: any): Parameters<typeof NextResponse.json> {
-
     const status = this.errorCodeLookup[error.name];
     if (!status) {
       return [{ error: 'An unexpected error occurred' }, { status: 500 }];
@@ -29,7 +28,6 @@ class HTTPExceptionMapper {
 }
 
 const httpExceptionMapperInstance = new HTTPExceptionMapper();
-
 
 export const httpExceptionMapper = (
   error: any,

@@ -1,13 +1,8 @@
 import { AuthService } from '@/server/services/auth';
 import { NextRequest, NextResponse } from 'next/server';
 import { Mailer } from '@/lib/mailer/Mailer';
-import { PostgresDB } from '@/server/db/postgres';
-import { UserRepository } from '@/server/repositories';
 import { httpExceptionMapper } from '@/lib/exception-http-mapper';
-
-const getUserRepository = () => {
-  return new UserRepository(new PostgresDB());
-};
+import { getUserRepository } from '@/server/factories';
 
 export async function GET(request: NextRequest) {
   try {

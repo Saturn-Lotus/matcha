@@ -21,7 +21,7 @@ export const withAuthorization: MiddlewareFactory = (next) => {
     if (!ENABLE_AUTH) {
       return next(request, event);
     }
-    
+
     const path = request.nextUrl.pathname;
     const isPublicRoute = publicRoutes.includes(path);
     if (!isPublicRoute) {

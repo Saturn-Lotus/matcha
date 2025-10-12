@@ -1,4 +1,3 @@
-
 export default interface IBaseDB {
   /**
    * Executes a SQL query and returns the result.

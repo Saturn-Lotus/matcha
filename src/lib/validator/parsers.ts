@@ -176,7 +176,6 @@ export class FileParser implements Parser<File> {
   /**
    * @param mimeTypes additional mime types to allow
    * Defaults to common image mime types if not provided
-   * 
    */
   image(mimeTypes?: string[]) {
     const mimeTypesToCheck = [

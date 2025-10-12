@@ -1,14 +1,9 @@
 import { httpExceptionMapper } from '@/lib/exception-http-mapper';
 import { Mailer } from '@/lib/mailer/Mailer';
 import { ForgotPasswordSchema, ResetPasswordSchema } from '@/server/schemas';
-import { PostgresDB } from '@/server/db/postgres';
-import { UserRepository } from '@/server/repositories';
 import { AuthService } from '@/server/services/auth';
 import { NextRequest, NextResponse } from 'next/server';
-
-const getUserRepository = () => {
-  return new UserRepository(new PostgresDB());
-};
+import { getUserRepository } from '@/server/factories';
 
 export async function POST(request: NextRequest) {
   try {

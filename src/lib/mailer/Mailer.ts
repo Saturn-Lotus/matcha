@@ -1,4 +1,4 @@
-import 'server-only'
+import 'server-only';
 import * as nodemailer from 'nodemailer';
 
 export class TransporterError extends Error {

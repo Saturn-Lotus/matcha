@@ -1,15 +1,11 @@
 import { httpExceptionMapper } from '@/lib/exception-http-mapper';
 import { Mailer } from '@/lib/mailer/Mailer';
+import { getUserRepository } from '@/server/factories';
 import { CredentialsSchema } from '@/server/schemas';
-import { PostgresDB } from '@/server/db/postgres';
-import { UserRepository } from '@/server/repositories/user-repository';
+
 import { AuthService } from '@/server/services/auth';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
-
-const getUserRepository = () => {
-  return new UserRepository(new PostgresDB());
-};
 
 export async function POST(request: NextRequest) {
   try {
