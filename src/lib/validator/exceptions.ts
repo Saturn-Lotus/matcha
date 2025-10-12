@@ -4,6 +4,7 @@ import { HTTPError } from '../exception-http-mapper';
 export class ValidationError extends Error {
   constructor(message: string) {
     super(message);
+    this.name = 'ValidationError';
   }
 }
 export class TypeValidationError extends ValidationError {
