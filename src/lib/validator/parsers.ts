@@ -30,6 +30,12 @@ export function assertDate(value: unknown): asserts value is Date {
   }
 }
 
+export function assertFile(value: unknown): asserts value is File {
+  if (!(value instanceof File)) {
+    throw new TypeValidationError(value, 'File');
+  }
+}
+
 export class StringParser implements Parser<string> {
   private readonly checks: CheckFunc<string>[] = [];
 
@@ -155,6 +161,63 @@ export class BooleanParser implements Parser<boolean> {
 export class DateParser implements Parser<Date> {
   parse(value: unknown): Date {
     assertDate(value);
+    return value;
+  }
+}
+
+export class FileParser implements Parser<File> {
+  private readonly checks: CheckFunc<File>[];
+  readonly baseMimeTypes = {
+    image: ['image/png', 'image/jpeg', 'image/webp'],
+  };
+  constructor(checks?: CheckFunc<File>[]) {
+    this.checks = checks || [];
+  }
+  /**
+   * @param mimeTypes additional mime types to allow
+   * Defaults to common image mime types if not provided
+   * 
+   */
+  image(mimeTypes?: string[]) {
+    const mimeTypesToCheck = [
+      ...(mimeTypes || []),
+      ...this.baseMimeTypes.image,
+    ];
+    return new FileParser([
+      ...this.checks,
+      (file) => {
+        if (!mimeTypesToCheck.includes(file.type)) {
+          throw new CheckValidationError(
+            file,
+            `file type is not supported: ${file.type}`,
+          );
+        }
+      },
+    ]);
+  }
+
+  /**
+   * @param max maximum file size in bytes
+   */
+  sizeMax(max: number) {
+    return new FileParser([
+      ...this.checks,
+      (file) => {
+        if (file.size > max) {
+          throw new CheckValidationError(
+            file,
+            `file size exceeds the limit of ${max} bytes`,
+          );
+        }
+      },
+    ]);
+  }
+  parse(value: unknown): File {
+    assertFile(value);
+
+    for (const check of this.checks) {
+      check(value);
+    }
     return value;
   }
 }

@@ -2,14 +2,19 @@ import { MissingFieldError, TypeValidationError } from './exceptions';
 import {
   BooleanParser,
   DateParser,
+  FileParser,
   NumberParser,
   Parser,
   StringParser,
 } from './parsers';
 
-type Merge<T> = {
-  [Key in keyof T]: T[Key];
-};
+type Merge<T> = T extends unknown
+  ? T extends readonly unknown[]
+    ? T
+    : T extends object
+      ? { [K in keyof T]: T[K] }
+      : T
+  : never;
 
 type InferSchemaType<Schema extends Record<string, Parser<any>>> = Merge<
   {
@@ -28,6 +33,7 @@ export const Su = {
   number: () => new NumberParser(),
   boolean: () => new BooleanParser(),
   date: () => new DateParser(),
+  file: () => new FileParser(),
   literal<const T extends readonly string[]>(literalValues: T) {
     type RType = T[number];
     return {
