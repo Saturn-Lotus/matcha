@@ -60,7 +60,7 @@ export class UserRepository extends BaseRepositoryClass<User> {
 
   async findById(id: string): Promise<User | null> {
     const rows = await this.db.query<User>(
-      `SELECT TOP 1 * FROM ${this.usersTable} WHERE id = $1;`,
+      `SELECT * FROM ${this.usersTable} WHERE "id" = $1 LIMIT 1;`,
       [id],
     );
     if (rows.length === 0) {

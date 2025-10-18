@@ -26,12 +26,11 @@ export class UserService {
     email?: string,
     username?: string,
   ): Promise<boolean> => {
-    const existingUsers = await this.userRepository.query(
-      'email = $1 OR username = $2 OR id = $3',
+    const results = await this.userRepository.query(
+      'email = $1 OR username = $2 OR id = $3 LIMIT 1;',
       [email, username, id],
     );
-
-    return existingUsers.length > 0;
+    return results.length > 0;
   };
 
   createUserProfile = async (id: string, profileData: CreateUserProfile) => {
