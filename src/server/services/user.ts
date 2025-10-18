@@ -1,4 +1,4 @@
-import { CreateUserProfile, UpdateUserProfile } from '@/server/schemas';
+import { CreateUserProfile } from '@/server/schemas';
 import { UserRepository } from '@/server/repositories/user-repository';
 import { NotFoundException } from '@/lib/exception-http-mapper';
 import { IStorage } from '@/server/storage';

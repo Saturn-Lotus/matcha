@@ -11,7 +11,7 @@ export const getUserRepository = (db?: PostgresDB) => {
   return new UserRepository(db);
 };
 
-export const getUserService = (
+export const getUserService = async (
   userRepository?: UserRepository,
   storage?: IStorage,
 ) => {
@@ -19,7 +19,7 @@ export const getUserService = (
     userRepository = getUserRepository();
   }
   if (!storage) {
-    storage = getStorage();
+    storage = await getStorage();
   }
   return new UserService(userRepository, storage);
 };

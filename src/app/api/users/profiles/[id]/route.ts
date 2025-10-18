@@ -19,8 +19,8 @@ export const POST = withErrorHandler(
 
     const data = CreateUserProfileSchema.parse(rawProfileData);
 
-    const userService = getUserService();
-    userService.createUserProfile(id, data);
+    const userService = await getUserService();
+    await userService.createUserProfile(id, data);
 
     return NextResponse.json(id);
   },

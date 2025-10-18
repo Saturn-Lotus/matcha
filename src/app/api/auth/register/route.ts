@@ -12,7 +12,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   const data = RegisterUserSchema.parse(await request.json());
 
   const userRepository = getUserRepository();
-  const userService = getUserService(userRepository);
+  const userService = await getUserService(userRepository);
 
   const userAlreadyExists = await userService.userExists(
     undefined,

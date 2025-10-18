@@ -1,7 +1,7 @@
 export interface IStorage {
-  uploadFile(file: File, path: string): Promise<string>;
-  bulkUploadFiles(files: File[], path: string): Promise<string[]>;
-  deleteFile(path: string): Promise<void>;
-  getFileUrl(path: string): Promise<string>;
-  getFile(path: string): Promise<Buffer>;
+  uploadFile(file: File, destination: string): Promise<string>;
+  bulkUploadFiles(files: File[], destination: string): Promise<string[]>;
+  deleteFile(filePath: string): Promise<void>;
+  getFileUrl(filePath: string): Promise<string>;
+  getFile(filePath: string): Promise<Buffer>;
 }

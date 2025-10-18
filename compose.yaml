@@ -29,8 +29,22 @@ services:
     volumes:
       - neo4j_data:/data
 
+  minio:
+    image: minio/minio:latest
+    env_file:
+      - .env
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    restart: unless-stopped
+
 volumes:
   postgres_data:
     driver: local
   neo4j_data:
+    driver: local
+  minio_data:
     driver: local

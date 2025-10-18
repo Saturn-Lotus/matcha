@@ -16,11 +16,7 @@ interface SuggestedProfileProps {
   tags: string[];
 }
 
-export function SuggestedProfile({
-  className,
-  about,
-  tags,
-}: SuggestedProfileProps) {
+function SuggestedProfile({ className, about, tags }: SuggestedProfileProps) {
   return (
     <Carousel className={`${className ?? ''} [&>div]:h-full`}>
       <CarouselContent className="h-full">
@@ -67,7 +63,7 @@ export function SuggestedProfile({
   );
 }
 
-const Page = () => {
+export default function Page() {
   return (
     <div className="flex flex-row h-full items-center justify-center">
       <div className="h-full w-[20%] bg-white"></div>
@@ -81,6 +77,4 @@ const Page = () => {
       </div>
     </div>
   );
-};
-
-export default Page;
+}

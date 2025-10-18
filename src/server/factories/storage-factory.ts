@@ -1,16 +1,14 @@
-import { IStorage } from '../storage/base';
+import { IStorage, MinioStorage } from '@/server/storage';
 
-export const getStorage = (storage?: string): IStorage => {
+export const getStorage = async (storage?: string): Promise<IStorage> => {
   const storageType = storage || process.env.STORAGE_TYPE || 'local';
+  const bucketName = process.env.STORAGE_BUCKET_NAME || 'matcha';
   switch (storageType) {
-    case 'azure':
-      // return new AzureBlobStorage(USERS_CONTAINER);
-      throw new Error('Azure storage not implemented yet');
+    case 'minio':
+      return await MinioStorage.create(bucketName);
     case 'local':
-      // return new LocalStorage(USERS_CONTAINER);
       throw new Error('Local storage not implemented yet');
     default:
       throw new Error(`Unsupported storage type: ${storageType}`);
   }
-  // return new AzureBlobStorage(USERS_CONTAINER);
 };
