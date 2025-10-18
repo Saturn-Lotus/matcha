@@ -29,7 +29,7 @@ export const withAuthorization: MiddlewareFactory = (next) => {
       const sessionCookie = cookieStore.get('session')?.value;
       const session = await decrypt(sessionCookie);
       if (!session?.userId) {
-        return NextResponse.redirect(new URL('/login', request.nextUrl));
+        return NextResponse.redirect(new URL('/', request.nextUrl));
       }
     }
     return next(request, event);

@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     cookieStore.set('session', session);
     return NextResponse.redirect(new URL('/', request.url));
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return NextResponse.json(...httpExceptionMapper(error));
   }
 }

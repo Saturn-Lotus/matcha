@@ -1,7 +1,7 @@
 /**
  * @type {import('node-pg-migrate').ColumnDefinitions | undefined}
  */
-export const shorthands = undefined;
+exports.shorthands = undefined;
 
 const sql = (strings, ...values) =>
   strings.reduce((prev, curr, i) => prev + curr + (values[i] ?? ''), '');
@@ -11,7 +11,7 @@ const sql = (strings, ...values) =>
  * @param run {() => void | undefined}
  * @returns {Promise<void> | void}
  */
-export const up = (pgm) => {
+exports.up = (pgm) => {
   pgm.sql(
     sql`ALTER TABLE users ADD COLUMN "passwordResetToken" VARCHAR(255) UNIQUE;`,
   );
@@ -22,6 +22,6 @@ export const up = (pgm) => {
  * @param run {() => void | undefined}
  * @returns {Promise<void> | void}
  */
-export const down = (pgm) => {
+exports.down = (pgm) => {
   pgm.sql(sql`ALTER TABLE users DROP COLUMN "passwordResetToken";`);
 };

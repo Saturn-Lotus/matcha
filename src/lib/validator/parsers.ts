@@ -114,6 +114,17 @@ export class StringParser implements Parser<string> {
       },
     ]);
   }
+
+  match(strToMatch: string | undefined) {
+    return new StringParser([
+      ...this.checks,
+      (value: string) => {
+        if (value !== strToMatch) {
+          throw new CheckValidationError(value, `must match ${strToMatch}`);
+        }
+      },
+    ]);
+  }
 }
 
 export class NumberParser implements Parser<number> {

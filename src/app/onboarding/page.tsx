@@ -1,34 +1,48 @@
-'use client'
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Upload, X, Heart } from "lucide-react";
+'use client';
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Upload, X, Heart } from 'lucide-react';
+import Image from 'next/image';
 
 const POPULAR_INTERESTS = [
-  "Travel", "Photography", "Hiking", "Coffee", "Dogs", "Music",
-  "Fitness", "Reading", "Cooking", "Art", "Gaming", "Yoga",
-  "Vegan", "Geek", "Piercing", "Tattoos", "Dancing", "Movies"
+  'Travel',
+  'Photography',
+  'Hiking',
+  'Coffee',
+  'Dogs',
+  'Music',
+  'Fitness',
+  'Reading',
+  'Cooking',
+  'Art',
+  'Gaming',
+  'Yoga',
+  'Vegan',
+  'Geek',
+  'Piercing',
+  'Tattoos',
+  'Dancing',
+  'Movies',
 ];
 
 const Onboarding = () => {
   const [step, setStep] = useState(1);
-  const [loading, setLoading] = useState(false);
-  
+
   const [formData, setFormData] = useState({
-    gender: "",
-    sexualPreference: "",
-    age: "",
-    location: "",
-    bio: "",
-    customInterest: ""
+    gender: '',
+    sexualPreference: '',
+    age: '',
+    location: '',
+    bio: '',
+    customInterest: '',
   });
-  
+
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [photos, setPhotos] = useState<File[]>([]);
   const [profilePictureIndex, setProfilePictureIndex] = useState(0);
-
 
   const removePhoto = (index: number) => {
     const newPhotos = photos.filter((_, i) => i !== index);
@@ -39,10 +53,10 @@ const Onboarding = () => {
   };
 
   const toggleInterest = (interest: string) => {
-    setSelectedInterests(prev =>
+    setSelectedInterests((prev) =>
       prev.includes(interest)
-        ? prev.filter(i => i !== interest)
-        : [...prev, interest]
+        ? prev.filter((i) => i !== interest)
+        : [...prev, interest],
     );
   };
 
@@ -52,7 +66,7 @@ const Onboarding = () => {
       if (!selectedInterests.includes(formatted)) {
         setSelectedInterests([...selectedInterests, formatted]);
       }
-      setFormData({ ...formData, customInterest: "" });
+      setFormData({ ...formData, customInterest: '' });
     }
   };
 
@@ -76,12 +90,14 @@ const Onboarding = () => {
       </div>
 
       <div className="space-y-1">
-        <Label htmlFor="preference">I'm interested in *</Label>
+        <Label htmlFor="preference">I&apos;m interested in *</Label>
         <select
           id="preference"
           className="flex h-10 w-full rounded-md border border-gray-300 bg-background px-3 py-2 text-sm"
           value={formData.sexualPreference}
-          onChange={(e) => setFormData({ ...formData, sexualPreference: e.target.value })}
+          onChange={(e) =>
+            setFormData({ ...formData, sexualPreference: e.target.value })
+          }
         >
           <option value="">Select preference</option>
           <option value="men">Men</option>
@@ -99,7 +115,7 @@ const Onboarding = () => {
           placeholder="25"
           value={formData.age}
           onChange={(e) => setFormData({ ...formData, age: e.target.value })}
-		  />
+        />
       </div>
 
       <div className="space-y-1">
@@ -109,7 +125,9 @@ const Onboarding = () => {
           className="border border-gray-300 rounded-md placeholder:text-gray-400"
           placeholder="Meknes, MA"
           value={formData.location}
-          onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+          onChange={(e) =>
+            setFormData({ ...formData, location: e.target.value })
+          }
         />
       </div>
 
@@ -129,7 +147,7 @@ const Onboarding = () => {
         <textarea
           id="bio"
           placeholder="Tell us about yourself..."
-		  className="border border-gray-300 rounded-md p-2 w-full"
+          className="border border-gray-300 rounded-md p-2 w-full"
           value={formData.bio}
           onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
           rows={5}
@@ -157,13 +175,15 @@ const Onboarding = () => {
         <div className="flex gap-2 mt-4">
           <Input
             placeholder="Add custom interest"
-			className="border border-gray-300 rounded-md placeholder:text-gray-400"
+            className="border border-gray-300 rounded-md placeholder:text-gray-400"
             value={formData.customInterest}
-            onChange={(e) => setFormData({ ...formData, customInterest: e.target.value })}
-			/>
+            onChange={(e) =>
+              setFormData({ ...formData, customInterest: e.target.value })
+            }
+          />
           <Button
             type="button"
-			className="border border-gray-300 rounded-md"
+            className="border border-gray-300 rounded-md"
             onClick={addCustomInterest}
             variant="outline"
           >
@@ -171,10 +191,15 @@ const Onboarding = () => {
           </Button>
         </div>
 
-        {selectedInterests.filter(i => !POPULAR_INTERESTS.map(p => p.toLowerCase()).includes(i)).length > 0 && (
+        {selectedInterests.filter(
+          (i) => !POPULAR_INTERESTS.map((p) => p.toLowerCase()).includes(i),
+        ).length > 0 && (
           <div className="flex flex-wrap gap-2 mt-3">
             {selectedInterests
-              .filter(i => !POPULAR_INTERESTS.map(p => p.toLowerCase()).includes(i))
+              .filter(
+                (i) =>
+                  !POPULAR_INTERESTS.map((p) => p.toLowerCase()).includes(i),
+              )
               .map((interest) => (
                 <span
                   key={interest}
@@ -210,7 +235,8 @@ const Onboarding = () => {
       <div>
         <Label>Upload Photos (1-5) *</Label>
         <p className="text-sm mb-4 text-gray-400">
-          Upload up to 5 photos. Click on a photo to set it as your profile picture.
+          Upload up to 5 photos. Click on a photo to set it as your profile
+          picture.
         </p>
 
         <div className="grid grid-cols-3 gap-4 mb-4">
@@ -219,11 +245,12 @@ const Onboarding = () => {
               key={index}
               className="relative group aspect-square rounded-lg overflow-hidden border-2 cursor-pointer"
               style={{
-                borderColor: index === profilePictureIndex ? '#ec4899' : 'transparent'
+                borderColor:
+                  index === profilePictureIndex ? '#ec4899' : 'transparent',
               }}
               onClick={() => setProfilePictureIndex(index)}
             >
-              <img
+              <Image
                 src={URL.createObjectURL(photo)}
                 alt={`Upload ${index + 1}`}
                 className="w-full h-full object-cover"
@@ -248,12 +275,7 @@ const Onboarding = () => {
 
           {photos.length < 5 && (
             <label className="aspect-square rounded-lg border-2 border-dashed border-gray-300 hover:border-pink-400 transition-colors cursor-pointer flex flex-col items-center justify-center">
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-              />
+              <input type="file" accept="image/*" multiple className="hidden" />
               <Upload className="w-8 h-8 text-gray-400 mb-2" />
               <span className="text-sm text-gray-500">Upload</span>
             </label>
@@ -269,18 +291,15 @@ const Onboarding = () => {
         >
           Back
         </Button>
-        <Button
-          disabled={loading || photos.length === 0}
-          className="flex-1 strawberry-matcha-btn hover:opacity-90 text-white"
-        >
-          {loading ? 'Creating Profile...' : 'Complete Profile'}
+        <Button className="flex-1 strawberry-matcha-btn hover:opacity-90 text-white">
+          Complete Profile
         </Button>
       </div>
     </div>
   );
 
   return (
-    <div className="min-h-screen strawberry-matcha-bg flex items-center justify-center p-4">
+    <div className="h-full w-full strawberry-matcha-bg flex items-center justify-center p-4">
       <Card className="w-full max-w-2xl glass-effect border-0 shadow-xl">
         <CardHeader>
           <CardTitle className="text-3xl font-bold text-center strawberry-matcha-gradient">
@@ -291,9 +310,7 @@ const Onboarding = () => {
               <div
                 key={s}
                 className={`h-2 w-16 rounded-full transition-colors ${
-                  s <= step
-                    ? 'strawberry-matcha-btn'
-                    : 'bg-gray-200'
+                  s <= step ? 'strawberry-matcha-btn' : 'bg-gray-200'
                 }`}
               />
             ))}

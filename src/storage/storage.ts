@@ -1,4 +1,3 @@
-
 export abstract class Storage {
   abstract getFile(path: string);
 
