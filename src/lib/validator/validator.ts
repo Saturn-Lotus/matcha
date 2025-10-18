@@ -27,6 +27,12 @@ type InferSchemaType<Schema extends Record<string, Parser<any>>> = Merge<
       : never]?: Exclude<ReturnType<Schema[Key]['parse']>, undefined>;
   }
 >;
+
+const OPTIONAL = Symbol('su.optional');
+
+function isOptional(parser: unknown): boolean {
+  return !!(parser && (parser as any)[OPTIONAL]);
+}
 // TODO: ensure all parsers are classes with parse method
 export const Su = {
   string: () => new StringParser(),
@@ -94,7 +100,7 @@ export const Su = {
 
       const obj = value as Record<string, unknown>;
       const missingFields = Object.keys(schema).filter(
-        (key) => !(key in obj) && !(schema[key] instanceof Su.optional),
+        (key) => !(key in obj) && !isOptional(schema[key]),
       );
       if (missingFields.length > 0) {
         throw new MissingFieldError(missingFields);
