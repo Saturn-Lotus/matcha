@@ -1,5 +1,5 @@
-import { GENDERS, MAX_FILE_SIZE, SEXUAL_PREFERENCES } from '../config';
-import { SuInfer, Su } from '../../lib/validator';
+import { GENDERS, MAX_FILE_SIZE, SEXUAL_PREFERENCES } from '@/server/config';
+import { SuInfer, Su } from '@/lib/validator';
 
 // ***********************************
 // DB Schema and Types
@@ -50,6 +50,7 @@ export const CreateUserProfileSchema = Su.object({
   sexualPreference: Su.literal(SEXUAL_PREFERENCES),
   bio: Su.string(),
   interests: Su.array(Su.string()),
+  avatar: Su.string(),
   pictures: Su.array(Su.file().image().sizeMax(MAX_FILE_SIZE)),
 });
 

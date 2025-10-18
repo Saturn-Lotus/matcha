@@ -1,7 +1,8 @@
-import { CreateUserProfile } from '@/server/schemas';
-import { UserRepository } from './../repositories/user-repository';
+import { CreateUserProfile, UpdateUserProfile } from '@/server/schemas';
+import { UserRepository } from '@/server/repositories/user-repository';
 import { NotFoundException } from '@/lib/exception-http-mapper';
-import { IStorage } from '../storage/base';
+import { IStorage } from '@/server/storage';
+import { getUserProfilePicturesPath } from '@/server/storage/utils/path';
 
 export class UserService {
   private readonly userRepository: UserRepository;
@@ -11,6 +12,14 @@ export class UserService {
     this.userRepository = userRepository;
     this.storage = storage;
   }
+
+  getUserById = async (id: string) => {
+    const user = await this.userRepository.findById(id);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user;
+  };
 
   userExists = async (
     id?: string,
@@ -26,12 +35,9 @@ export class UserService {
   };
 
   createUserProfile = async (id: string, profileData: CreateUserProfile) => {
-    const user = this.userRepository.findById(id);
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
+    const user = await this.getUserById(id);
 
-    const storagePath = `${id}/profiles/pictures/`;
+    const storagePath = getUserProfilePicturesPath(user.id);
     const uploadedPictures = await this.storage.bulkUploadFiles(
       profileData.pictures,
       storagePath,
