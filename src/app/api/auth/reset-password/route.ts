@@ -1,39 +1,25 @@
-import { httpExceptionMapper } from '@/lib/exception-http-mapper';
-import { Mailer } from '@/lib/mailer/Mailer';
 import { ForgotPasswordSchema, ResetPasswordSchema } from '@/server/schemas';
-import { AuthService } from '@/server/services/auth';
 import { NextRequest, NextResponse } from 'next/server';
-import { getUserRepository } from '@/server/factories';
+import { getAuthService } from '@/server/factories/auth-factory';
+import { withErrorHandler } from '@/middlewares/routes-middlewares';
 
-export async function POST(request: NextRequest) {
-  try {
-    const { email } = ForgotPasswordSchema.parse(await request.json());
-    const userRepository = getUserRepository();
-    const auth = new AuthService(userRepository, new Mailer());
+export const POST = withErrorHandler(async (request: NextRequest) => {
+  const { email } = ForgotPasswordSchema.parse(await request.json());
+  const auth = getAuthService();
 
-    await auth.requestPasswordReset(email);
+  await auth.requestPasswordReset(email);
 
-    return NextResponse.json({ success: true }, { status: 200 });
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json(...httpExceptionMapper(error));
-  }
-}
+  return NextResponse.json({ success: true }, { status: 200 });
+});
 
-export async function PATCH(request: NextRequest) {
-  try {
-    const searchParams = request.nextUrl.searchParams;
-    const token = searchParams.get('token') || '';
-    const { newPassword } = ResetPasswordSchema.parse(await request.json());
+export const PATCH = withErrorHandler(async (request: NextRequest) => {
+  const searchParams = request.nextUrl.searchParams;
+  const token = searchParams.get('token') || '';
+  const { newPassword } = ResetPasswordSchema.parse(await request.json());
 
-    const userRepository = getUserRepository();
-    const auth = new AuthService(userRepository, new Mailer());
+  const auth = getAuthService();
 
-    await auth.resetPassword(token, newPassword);
+  await auth.resetPassword(token, newPassword);
 
-    return NextResponse.json({ success: true }, { status: 200 });
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json(...httpExceptionMapper(error));
-  }
-}
+  return NextResponse.json({ success: true }, { status: 200 });
+});
