@@ -2,6 +2,7 @@ import { Heart } from 'lucide-react';
 import './globals.css';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { Toaster } from '@/components/ui/sonner';
 
 export default function RootLayout({
   children,
@@ -35,7 +36,10 @@ export default function RootLayout({
             </Link>
           </div>
         </header>
-        <main className="flex-1 w-screen overflow-hidden">{children}</main>
+        <main className="flex-1 w-screen overflow-hidden">
+          <Toaster />
+          {children}
+        </main>
         <footer className="text-center w-full text-gray-500 md:py-1 py-1 h-[6vh] flex justify-center">
           <p className="md:text-lg text-xs word-break px-2">
             &copy; 2025 Strawberry Matcha. Made with 🍓 and 🍵 for finding love.
