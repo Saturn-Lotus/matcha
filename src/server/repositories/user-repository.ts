@@ -72,7 +72,7 @@ export class UserRepository extends BaseRepositoryClass<User> {
 
   async findProfileByUserId(userId: string): Promise<UserProfile | null> {
     const rows = await this.db.query<UserProfile>(
-      `SELECT * FROM ${this.userProfilesTable} WHERE userId = $1 LIMIT 1;`,
+      `SELECT * FROM ${this.userProfilesTable} WHERE "userId" = $1 LIMIT 1;`,
       [userId],
     );
     if (rows.length === 0) {
@@ -83,7 +83,7 @@ export class UserRepository extends BaseRepositoryClass<User> {
 
   async findByUsername(username: string): Promise<User | null> {
     const rows = await this.db.query<User>(
-      `SELECT * FROM ${this.usersTable} WHERE username = $1 LIMIT 1;`,
+      `SELECT * FROM ${this.usersTable} WHERE "username" = $1 LIMIT 1;`,
       [username],
     );
     if (rows.length === 0) {

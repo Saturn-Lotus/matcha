@@ -14,11 +14,11 @@ const publicRoutes = [
   '/api/auth/reset-password',
 ];
 
-const ENABLE_AUTH = process.env.ENABLE_AUTH === 'true';
+const DISABLE_AUTH = process.env.DISABLE_AUTH === 'true';
 
 export const withAuthorization: MiddlewareFactory = (next) => {
   return async (request, event) => {
-    if (!ENABLE_AUTH) {
+    if (DISABLE_AUTH) {
       return next(request, event);
     }
 
