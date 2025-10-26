@@ -42,5 +42,8 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   const cookieStore = await cookies();
   cookieStore.set('session', session);
 
-  return NextResponse.redirect(new URL('/onboarding', request.url));
+  return NextResponse.json(
+    { id: user.id, email: user.email, isVerified: false },
+    { status: 201 },
+  );
 });

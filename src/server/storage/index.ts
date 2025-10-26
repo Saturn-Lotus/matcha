@@ -1,3 +1,3 @@
 export * from './base';
 export * from './minio';
-export * from './vercel-blob'
+export * from './vercel-blob';

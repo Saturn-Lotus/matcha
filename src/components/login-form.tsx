@@ -19,7 +19,7 @@ export function LoginForm() {
       body: JSON.stringify(Object.fromEntries(formData)),
     });
     if (response.ok) {
-      router.push('/home');
+      router.push('/');
     }
   };
 

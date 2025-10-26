@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     const session = await auth.createSession(user.id, user.email);
     const cookieStore = await cookies();
     cookieStore.set('session', session);
-    return NextResponse.redirect(new URL('/', request.url));
+    return NextResponse.json({ id: user.id, email: user.email });
   } catch (error) {
     console.error(error);
     return NextResponse.json(...httpExceptionMapper(error));

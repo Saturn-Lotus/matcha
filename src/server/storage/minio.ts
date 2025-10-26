@@ -11,7 +11,6 @@ const minioClient = new Minio.Client({
   secretKey: process.env.MINIO_ROOT_PASSWORD || 'minioadmin',
 });
 
-
 export class MinioStorage implements IStorage {
   private readonly client = minioClient;
   private readonly bucket;
