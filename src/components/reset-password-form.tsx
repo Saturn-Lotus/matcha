@@ -94,13 +94,10 @@ const SetNewPasswordCard = ({
   const resetPassword = async () => {
     const params = new URLSearchParams();
     params.append('token', token);
-	await fetch(
-      `/api/auth/reset-password?${params.toString()}`,
-      {
-        method: 'PATCH',
-        body: JSON.stringify({ newPassword }),
-      },
-    );
+    await fetch(`/api/auth/reset-password?${params.toString()}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ newPassword }),
+    });
   };
 
   return (
@@ -202,8 +199,8 @@ const ResetPasswordForm = () => {
             </CardTitle>
             {!sent ? (
               <p className="text-center text-gray-600 text-sm">
-                Enter your email address and we&apos;ll send you a link to reset your
-                password.
+                Enter your email address and we&apos;ll send you a link to reset
+                your password.
               </p>
             ) : (
               ''

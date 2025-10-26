@@ -56,34 +56,38 @@ export class MinioStorage implements IStorage {
   }
 
   async bulkUploadFiles(files: File[], destination: string): Promise<string[]> {
-	const uploadPromises = files.map((file) =>
-	  this.uploadFile(file, destination),
-	);
-	return Promise.all(uploadPromises);
+    const uploadPromises = files.map((file) =>
+      this.uploadFile(file, destination),
+    );
+    return Promise.all(uploadPromises);
   }
 
   async deleteFile(filePath: string): Promise<void> {
-	await this.client.removeObject(this.bucket, filePath);
+    await this.client.removeObject(this.bucket, filePath);
   }
 
   async getFileUrl(filePath: string): Promise<string> {
-	const url = await this.client.presignedGetObject(this.bucket, filePath, 24 * 60 * 60);
-	return url;
+    const url = await this.client.presignedGetObject(
+      this.bucket,
+      filePath,
+      24 * 60 * 60,
+    );
+    return url;
   }
 
   async getFile(filePath: string): Promise<Buffer> {
-	const stream = await this.client.getObject(this.bucket, filePath);
-	const chunks: Buffer[] = [];
-	return new Promise<Buffer>((resolve, reject) => {
-	  stream.on('data', (chunk) => {
-		chunks.push(chunk);
-	  });
-	  stream.on('end', () => {
-		resolve(Buffer.concat(chunks));
-	  });
-	  stream.on('error', (err) => {
-		reject(err);
-	  });
-	});
+    const stream = await this.client.getObject(this.bucket, filePath);
+    const chunks: Buffer[] = [];
+    return new Promise<Buffer>((resolve, reject) => {
+      stream.on('data', (chunk) => {
+        chunks.push(chunk);
+      });
+      stream.on('end', () => {
+        resolve(Buffer.concat(chunks));
+      });
+      stream.on('error', (err) => {
+        reject(err);
+      });
+    });
   }
 }
