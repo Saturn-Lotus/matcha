@@ -38,10 +38,11 @@ export class UserRepository extends BaseRepositoryClass<User> {
 
   async profileCreate(item: CreateUserProfile): Promise<UserProfile> {
     const rows = await this.db.query<UserProfile>(
-      `Insert INTO ${this.userProfilesTable}("gender", "sexualPreference", "bio", "interests", "pictures", "avatarUrl")
-      VALUES ($1, $2, $3, $4, $5, $6) RETURNING *;
+      `Insert INTO ${this.userProfilesTable}("userId", "gender", "sexualPreference", "bio", "interests", "pictures", "avatarUrl")
+      VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *;
       `,
       [
+        item.userId,
         item.gender,
         item.sexualPreference,
         item.bio,

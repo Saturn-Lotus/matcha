@@ -1,4 +1,4 @@
-import { IStorage, MinioStorage } from '@/server/storage';
+import { IStorage, MinioStorage, VercelBlobStorage } from '@/server/storage';
 
 export const getStorage = async (storage?: string): Promise<IStorage> => {
   const storageType = storage || process.env.STORAGE_TYPE || 'local';
@@ -6,8 +6,8 @@ export const getStorage = async (storage?: string): Promise<IStorage> => {
   switch (storageType) {
     case 'minio':
       return await MinioStorage.create(bucketName);
-    case 'local':
-      throw new Error('Local storage not implemented yet');
+    case 'vercel-blob':
+      return new VercelBlobStorage(bucketName);
     default:
       throw new Error(`Unsupported storage type: ${storageType}`);
   }

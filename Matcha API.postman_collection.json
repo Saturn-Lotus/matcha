@@ -1,0 +1,257 @@
+{
+  "info": {
+    "_postman_id": "9807a997-c06b-428d-9b6b-767362509a52",
+    "name": "Matcha API",
+    "description": "Postman collection documenting Matcha API endpoints (auth + users/profiles)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "32052001"
+  },
+  "item": [
+    {
+      "name": "auth",
+      "item": [
+        {
+          "name": "Signin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"jdoe@example.com\",\n  \"password\": \"s3cret\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/signin",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "signin"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "logout"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Auth - Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"jdoe\",\n  \"email\": \"jdoe@example.com\",\n  \"password\": \"s3cret\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Auth - Request Password Reset",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"jdoe@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/reset-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "reset-password"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Auth - Verify Email",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/verify?token={{verificationToken}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "verify"],
+              "query": [
+                {
+                  "key": "token",
+                  "value": "{{verificationToken}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "users",
+      "item": [
+        {
+          "name": "Create Profile by ID",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "gender",
+                  "value": "male",
+                  "type": "text"
+                },
+                {
+                  "key": "sexualPreference",
+                  "value": "female",
+                  "type": "text"
+                },
+                {
+                  "key": "bio",
+                  "value": "i like cats",
+                  "type": "text"
+                },
+                {
+                  "key": "interests",
+                  "value": "swim",
+                  "type": "text"
+                },
+                {
+                  "key": "interests",
+                  "value": "fishing",
+                  "type": "text"
+                },
+                {
+                  "key": "pictures",
+                  "type": "file",
+                  "src": "/Users/elkhayyatedriss/Downloads/image (5).png"
+                },
+                {
+                  "key": "pictures",
+                  "type": "file",
+                  "src": "/Users/elkhayyatedriss/Downloads/meeting.jpg"
+                },
+                {
+                  "key": "pictures",
+                  "type": "file",
+                  "src": "/Users/elkhayyatedriss/Downloads/Photo on 30-9-2025 at 11.21.jpg"
+                },
+                {
+                  "key": "pictures",
+                  "type": "file",
+                  "src": "/Users/elkhayyatedriss/Downloads/download.png"
+                },
+                {
+                  "key": "pictures",
+                  "type": "file",
+                  "src": "/Users/elkhayyatedriss/Library/CloudStorage/OneDrive-TheBostonConsultingGroup,Inc/Desktop/Screenshot 2025-10-15 at 17.36.36.png"
+                },
+                {
+                  "key": "avatar",
+                  "value": "image (5).png",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/profiles/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "profiles", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "602fbfe0-c57c-47a7-9b7b-d8576ca4b99c"
+                }
+              ]
+            },
+            "description": "Returns public profile data for the user. Replace :id with the user id."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Root",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api",
+          "host": ["{{baseUrl}}"],
+          "path": ["api"]
+        }
+      },
+      "response": []
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [""]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [""]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "verificationToken",
+      "value": ""
+    }
+  ]
+}

@@ -11,11 +11,10 @@ const minioClient = new Minio.Client({
   secretKey: process.env.MINIO_ROOT_PASSWORD || 'minioadmin',
 });
 
-const BUCKET_NAME = process.env.STORAGE_BUCKET_NAME || 'matcha';
 
 export class MinioStorage implements IStorage {
   private readonly client = minioClient;
-  private readonly bucket = BUCKET_NAME;
+  private readonly bucket;
 
   private constructor(bucketName: string) {
     this.bucket = bucketName;
@@ -30,20 +29,21 @@ export class MinioStorage implements IStorage {
     return new MinioStorage(bucketName);
   }
 
-  private buildObjectKey(destination: string, fileName: string): string {
+  private buildObjectKey(destination: string): string {
+    const fileName = crypto.randomUUID();
     const fullPath = path.posix.join(destination, fileName);
     return fullPath;
   }
 
-  private buildObjectMetadata(contentType: string): Minio.ItemBucketMetadata {
-    return { 'Content-Type': contentType };
+  private buildObjectMetadata(file: File): Minio.ItemBucketMetadata {
+    return { 'Content-Type': file.type, 'original-name': file.name };
   }
 
   async uploadFile(file: File, destination: string): Promise<string> {
     const fileBuffer = Buffer.from(await file.arrayBuffer());
     const fileSize = file.size;
-    const objectKey = this.buildObjectKey(destination, file.name);
-    const metadata = this.buildObjectMetadata(file.type);
+    const objectKey = this.buildObjectKey(destination);
+    const metadata = this.buildObjectMetadata(file);
 
     await this.client.putObject(
       this.bucket,

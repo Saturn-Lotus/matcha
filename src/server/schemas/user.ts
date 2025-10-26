@@ -55,3 +55,13 @@ export const CreateUserProfileSchema = Su.object({
 });
 
 export type CreateUserProfile = SuInfer<typeof CreateUserProfileSchema>;
+
+export const UpdateUserProfileSchema = Su.object({
+  gender: Su.optional(Su.literal(GENDERS)),
+  sexualPreference: Su.optional(Su.literal(SEXUAL_PREFERENCES)),
+  bio: Su.optional(Su.string()),
+  interests: Su.optional(Su.array(Su.string())),
+  pictures: Su.optional(Su.array(Su.file().image().sizeMax(MAX_FILE_SIZE))),
+});
+
+export type UpdateUserProfile = SuInfer<typeof UpdateUserProfileSchema>;

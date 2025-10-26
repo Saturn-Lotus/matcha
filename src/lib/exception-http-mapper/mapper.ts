@@ -1,6 +1,14 @@
 /* eslint-disable @typescript-eslint/no-unsafe-function-type */
 import { NextResponse } from 'next/server';
 
+export type ServerError = {
+  error: {
+    code: string;
+    message?: string;
+    details?: Array<{ field: string; issue: string }>;
+  };
+};
+
 class HTTPExceptionMapper {
   private errorCodeLookup: Record<string, number>;
 
@@ -21,9 +29,29 @@ class HTTPExceptionMapper {
   mapException(error: any): Parameters<typeof NextResponse.json> {
     const status = this.errorCodeLookup[error.name];
     if (!status) {
-      return [{ error: 'An unexpected error occurred' }, { status: 500 }];
+      const requestId = error.requestId || 'unknown';
+      return [
+        {
+          error: {
+            code: error.name,
+            message: error.message,
+            details: error.details,
+            requestId,
+          },
+        },
+        { status: 500 },
+      ];
     }
-    return [{ error: error.message }, { status }];
+    return [
+      {
+        error: {
+          code: error.name,
+          message: error.message,
+          details: error.details,
+        },
+      },
+      { status },
+    ];
   }
 }
 

@@ -13,6 +13,7 @@ const sql = (strings, ...values) =>
  */
 export const up = (pgm) => {
   pgm.sql(sql`
+		ALTER TABLE user_profiles RENAME COLUMN user_id TO "userId";
 		ALTER TABLE user_profiles RENAME COLUMN sexual_preference TO "sexualPreference";
 		ALTER TABLE user_profiles RENAME COLUMN avatar_url TO "avatarUrl";
 		ALTER TABLE user_profiles RENAME COLUMN created_at TO "createdAt";
@@ -27,6 +28,7 @@ export const up = (pgm) => {
  */
 export const down = (pgm) => {
   pgm.sql(sql`
+		ALTER TABLE user_profiles RENAME COLUMN "userId" TO user_id;
 		ALTER TABLE user_profiles RENAME COLUMN "sexualPreference" TO sexual_preference;
 		ALTER TABLE user_profiles RENAME COLUMN "avatarUrl" TO avatar_url;
 		ALTER TABLE user_profiles RENAME COLUMN "createdAt" TO created_at;
