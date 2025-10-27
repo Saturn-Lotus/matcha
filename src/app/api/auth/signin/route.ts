@@ -1,16 +1,14 @@
 import { httpExceptionMapper } from '@/lib/exception-http-mapper';
-import { Mailer } from '@/lib/mailer/Mailer';
-import { getUserRepository } from '@/server/factories';
+import { getAuthService } from '@/server/factories';
 import { CredentialsSchema } from '@/server/schemas';
 
-import { AuthService } from '@/server/services/auth';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
   try {
     const credentials = CredentialsSchema.parse(await request.json());
-    const auth = new AuthService(getUserRepository(), new Mailer());
+    const auth = getAuthService();
 
     const user = await auth.authenticate(
       credentials.username,

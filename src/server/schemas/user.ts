@@ -2,47 +2,49 @@ import { GENDERS, MAX_FILE_SIZE, SEXUAL_PREFERENCES } from '@/server/config';
 import { SuInfer, Su } from '@/lib/validator';
 
 // ***********************************
-// DB Schema and Types
+// *     DB Schema and Types
 // ***********************************
+const UserTokenTypes = ['emailVerification', 'passwordReset'] as const;
 
 export const UserSchema = Su.object({
   id: Su.string(),
   username: Su.string(),
-  firstName: Su.string(),
-  lastName: Su.string(),
   email: Su.string(),
-  createdAt: Su.optional(Su.date()),
-  updatedAt: Su.optional(Su.date()),
+  pendingEmail: Su.null(Su.string()),
+  createdAt: Su.date(),
+  updatedAt: Su.date(),
   passwordHash: Su.string(),
   isVerified: Su.boolean(),
-  emailVerificationToken: Su.optional(Su.null(Su.string())),
-  passwordResetToken: Su.optional(Su.null(Su.string())),
 });
-
 export type User = SuInfer<typeof UserSchema>;
+
+export const UserTokensSchema = Su.object({
+  userId: Su.string(),
+  tokenHash: Su.string(),
+  tokenType: Su.literal(UserTokenTypes),
+  tokenExpiry: Su.date(),
+  createdAt: Su.optional(Su.date()),
+});
+export type UserToken = SuInfer<typeof UserTokensSchema>;
 
 export const UserProfileSchema = Su.object({
   userId: Su.string(),
-  bio: Su.string(),
-  gender: Su.literal(GENDERS),
-  sexualPreference: Su.literal(SEXUAL_PREFERENCES),
-  avatarUrl: Su.string(),
-  interests: Su.array(Su.string()),
-  pictures: Su.array(Su.string()),
+  firstName: Su.string(),
+  lastName: Su.string(),
+  bio: Su.null(Su.string()),
+  gender: Su.null(Su.literal(GENDERS)),
+  sexualPreference: Su.null(Su.literal(SEXUAL_PREFERENCES)),
+  avatarUrl: Su.null(Su.string()),
+  interests: Su.null(Su.array(Su.string())),
+  pictures: Su.null(Su.array(Su.string())),
   createdAt: Su.optional(Su.date()),
   updatedAt: Su.optional(Su.date()),
 });
 
 export type UserProfile = SuInfer<typeof UserProfileSchema>;
 
-export type UserWithProfile = Omit<
-  User,
-  'passwordHash' | 'emailVerificationToken' | 'passwordResetToken'
-> &
-  Omit<UserProfile, 'userId' | 'createdAt' | 'updatedAt'>;
-
 // ***********************************
-// Input validation schemas and types
+// *     Input validation schemas and types
 // ***********************************
 
 export const CreateUserProfileSchema = Su.object({
@@ -55,13 +57,3 @@ export const CreateUserProfileSchema = Su.object({
 });
 
 export type CreateUserProfile = SuInfer<typeof CreateUserProfileSchema>;
-
-export const UpdateUserProfileSchema = Su.object({
-  gender: Su.optional(Su.literal(GENDERS)),
-  sexualPreference: Su.optional(Su.literal(SEXUAL_PREFERENCES)),
-  bio: Su.optional(Su.string()),
-  interests: Su.optional(Su.array(Su.string())),
-  pictures: Su.optional(Su.array(Su.file().image().sizeMax(MAX_FILE_SIZE))),
-});
-
-export type UpdateUserProfile = SuInfer<typeof UpdateUserProfileSchema>;

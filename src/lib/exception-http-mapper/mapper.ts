@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-function-type */
 import { NextResponse } from 'next/server';
 
 export type ServerError = {

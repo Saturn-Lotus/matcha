@@ -260,7 +260,10 @@ export class ArrayParser<T> implements Parser<T[]> {
           throw new CheckValidationError(value, `array longer than ${max}`);
         }
         if (fix !== undefined && value.length !== fix) {
-          throw new CheckValidationError(value, `array must have exactly ${fix} items`);
+          throw new CheckValidationError(
+            value,
+            `array must have exactly ${fix} items`,
+          );
         }
       },
     ]);
@@ -274,7 +277,6 @@ export class ArrayParser<T> implements Parser<T[]> {
     return value;
   }
 }
-
 
 export class NullParser<T> implements Parser<T | null> {
   private readonly innerParser: Parser<T>;
@@ -302,8 +304,9 @@ export class OptionalParser<T> implements Parser<T | undefined> {
   }
 }
 
-
-export class LiteralParser<const T extends readonly string[]> implements Parser<T[number]> {
+export class LiteralParser<const T extends readonly string[]>
+  implements Parser<T[number]>
+{
   private readonly literalValues: T;
   constructor(literalValues: T) {
     this.literalValues = literalValues;

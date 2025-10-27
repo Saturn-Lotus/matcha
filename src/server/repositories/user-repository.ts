@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { User, UserProfile } from '@/server/schemas';
 import BaseRepositoryClass from './base';
 import { PostgresDB } from '../db/postgres';
@@ -6,9 +5,9 @@ import { CreateUserInput, CreateUserProfile } from '../types';
 
 export class UserRepository extends BaseRepositoryClass<User> {
   private readonly db: PostgresDB;
+
   private readonly usersTable: string = 'users';
   private readonly userProfilesTable: string = 'user_profiles';
-  // private readonly graphDb: IGraphDB;
 
   constructor(db: PostgresDB) {
     super();
@@ -17,14 +16,13 @@ export class UserRepository extends BaseRepositoryClass<User> {
 
   async create(item: CreateUserInput): Promise<User> {
     const rows = await this.db.query<User>(
-      `INSERT INTO ${this.usersTable}("username", "firstName", "lastName", "email", "passwordHash", "isVerified")
-			VALUES ($1, $2, $3, $4, $5, $6) RETURNING *;
+      `INSERT INTO ${this.usersTable}("username", "email","pendingEmail", "passwordHash", "isVerified")
+			VALUES ($1, $2, $3, $4, $5) RETURNING *;
 			`,
       [
         item.username,
-        item.firstName,
-        item.lastName,
         item.email,
+        item.pendingEmail,
         item.passwordHash,
         item.isVerified,
       ],
@@ -38,11 +36,24 @@ export class UserRepository extends BaseRepositoryClass<User> {
 
   async profileCreate(item: CreateUserProfile): Promise<UserProfile> {
     const rows = await this.db.query<UserProfile>(
-      `Insert INTO ${this.userProfilesTable}("userId", "gender", "sexualPreference", "bio", "interests", "pictures", "avatarUrl")
-      VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *;
+      `Insert INTO ${this.userProfilesTable}
+      ( 
+      "userId",
+      "firstName",
+      "lastName",
+      "gender",
+      "sexualPreference",
+      "bio",
+      "interests",
+      "pictures",
+      "avatarUrl"
+    )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *;
       `,
       [
         item.userId,
+        item.firstName,
+        item.lastName,
         item.gender,
         item.sexualPreference,
         item.bio,
@@ -122,13 +133,6 @@ export class UserRepository extends BaseRepositoryClass<User> {
     return rows;
   }
 
-  async findAll(
-    conditions: Record<string, any>,
-    limit?: number,
-  ): Promise<User[]> {
-    throw new Error('Method not implemented.');
-  }
-
   async update(id: string, item: Partial<User>): Promise<User> {
     const setClause = Object.entries(item)
       .map(([columnName, value]) => {
@@ -146,7 +150,7 @@ export class UserRepository extends BaseRepositoryClass<User> {
 
   async updateProfile(
     userId: string,
-    item: Partial<UserProfile>,
+    item: Partial<Omit<UserProfile, 'userId'>>,
   ): Promise<UserProfile> {
     const setClause = Object.entries(item)
       .map(([columnName, value]) => {

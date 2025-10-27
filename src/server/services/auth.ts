@@ -1,9 +1,9 @@
 import { IMailer } from '@/lib/mailer/Mailer';
-import { UserRepository } from '../repositories';
+import { UserRepository, UserTokensRepository } from '@/server/repositories';
 import { randomBytes } from 'crypto';
 import { encrypt } from '@/lib/auth/session';
-import bcrypt from 'bcrypt';
 import { HTTPError } from '@/lib/exception-http-mapper';
+import bcrypt from 'bcrypt';
 
 @HTTPError(400)
 export class InvalidVerificationTokenError extends Error {
@@ -34,9 +34,23 @@ export class InvalidCredentialsError extends Error {
   }
 }
 
+@HTTPError(409)
+export class EmailInUseError extends Error {
+  constructor(message = 'Email is already in use by another account') {
+    super(message);
+  }
+}
+
+const TOKEN_EXPIRY_HOURS = parseInt(process.env.TOKEN_EXPIRY_HOURS || '24', 10);
+const JWT_SESSION_EXPIRY_DAYS = parseInt(
+  process.env.JWT_SESSION_EXPIRY_DAYS || '7',
+  10,
+);
+
 export class AuthService {
   constructor(
     private readonly userRepo: UserRepository,
+    private readonly userTokensRepo: UserTokensRepository,
     private readonly mailer: IMailer,
   ) {}
 
@@ -46,7 +60,13 @@ export class AuthService {
 
   async sendVerificationEmail(receiverEmail: string, userId: string) {
     const token = this.generate32ByteToken();
-    await this.userRepo.update(userId, { emailVerificationToken: token });
+    const expiryDate = new Date(Date.now() + TOKEN_EXPIRY_HOURS * 3600 * 1000);
+    await this.userTokensRepo.create({
+      userId,
+      tokenHash: bcrypt.hashSync(token, 10),
+      tokenType: 'emailVerification',
+      tokenExpiry: expiryDate,
+    });
 
     if (process.env.NEXT_PUBLIC_CLIENT_URL === undefined) {
       throw new Error('NEXT_PUBLIC_CLIENT_URL is not defined');
@@ -81,7 +101,13 @@ export class AuthService {
     const token = this.generate32ByteToken();
     const user = await this.userRepo.findByEmail(receiverEmail);
     if (user) {
-      await this.userRepo.update(user.id, { passwordResetToken: token });
+      const tokenHash = await bcrypt.hash(token, 10);
+      await this.userTokensRepo.create({
+        userId: user.id,
+        tokenHash,
+        tokenType: 'passwordReset',
+        tokenExpiry: new Date(Date.now() + TOKEN_EXPIRY_HOURS * 3600 * 1000),
+      });
 
       if (process.env.NEXT_PUBLIC_CLIENT_URL === undefined) {
         throw new Error('NEXT_PUBLIC_CLIENT_URL is not defined');
@@ -118,44 +144,81 @@ export class AuthService {
     if (!token.trim()) {
       throw new InvalidVerificationTokenError('No token provided');
     }
+    const tokenHash = await bcrypt.hash(token, 10);
+    const results = await this.userTokensRepo.query(
+      '"tokenHash" = $1 AND "tokenType" = $2',
+      [tokenHash, 'emailVerification'],
+    );
 
-    const results = await this.userRepo.query('"emailVerificationToken" = $1', [
-      token,
-    ]);
+    const userToken = results.length === 1 ? results[0] : null;
 
-    const user = results.length === 1 ? results[0] : null;
-
-    if (!user) {
+    if (!userToken) {
       throw new InvalidVerificationTokenError('Token is invalid');
     }
 
-    if (user.isVerified) {
-      return;
+    if (userToken.tokenExpiry < new Date()) {
+      throw new VerificationTokenExpiredError('Token has expired');
     }
 
-    try {
-      await this.userRepo.update(user.id, {
-        isVerified: true,
-        emailVerificationToken: null,
-      });
-    } catch (error: any) {
-      console.error('Error updating user verification status:', error);
-      throw new Error('Failed to update user verification status');
+    await this.userRepo.update(userToken.userId, {
+      isVerified: true,
+    });
+    await this.userTokensRepo.delete(userToken.tokenHash);
+  }
+
+  async verifyUserEmailChange(token: string) {
+    if (!token.trim()) {
+      throw new InvalidVerificationTokenError('No token provided');
     }
+    const tokenHash = await bcrypt.hash(token, 10);
+    const results = await this.userTokensRepo.query(
+      '"tokenHash" = $1 AND "tokenType" = $2',
+      [tokenHash, 'emailVerification'],
+    );
+    const userToken = results.length === 1 ? results[0] : null;
+    const user = await this.userRepo.findById(userToken?.userId || '');
+
+    if (!userToken || !user) {
+      throw new InvalidVerificationTokenError('Token is invalid');
+    }
+    if (userToken.tokenExpiry < new Date()) {
+      throw new VerificationTokenExpiredError('Token has expired');
+    }
+    if (!user.pendingEmail) {
+      throw new Error('No pending email to verify');
+    }
+    const emailInUse = await this.userRepo.findByEmail(user.pendingEmail);
+    if (emailInUse && emailInUse.id !== user.id) {
+      throw new EmailInUseError();
+    }
+    this.userRepo.update(user.id, {
+      email: user.pendingEmail,
+      pendingEmail: null,
+    });
+    await this.userTokensRepo.delete(userToken.tokenHash);
   }
 
   async resetPassword(token: string, newPassword: string) {
-    if (!token || !token.trim()) {
+    if (!token.trim()) {
       throw new InvalidVerificationTokenError('No token provided');
     }
+    const tokenHash = await bcrypt.hash(token, 10);
 
-    const results = await this.userRepo.query('"passwordResetToken" = $1', [
-      token,
-    ]);
-    const user = results.length === 1 ? results[0] : null;
+    const results = await this.userTokensRepo.query(
+      '"tokenHash" = $1 AND "tokenType" = $2',
+      [tokenHash, 'passwordReset'],
+    );
+    const userToken = results.length === 1 ? results[0] : null;
 
-    if (!user) {
+    if (!userToken) {
       throw new InvalidVerificationTokenError('Token is invalid');
+    }
+    if (userToken.tokenExpiry < new Date()) {
+      throw new VerificationTokenExpiredError('Token has expired');
+    }
+    const user = await this.userRepo.findById(userToken.userId);
+    if (!user) {
+      throw new Error('User not found');
     }
     const isPasswordMatched = await bcrypt.compare(
       newPassword,
@@ -166,17 +229,12 @@ export class AuthService {
       throw new SimilarPasswordError();
     }
 
-    try {
-      const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-      await this.userRepo.update(user.id, {
-        passwordHash: hashedPassword,
-        passwordResetToken: null,
-      });
-    } catch (error: any) {
-      console.error('Error updating user password:', error);
-      throw new Error('Failed to update user password');
-    }
+    await this.userRepo.update(user.id, {
+      passwordHash: hashedPassword,
+    });
+    await this.userTokensRepo.delete(userToken.tokenHash);
   }
 
   async authenticate(username: string, password: string) {
@@ -196,7 +254,9 @@ export class AuthService {
   }
 
   async createSession(userId: string, email: string) {
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // expires in 7 days
+    const expiresAt = new Date(
+      Date.now() + JWT_SESSION_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
+    );
     const session = await encrypt({ userId, email, expiresAt });
     return session;
   }

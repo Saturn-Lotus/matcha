@@ -35,10 +35,7 @@ export class UserService {
 
   createUserProfile = async (id: string, profileData: CreateUserProfile) => {
     const user = await this.getUserById(id);
-    const userProfile = await this.userRepository.findProfileByUserId(id);
-    if (userProfile) {
-      throw new Error('Profile already exists for this user');
-    }
+
     const storagePath = getUserProfilePicturesPath(user.id);
     const uploadedPictures = await this.storage.bulkUploadFiles(
       profileData.pictures,
@@ -46,8 +43,7 @@ export class UserService {
     );
     const avatarUrl = uploadedPictures[0] || '';
 
-    const profile = await this.userRepository.profileCreate({
-      userId: id,
+    const profile = await this.userRepository.updateProfile(user.id, {
       gender: profileData.gender,
       sexualPreference: profileData.sexualPreference,
       bio: profileData.bio,

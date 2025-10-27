@@ -1,12 +1,14 @@
-import { Mailer } from '@/lib/mailer/Mailer';
 import { ValidationError } from '@/lib/validator';
 import { RegisterUserSchema } from '@/server/schemas';
-import { AuthService } from '@/server/services/auth';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcrypt';
 import { withErrorHandler } from '@/middlewares/routes-middlewares';
-import { getUserRepository, getUserService } from '@/server/factories';
+import {
+  getAuthService,
+  getUserRepository,
+  getUserService,
+} from '@/server/factories';
 
 export const POST = withErrorHandler(async (request: NextRequest) => {
   const data = RegisterUserSchema.parse(await request.json());
@@ -30,12 +32,23 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     username: data.username,
     email: data.email,
     passwordHash: hashedPassword,
-    firstName: data.firstName,
-    lastName: data.lastName,
     isVerified: false,
+    pendingEmail: data.email,
   });
 
-  const auth = new AuthService(userRepository, new Mailer());
+  await userRepository.profileCreate({
+    userId: user.id,
+    firstName: data.firstName,
+    lastName: data.lastName,
+    bio: null,
+    gender: null,
+    sexualPreference: null,
+    avatarUrl: null,
+    interests: null,
+    pictures: null,
+  });
+
+  const auth = getAuthService();
   await auth.sendVerificationEmail(data.email, user.id);
 
   const session = await auth.createSession(user.id, user.email);
