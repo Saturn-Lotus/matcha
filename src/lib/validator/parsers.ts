@@ -231,3 +231,87 @@ export class FileParser implements Parser<File> {
     return value;
   }
 }
+
+export class ArrayParser<T> implements Parser<T[]> {
+  private readonly itemParser: Parser<T>;
+  private readonly checks: CheckFunc<T[]>[];
+
+  constructor(itemParser: Parser<T>, checks?: CheckFunc<T[]>[]) {
+    this.itemParser = itemParser;
+    this.checks = checks || [];
+  }
+  private validate(value: unknown): asserts value is T[] {
+    if (!Array.isArray(value)) {
+      throw new TypeValidationError(value, 'array');
+    }
+    for (const item of value) {
+      this.itemParser.parse(item);
+    }
+  }
+
+  length({ min, max, fix }: { min?: number; max?: number; fix?: number }) {
+    return new ArrayParser<T>(this.itemParser, [
+      ...this.checks,
+      (value: T[]) => {
+        if (min !== undefined && value.length < min) {
+          throw new CheckValidationError(value, `array shorter than ${min}`);
+        }
+        if (max !== undefined && value.length > max) {
+          throw new CheckValidationError(value, `array longer than ${max}`);
+        }
+        if (fix !== undefined && value.length !== fix) {
+          throw new CheckValidationError(value, `array must have exactly ${fix} items`);
+        }
+      },
+    ]);
+  }
+
+  parse(value: unknown): T[] {
+    this.validate(value);
+    for (const check of this.checks) {
+      check(value);
+    }
+    return value;
+  }
+}
+
+
+export class NullParser<T> implements Parser<T | null> {
+  private readonly innerParser: Parser<T>;
+  constructor(innerParser: Parser<T>) {
+    this.innerParser = innerParser;
+  }
+  parse(value: unknown): T | null {
+    if (value === null) {
+      return null;
+    }
+    return this.innerParser.parse(value);
+  }
+}
+
+export class OptionalParser<T> implements Parser<T | undefined> {
+  private readonly innerParser: Parser<T>;
+  constructor(innerParser: Parser<T>) {
+    this.innerParser = innerParser;
+  }
+  parse(value: unknown): T | undefined {
+    if (value === undefined) {
+      return undefined;
+    }
+    return this.innerParser.parse(value);
+  }
+}
+
+
+export class LiteralParser<const T extends readonly string[]> implements Parser<T[number]> {
+  private readonly literalValues: T;
+  constructor(literalValues: T) {
+    this.literalValues = literalValues;
+  }
+  parse(value: unknown): T[number] {
+    if (this.literalValues.indexOf(value as T[number]) === -1) {
+      throw new TypeValidationError(value, 'literal');
+    }
+    return value as T[number];
+  }
+}

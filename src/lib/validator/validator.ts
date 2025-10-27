@@ -1,9 +1,13 @@
 import { MissingFieldError, TypeValidationError } from './exceptions';
 import {
+  ArrayParser,
   BooleanParser,
   DateParser,
   FileParser,
+  LiteralParser,
+  NullParser,
   NumberParser,
+  OptionalParser,
   Parser,
   StringParser,
 } from './parsers';
@@ -33,7 +37,6 @@ const OPTIONAL = Symbol('su.optional');
 function isOptional(parser: unknown): boolean {
   return !!(parser && (parser as any)[OPTIONAL]);
 }
-// TODO: ensure all parsers are classes with parse method
 export const Su = {
   string: () => new StringParser(),
   number: () => new NumberParser(),
@@ -41,54 +44,16 @@ export const Su = {
   date: () => new DateParser(),
   file: () => new FileParser(),
   literal<const T extends readonly string[]>(literalValues: T) {
-    type RType = T[number];
-    return {
-      parse(value: unknown): RType {
-        if (literalValues.indexOf(value as RType) === -1) {
-          throw new TypeValidationError(value, 'literal');
-        }
-        return value as RType;
-      },
-    };
+    return new LiteralParser<T>(literalValues);
   },
   optional<T>(parser: Parser<T>) {
-    return {
-      parse(value: unknown): T | undefined {
-        if (value === undefined) {
-          return undefined;
-        }
-        return parser.parse(value);
-      },
-    };
+    return new OptionalParser<T>(parser);
   },
-
   null<T>(parser: Parser<T>) {
-    return {
-      parse(value: unknown): T | null {
-        if (value === null) {
-          return null;
-        }
-        return parser.parse(value);
-      },
-    };
+    return new NullParser<T>(parser);
   },
   array<P extends Parser<any>>(itemParser: P) {
-    type T = ReturnType<P['parse']>;
-    function validate(value: unknown): asserts value is T[] {
-      if (!Array.isArray(value)) {
-        throw new TypeValidationError(value, 'array');
-      }
-      for (const item of value) {
-        itemParser.parse(item);
-      }
-    }
-
-    return {
-      parse(value: unknown) {
-        validate(value);
-        return value;
-      },
-    };
+    return new ArrayParser<ReturnType<P['parse']>>(itemParser);
   },
   object<T, S extends Record<string, Parser<T>>>(schema: S) {
     function validateSchema(
