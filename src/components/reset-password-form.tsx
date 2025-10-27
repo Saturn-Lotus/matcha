@@ -185,20 +185,20 @@ const ResetPasswordForm = () => {
       <div className="w-full h-full max-w-md">
         <div className="text-center mb-8 hidden md:block">
           <h1 className="text-2xl font-bold strawberry-matcha-gradient flex items-center justify-center space-x-2">
-            <Heart className="h-8 w-8 text-pink-400 fill-current mr-2" />
+            <Heart className="h-8 w-8 fill-current mr-2 text-icon-primary" />
             Strawberry Matcha
           </h1>
-          <p className="text-gray-600">
+          <p className="text-text-muted">
             Welcome back! Let&apos;s brew some sweet connections.
           </p>
         </div>
         <Card className="glass-effect border-0 shadow-xl">
           <CardHeader className="text-center">
-            <CardTitle className="font-bold text-gray-800 text-md md:text-2xl">
+            <CardTitle className="font-bold text-md md:text-2xl text-text-strong">
               Reset Password
             </CardTitle>
             {!sent ? (
-              <p className="text-center text-gray-600 text-sm">
+              <p className="text-center text-sm text-text-muted">
                 Enter your email address and we&apos;ll send you a link to reset
                 your password.
               </p>
@@ -208,10 +208,10 @@ const ResetPasswordForm = () => {
           </CardHeader>
           <CardContent className="space-y-6">
             {renderContent()}
-            <div className="text-center pt-4 border-t border-gray-200">
+            <div className="text-center pt-4 border-t border-border">
               <Link
                 href="/login"
-                className="text-pink-500 hover:text-pink-700 font-semibold inline-flex items-center gap-2"
+                className="font-semibold inline-flex items-center gap-2 text-link"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Back to Sign In
