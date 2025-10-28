@@ -10,6 +10,7 @@ import { renderTemplate } from '@/lib/mailer/utils';
 export class InvalidVerificationTokenError extends Error {
   constructor(message = 'Invalid verification token') {
     super(message);
+    this.name = 'InvalidVerificationTokenError';
   }
 }
 
@@ -17,6 +18,7 @@ export class InvalidVerificationTokenError extends Error {
 export class VerificationTokenExpiredError extends Error {
   constructor(message = 'Verification token already used or expired') {
     super(message);
+    this.name = 'VerificationTokenExpiredError';
   }
 }
 
@@ -26,6 +28,7 @@ export class SimilarPasswordError extends Error {
     message = 'New password must be different from the old password',
   ) {
     super(message);
+    this.name = 'SimilarPasswordError';
   }
 }
 @HTTPError(401)
