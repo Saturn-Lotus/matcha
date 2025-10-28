@@ -34,8 +34,6 @@ const Onboarding = () => {
   const [formData, setFormData] = useState({
     gender: '',
     sexualPreference: '',
-    age: '',
-    location: '',
     bio: '',
     customInterest: '',
   });
@@ -58,16 +56,6 @@ const Onboarding = () => {
         ? prev.filter((i) => i !== interest)
         : [...prev, interest],
     );
-  };
-
-  const addCustomInterest = () => {
-    if (formData.customInterest.trim()) {
-      const formatted = formData.customInterest.trim().toLowerCase();
-      if (!selectedInterests.includes(formatted)) {
-        setSelectedInterests([...selectedInterests, formatted]);
-      }
-      setFormData({ ...formData, customInterest: '' });
-    }
   };
 
   const renderStep1 = () => (
@@ -104,31 +92,6 @@ const Onboarding = () => {
           <option value="women">Women</option>
           <option value="everyone">Everyone</option>
         </select>
-      </div>
-
-      <div className="space-y-1">
-        <Label htmlFor="age">Age</Label>
-        <Input
-          id="age"
-          className="border border-gray-300 rounded-md placeholder:text-gray-400"
-          type="number"
-          placeholder="25"
-          value={formData.age}
-          onChange={(e) => setFormData({ ...formData, age: e.target.value })}
-        />
-      </div>
-
-      <div className="space-y-1">
-        <Label htmlFor="location">Location</Label>
-        <Input
-          id="location"
-          className="border border-gray-300 rounded-md placeholder:text-gray-400"
-          placeholder="Meknes, MA"
-          value={formData.location}
-          onChange={(e) =>
-            setFormData({ ...formData, location: e.target.value })
-          }
-        />
       </div>
 
       <Button
@@ -170,25 +133,6 @@ const Onboarding = () => {
               #{interest}
             </button>
           ))}
-        </div>
-
-        <div className="flex gap-2 mt-4">
-          <Input
-            placeholder="Add custom interest"
-            className="border border-gray-300 rounded-md placeholder:text-gray-400"
-            value={formData.customInterest}
-            onChange={(e) =>
-              setFormData({ ...formData, customInterest: e.target.value })
-            }
-          />
-          <Button
-            type="button"
-            className="border border-gray-300 rounded-md"
-            onClick={addCustomInterest}
-            variant="outline"
-          >
-            Add
-          </Button>
         </div>
 
         {selectedInterests.filter(
