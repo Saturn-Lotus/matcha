@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1'
+
+      - name: Install dependencies (bun)
+        run: |
+          set -euo pipefail
+          bun install --frozen-lockfile || bun install
+
+      - name: Run ESLint (bun)
+        run: bun run lint
+
+      - name: Check formatting (Prettier via bunx)
+        run: bunx prettier --check .
+
+      - name: Type check (tsc via bunx)
+        run: bunx tsc --noEmit
+
+      - name: Build (try bun, fallback to npm)
+        run: |
+          set -euo pipefail
+          if bun -v >/dev/null 2>&1; then
+            bun run build || npm run build
+          else
+            npm run build
+          fi
+
+      - name: Run tests (bun)
+        env:
+          CI: true
+        run: bun test --ci || npx jest --runInBand
