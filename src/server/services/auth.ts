@@ -4,6 +4,7 @@ import { randomBytes } from 'crypto';
 import { encrypt } from '@/lib/auth/session';
 import { HTTPError } from '@/lib/exception-http-mapper';
 import bcrypt from 'bcrypt';
+import { renderTemplate } from '@/lib/mailer/utils';
 
 @HTTPError(400)
 export class InvalidVerificationTokenError extends Error {
@@ -72,29 +73,8 @@ export class AuthService {
       throw new Error('NEXT_PUBLIC_CLIENT_URL is not defined');
     }
     const link = `${process.env.NEXT_PUBLIC_CLIENT_URL}/api/auth/verify?token=${token}`;
-    this.mailer.sendEmail(
-      receiverEmail,
-      'Verify your email address',
-      `
-      <div style="font-family: Arial, sans-serif; max-width: 480px; margin: auto; padding: 24px; border: 1px solid #eee; border-radius: 8px; background: #fafbfc;">
-        <h2 style="color: #333;">Welcome to Matcha!</h2>
-        <p style="font-size: 16px; color: #555;">
-        Thank you for signing up. Please verify your email address by clicking the button below:
-        </p>
-        <a href="${link}" style="display: inline-block; margin: 16px 0; padding: 12px 24px; background: #4f46e5; color: #fff; text-decoration: none; border-radius: 4px; font-weight: bold;">
-        Verify Email
-        </a>
-        <p style="font-size: 14px; color: #888;">
-        If the button doesn't work, copy and paste this link into your browser:<br>
-        <span style="word-break: break-all;">${link}</span>
-        </p>
-        <hr style="margin: 24px 0;">
-        <p style="font-size: 12px; color: #aaa;">
-        If you did not create an account, you can safely ignore this email.
-        </p>
-      </div>
-      `,
-    );
+    const html = await renderTemplate('verify-email', { link });
+    this.mailer.sendEmail(receiverEmail, 'Verify your email address', html);
   }
 
   async requestPasswordReset(receiverEmail: string) {
@@ -113,30 +93,8 @@ export class AuthService {
         throw new Error('NEXT_PUBLIC_CLIENT_URL is not defined');
       }
       const link = `${process.env.NEXT_PUBLIC_CLIENT_URL}/reset-password?token=${token}`;
-
-      this.mailer.sendEmail(
-        receiverEmail,
-        'Reset your password',
-        `
-        <div style="font-family: Arial, sans-serif; max-width: 480px; margin: auto; padding: 24px; border: 1px solid #eee; border-radius: 8px; background: #fafbfc;">
-        <h2 style="color: #333;">Reset your password</h2>
-        <p style="font-size: 16px; color: #555;">
-        We received a request to reset your password. Click the button below to reset it:
-        </p>
-        <a href="${link}" style="display: inline-block; margin: 16px 0; padding: 12px 24px; background: #4f46e5; color: #fff; text-decoration: none; border-radius: 4px; font-weight: bold;">
-        Reset Password
-        </a>
-        <p style="font-size: 14px; color: #888;">
-        If the button doesn't work, copy and paste this link into your browser:<br>
-        <span style="word-break: break-all;">${link}</span>
-        </p>
-        <hr style="margin: 24px 0;">
-        <p style="font-size: 12px; color: #aaa;">
-        If you did not request a password reset, you can safely ignore this email.
-        </p>
-        </div>
-        `,
-      );
+      const html = await renderTemplate('reset-password', { link });
+      this.mailer.sendEmail(receiverEmail, 'Reset your password', html);
     }
   }
 
