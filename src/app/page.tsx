@@ -3,7 +3,7 @@ import { Heart, MessageSquare, Users } from 'lucide-react';
 
 export default function Home() {
   return (
-    <div className="flex-1 flex items-center justify-center">
+    <div className="flex-1 flex items-center  h-full justify-center">
       <div className="text-center max-w-4xl mx-auto">
         <h2 className="text-6xl font-bold mt-6 mb-6 strawberry-matcha-gradient">
           Sweet Connections, Fresh Starts
@@ -22,7 +22,7 @@ export default function Home() {
           </Button>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8 mt-16">
+        <div className="grid md:grid-cols-3 gap-2 md:gap-8 mt-16">
           <div className="glass-effect p-6 rounded-2xl border border-card-border">
             <Users className="h-12 w-12 mx-auto mb-4 text-icon-secondary" />
             <h3 className="text-xl font-semibold mb-2 matcha-gradient">
