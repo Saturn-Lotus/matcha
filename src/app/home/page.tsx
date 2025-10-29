@@ -1,11 +1,11 @@
 import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '@/app/components/ui/card';
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
-} from '@/components/ui/carousel';
-import { Button } from '@/components/ui/button';
+} from '@/app/components/ui/carousel';
+import { Button } from '@/app/components/ui/button';
 import { Heart, X } from 'lucide-react';
 import Image from 'next/image';
 

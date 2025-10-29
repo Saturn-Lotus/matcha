@@ -1,11 +1,11 @@
-import { Button } from '@/components/ui/button';
+import { Button } from '@/app/components/ui/button';
 import { Heart, MessageSquare, Users } from 'lucide-react';
 
 export default function Home() {
   return (
     <div className="flex-1 flex items-center justify-center">
       <div className="text-center max-w-4xl mx-auto">
-        <h2 className="text-6xl font-bold mb-6 strawberry-matcha-gradient">
+        <h2 className="text-6xl font-bold mt-6 mb-6 strawberry-matcha-gradient">
           Sweet Connections, Fresh Starts
         </h2>
         <p className="text-xl mb-12 max-w-2xl mx-auto text-text-muted">

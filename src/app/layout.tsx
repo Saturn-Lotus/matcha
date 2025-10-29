@@ -1,9 +1,9 @@
 'use client';
 import { Heart } from 'lucide-react';
 import './globals.css';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/app/components/ui/button';
 import Link from 'next/link';
-import { Toaster } from '@/components/ui/sonner';
+import { Toaster } from '@/app/components/ui/sonner';
 import { usePathname } from 'next/navigation';
 
 const noHeaderRoutes = ['/login', '/register', '/reset-password'];

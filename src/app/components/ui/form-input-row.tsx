@@ -1,5 +1,5 @@
 'use client';
-import { Input } from '@/components/ui/input';
+import { Input } from '@/app/components/ui/input';
 import React from 'react';
 
 interface FormInputRowProps {
