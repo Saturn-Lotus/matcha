@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import Link from 'next/link';
 import { ArrowLeft, Heart, Lock, Mail } from 'lucide-react';
@@ -8,6 +8,8 @@ import { Input } from './ui/input';
 import { toast } from 'sonner';
 import { Su } from '@/lib/validator';
 import { useSearchParams } from 'next/navigation';
+import FormInputRow from './ui/form-input-row';
+import { validateField } from './register-form';
 
 interface SendVerificationCardProps {
   email: string;
@@ -85,55 +87,76 @@ interface SetNewPasswordCardProps {
   id: string;
 }
 
-const SetNewPasswordCard = ({
-  newPassword,
-  setNewPassword,
-  token,
-  id
-}: SetNewPasswordCardProps) => {
-  const [confirmedPassword, setConfirmedPassword] = useState('');
+const SetNewPasswordCard = ({ token, id }: SetNewPasswordCardProps) => {
+  const formRef = useRef(null);
 
-  const resetPassword = async () => {
+  const resetPassword = async (newPassword: string) => {
+    try {
+      Su.string().password().parse(newPassword);
+    } catch (error) {
+      toast.error('Error: unable to reset password');
+      return;
+    }
     const params = new URLSearchParams();
     params.append('token', token);
-	params.append('id', id)
+    params.append('id', id);
     await fetch(`/api/auth/reset-password?${params.toString()}`, {
       method: 'PATCH',
       body: JSON.stringify({ newPassword }),
     });
   };
 
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    await resetPassword(Object.fromEntries(formData)?.password as string);
+  };
+
   return (
     <>
-      <div className=" space-y-2">
-        <div className="border border-gray-300 rounded-sm h-10 flex items-center px-3">
-          <Lock className="h-5 w-5 text-gray-400" />
-          <Input
-            type="password"
-            placeholder="New password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            className="text-gray-700 placeholder:text-gray-400 md:text-lg text-xs"
-          />
-        </div>
-        <div className="border border-gray-300 rounded-sm h-10 flex items-center px-3">
-          <Lock className="h-5 w-5 text-gray-400" />
-          <Input
-            type="password"
-            placeholder="Confirm new password"
-            value={confirmedPassword}
-            onChange={(e) => setConfirmedPassword(e.target.value)}
-            className="text-gray-700 placeholder:text-gray-400 md:text-lg text-xs"
-          />
-        </div>
-      </div>
-
-      <Button
-        className="w-full h-12 strawberry-matcha-btn hover:opacity-90 text-white rounded-xl font-semibold"
-        onClick={resetPassword}
+      <form
+        ref={formRef}
+        onSubmit={handleSubmit}
+        className="flex flex-col gap-4"
       >
-        Change password
-      </Button>
+        <FormInputRow
+          id="password"
+          name="password"
+          type="password"
+          placeholder="New password"
+          icon={<Lock className="h-5 w-5 text-gray-400" />}
+          handleValidate={(value) =>
+            validateField(value, Su.string().password())
+          }
+          errorMessage="Password must be at least 8 characters, contain at least one uppercase letter, one lowercase letter, one number"
+        />
+        <FormInputRow
+          id="confirmPassword"
+          name="confirmPassword"
+          type="password"
+          placeholder="Confirm new password"
+          icon={<Lock className="h-5 w-5 text-gray-400" />}
+          errorMessage="Passwords do not match"
+          handleValidate={(value) =>
+            validateField(
+              value,
+              Su.string().match(
+                (
+                  (formRef.current as HTMLFormElement | null)?.querySelector(
+                    'input[name="password"]',
+                  ) as HTMLInputElement | null
+                )?.value,
+              ),
+            )
+          }
+        />
+        <Button
+          type="submit"
+          className="w-full h-12 strawberry-matcha-btn hover:opacity-90 text-white rounded-xl font-semibold"
+        >
+          Change password
+        </Button>
+      </form>
     </>
   );
 };
@@ -170,7 +193,7 @@ const ResetPasswordForm = () => {
           newPassword={newPassword}
           setNewPassword={setNewPassword}
           token={token}
-		  id={id}
+          id={id}
         />
       );
     else if (sent)

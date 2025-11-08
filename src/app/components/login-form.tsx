@@ -1,6 +1,11 @@
 'use client';
 import { Button } from '@/app/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/app/components/ui/card';
 import { Heart, User, Lock } from 'lucide-react';
 import Link from 'next/link';
 import FormInputRow from './ui/form-input-row';

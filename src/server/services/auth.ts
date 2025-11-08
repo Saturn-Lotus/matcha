@@ -85,7 +85,7 @@ export class AuthService {
     const user = await this.userRepo.findByEmail(receiverEmail);
     if (user) {
       const tokenHash = await bcrypt.hash(token, 10);
-	  await this.userTokensRepo.deleteByUserId(user.id, 'passwordReset');
+      await this.userTokensRepo.deleteByUserId(user.id, 'passwordReset');
       await this.userTokensRepo.create({
         userId: user.id,
         tokenHash,
@@ -178,11 +178,8 @@ export class AuthService {
       throw new VerificationTokenExpiredError('Token has expired');
     }
 
-	const isTokenMatched = await bcrypt.compare(
-      token,
-      userToken.tokenHash,
-    );
-	if (!isTokenMatched) {
+    const isTokenMatched = await bcrypt.compare(token, userToken.tokenHash);
+    if (!isTokenMatched) {
       throw new InvalidVerificationTokenError('Token is invalid');
     }
 

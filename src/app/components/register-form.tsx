@@ -1,33 +1,58 @@
 'use client';
 import { Button } from '@/app/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/app/components/ui/card';
 import { Heart, User, Lock, Mail } from 'lucide-react';
 import Link from 'next/link';
 import FormInputRow from './ui/form-input-row';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { Parser, Su } from '@/lib/validator';
+import { toast } from 'sonner';
+
+export const validateField = (value: unknown, validator: Parser<any>) => {
+  if (!value) return true;
+  try {
+    validator.parse(value);
+    return true;
+  } catch (error) {
+    console.error('Validation error:', error);
+    return false;
+  }
+};
 
 export const RegisterForm = () => {
   const formRef = useRef(null);
+  const [error, setError] = useState<boolean>(false);
 
   const registerUser = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
+    try {
+      const obj = Object.fromEntries(formData);
+      Su.object({
+        username: Su.string().length({ min: 2, max: 50 }).username(),
+        email: Su.string().email(),
+        lastName: Su.string().length({ min: 2, max: 50 }),
+        firstName: Su.string().length({ min: 2, max: 50 }),
+        password: Su.string().password(),
+        confirmedPassword: Su.string()
+          .password()
+          .match(obj.password as string),
+      }).parse(obj);
+      setError(false);
+    } catch (error: any) {
+      toast.error('Error: unable to register user', error.message);
+      setError(true);
+      return;
+    }
     await fetch('api/auth/register/', {
       method: 'POST',
       body: JSON.stringify(Object.fromEntries(formData)),
     });
-  };
-
-  const validateField = (value: unknown, validator: Parser<any>) => {
-    if (!value) return true;
-    try {
-      validator.parse(value);
-      return true;
-    } catch (error) {
-      console.error('Validation error:', error);
-      return false;
-    }
   };
 
   return (
@@ -104,7 +129,7 @@ export const RegisterForm = () => {
                 type="password"
                 placeholder="Password"
                 name="password"
-                errorMessage="Password must be at least 8 characters, contain at least one uppercase letter, one lowercase letter, one number, and one special character"
+                errorMessage="Password must be at least 8 characters, contain at least one uppercase letter, one lowercase letter, one number"
                 icon={<Lock className="h-5 w-5 text-icon-muted" />}
                 handleValidate={(value) =>
                   validateField(value, Su.string().password())
@@ -113,7 +138,7 @@ export const RegisterForm = () => {
               <FormInputRow
                 id="confirmedpassword"
                 type="password"
-                name="password"
+                name="confirmedPassword"
                 placeholder="Confirm Password"
                 errorMessage="Passwords do not match"
                 icon={<Lock className="h-5 w-5 text-icon-muted" />}

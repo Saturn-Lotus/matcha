@@ -71,7 +71,10 @@ export class UserTokensRepository extends BaseRepositoryClass<UserToken> {
     );
   }
 
-  async deleteByUserId(userId: string, type: UserToken['tokenType']): Promise<void> {
+  async deleteByUserId(
+    userId: string,
+    type: UserToken['tokenType'],
+  ): Promise<void> {
     await this.db.query<UserToken>(
       `DELETE FROM ${this.table} WHERE "userId" = $1 AND "tokenType" = $2;`,
       [userId, type],
