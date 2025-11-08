@@ -76,6 +76,14 @@ export const Su = {
       }
     }
     return {
+      safeParse(value: unknown) {
+        try {
+          validateSchema(value);
+          return { success: true, data: value as InferSchemaType<S> };
+        } catch (error) {
+          return { success: false, error };
+        }
+      },
       parse(value: unknown) {
         validateSchema(value);
         return value;

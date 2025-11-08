@@ -3,7 +3,11 @@ import { CheckValidationError, TypeValidationError } from './exceptions';
 export type AssertFunc<T> = (value: unknown) => asserts value is T;
 export type CheckFunc<T> = (value: T) => void;
 export type ParseFunc<T> = (value: unknown) => T;
+export type SafeParseFunc<T> = (
+  value: unknown,
+) => T | { success: false; error: Error };
 export interface Parser<T> {
+  safeParse: SafeParseFunc<T>;
   parse: ParseFunc<T>;
 }
 
@@ -44,13 +48,22 @@ export class StringParser implements Parser<string> {
       this.checks.push(...checks);
     }
   }
-  parse(value: unknown): string {
+  safeParse: SafeParseFunc<string> = (value: unknown) => {
+    try {
+      const parsedValue = this.parse(value);
+      return parsedValue;
+    } catch (error) {
+      return { success: false, error: error as Error };
+    }
+  };
+
+  parse: ParseFunc<string> = (value: unknown) => {
     assertString(value);
     for (const check of this.checks) {
       check(value);
     }
     return value;
-  }
+  };
 
   email() {
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -132,13 +145,23 @@ export class NumberParser implements Parser<number> {
   constructor(checks?: CheckFunc<number>[]) {
     this.checks = checks || [];
   }
-  parse(value: unknown): number {
+
+  safeParse: SafeParseFunc<number> = (value: unknown) => {
+    try {
+      const parsedValue = this.parse(value);
+      return parsedValue;
+    } catch (error) {
+      return { success: false, error: error as Error };
+    }
+  };
+
+  parse: ParseFunc<number> = (value: unknown) => {
     assertNumber(value);
     for (const check of this.checks) {
       check(value);
     }
     return value;
-  }
+  };
 
   min(minValue: number) {
     return new NumberParser([
@@ -163,17 +186,35 @@ export class NumberParser implements Parser<number> {
 }
 
 export class BooleanParser implements Parser<boolean> {
-  parse(value: unknown): boolean {
+  safeParse: SafeParseFunc<boolean> = (value: unknown) => {
+    try {
+      const parsedValue = this.parse(value);
+      return parsedValue;
+    } catch (error) {
+      return { success: false, error: error as Error };
+    }
+  };
+
+  parse: ParseFunc<boolean> = (value: unknown) => {
     assertBoolean(value);
     return value;
-  }
+  };
 }
 
 export class DateParser implements Parser<Date> {
-  parse(value: unknown): Date {
+  safeParse: SafeParseFunc<Date> = (value: unknown) => {
+    try {
+      const parsedValue = this.parse(value);
+      return parsedValue;
+    } catch (error) {
+      return { success: false, error: error as Error };
+    }
+  };
+
+  parse: ParseFunc<Date> = (value: unknown) => {
     assertDate(value);
     return value;
-  }
+  };
 }
 
 export class FileParser implements Parser<File> {
@@ -222,14 +263,24 @@ export class FileParser implements Parser<File> {
       },
     ]);
   }
-  parse(value: unknown): File {
+
+  safeParse: SafeParseFunc<File> = (value: unknown) => {
+    try {
+      const parsedValue = this.parse(value);
+      return parsedValue;
+    } catch (error) {
+      return { success: false, error: error as Error };
+    }
+  };
+
+  parse: ParseFunc<File> = (value: unknown) => {
     assertFile(value);
 
     for (const check of this.checks) {
       check(value);
     }
     return value;
-  }
+  };
 }
 
 export class ArrayParser<T> implements Parser<T[]> {
@@ -269,13 +320,21 @@ export class ArrayParser<T> implements Parser<T[]> {
     ]);
   }
 
-  parse(value: unknown): T[] {
+  safeParse: SafeParseFunc<T[]> = (value: unknown) => {
+    try {
+      const parsedValue = this.parse(value);
+      return parsedValue;
+    } catch (error) {
+      return { success: false, error: error as Error };
+    }
+  };
+  parse: ParseFunc<T[]> = (value: unknown) => {
     this.validate(value);
     for (const check of this.checks) {
       check(value);
     }
     return value;
-  }
+  };
 }
 
 export class NullParser<T> implements Parser<T | null> {
@@ -283,12 +342,21 @@ export class NullParser<T> implements Parser<T | null> {
   constructor(innerParser: Parser<T>) {
     this.innerParser = innerParser;
   }
-  parse(value: unknown): T | null {
+  safeParse: SafeParseFunc<T | null> = (value: unknown) => {
+    try {
+      const parsedValue = this.parse(value);
+      return parsedValue;
+    } catch (error) {
+      return { success: false, error: error as Error };
+    }
+  };
+
+  parse: ParseFunc<T | null> = (value: unknown) => {
     if (value === null) {
       return null;
     }
     return this.innerParser.parse(value);
-  }
+  };
 }
 
 export class OptionalParser<T> implements Parser<T | undefined> {
@@ -296,12 +364,21 @@ export class OptionalParser<T> implements Parser<T | undefined> {
   constructor(innerParser: Parser<T>) {
     this.innerParser = innerParser;
   }
-  parse(value: unknown): T | undefined {
+  safeParse: SafeParseFunc<T | undefined> = (value: unknown) => {
+    try {
+      const parsedValue = this.parse(value);
+      return parsedValue;
+    } catch (error) {
+      return { success: false, error: error as Error };
+    }
+  };
+
+  parse: ParseFunc<T | undefined> = (value: unknown) => {
     if (value === undefined) {
       return undefined;
     }
     return this.innerParser.parse(value);
-  }
+  };
 }
 
 export class LiteralParser<const T extends readonly string[]>
@@ -311,10 +388,18 @@ export class LiteralParser<const T extends readonly string[]>
   constructor(literalValues: T) {
     this.literalValues = literalValues;
   }
-  parse(value: unknown): T[number] {
+  safeParse: SafeParseFunc<T[number]> = (value: unknown) => {
+    try {
+      const parsedValue = this.parse(value);
+      return parsedValue;
+    } catch (error) {
+      return { success: false, error: error as Error };
+    }
+  };
+  parse: ParseFunc<T[number]> = (value: unknown) => {
     if (this.literalValues.indexOf(value as T[number]) === -1) {
       throw new TypeValidationError(value, 'literal');
     }
     return value as T[number];
-  }
+  };
 }
