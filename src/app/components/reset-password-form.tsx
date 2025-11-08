@@ -82,18 +82,21 @@ interface SetNewPasswordCardProps {
   newPassword: string;
   setNewPassword: (password: string) => void;
   token: string;
+  id: string;
 }
 
 const SetNewPasswordCard = ({
   newPassword,
   setNewPassword,
   token,
+  id
 }: SetNewPasswordCardProps) => {
   const [confirmedPassword, setConfirmedPassword] = useState('');
 
   const resetPassword = async () => {
     const params = new URLSearchParams();
     params.append('token', token);
+	params.append('id', id)
     await fetch(`/api/auth/reset-password?${params.toString()}`, {
       method: 'PATCH',
       body: JSON.stringify({ newPassword }),
@@ -143,6 +146,7 @@ const ResetPasswordForm = () => {
 
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
+  const id = searchParams.get('id');
 
   const handleResetPassword = async () => {
     try {
@@ -160,12 +164,13 @@ const ResetPasswordForm = () => {
   };
 
   const renderContent = () => {
-    if (token)
+    if (token && id)
       return (
         <SetNewPasswordCard
           newPassword={newPassword}
           setNewPassword={setNewPassword}
           token={token}
+		  id={id}
         />
       );
     else if (sent)

@@ -85,6 +85,7 @@ export class AuthService {
     const user = await this.userRepo.findByEmail(receiverEmail);
     if (user) {
       const tokenHash = await bcrypt.hash(token, 10);
+	  await this.userTokensRepo.deleteByUserId(user.id, 'passwordReset');
       await this.userTokensRepo.create({
         userId: user.id,
         tokenHash,
@@ -95,7 +96,7 @@ export class AuthService {
       if (process.env.NEXT_PUBLIC_CLIENT_URL === undefined) {
         throw new Error('NEXT_PUBLIC_CLIENT_URL is not defined');
       }
-      const link = `${process.env.NEXT_PUBLIC_CLIENT_URL}/reset-password?token=${token}`;
+      const link = `${process.env.NEXT_PUBLIC_CLIENT_URL}/reset-password?token=${token}&id=${user.id}`;
       const html = await renderTemplate('reset-password', { link });
       this.mailer.sendEmail(receiverEmail, 'Reset your password', html);
     }
@@ -159,15 +160,14 @@ export class AuthService {
     await this.userTokensRepo.delete(userToken.tokenHash);
   }
 
-  async resetPassword(token: string, newPassword: string) {
+  async resetPassword(token: string, id: string, newPassword: string) {
     if (!token.trim()) {
       throw new InvalidVerificationTokenError('No token provided');
     }
-    const tokenHash = await bcrypt.hash(token, 10);
 
     const results = await this.userTokensRepo.query(
-      '"tokenHash" = $1 AND "tokenType" = $2',
-      [tokenHash, 'passwordReset'],
+      '"tokenType" = $1 AND "userId" = $2',
+      ['passwordReset', id],
     );
     const userToken = results.length === 1 ? results[0] : null;
 
@@ -177,6 +177,15 @@ export class AuthService {
     if (userToken.tokenExpiry < new Date()) {
       throw new VerificationTokenExpiredError('Token has expired');
     }
+
+	const isTokenMatched = await bcrypt.compare(
+      token,
+      userToken.tokenHash,
+    );
+	if (!isTokenMatched) {
+      throw new InvalidVerificationTokenError('Token is invalid');
+    }
+
     const user = await this.userRepo.findById(userToken.userId);
     if (!user) {
       throw new Error('User not found');

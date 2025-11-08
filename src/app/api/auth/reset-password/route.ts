@@ -15,11 +15,12 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
 export const PATCH = withErrorHandler(async (request: NextRequest) => {
   const searchParams = request.nextUrl.searchParams;
   const token = searchParams.get('token') || '';
+  const id = searchParams.get('id') || '';
   const { newPassword } = ResetPasswordSchema.parse(await request.json());
 
   const auth = getAuthService();
 
-  await auth.resetPassword(token, newPassword);
+  await auth.resetPassword(token, id, newPassword);
 
   return NextResponse.json({ success: true }, { status: 200 });
 });
