@@ -32,11 +32,11 @@ export const up = (pgm) => {
 
 		-- new user_tokens table one to many relationship with users
 		CREATE TABLE IF NOT EXISTS user_tokens (
-			userId UUID REFERENCES users(id) ON DELETE CASCADE,
-			tokenHash TEXT NOT NULL UNIQUE,
-			tokenType VARCHAR(50) NOT NULL,
-			tokenExpiry TIMESTAMP WITH TIME ZONE NOT NULL,
-			created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+			"userId" UUID REFERENCES users(id) ON DELETE CASCADE,
+			"tokenHash" TEXT NOT NULL UNIQUE,
+			"tokenType" VARCHAR(50) NOT NULL,
+			"tokenExpiry" TIMESTAMP WITH TIME ZONE NOT NULL,
+			"createdAt" TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 		);
 		ALTER TABLE users DROP COLUMN "emailVerificationToken";
 		ALTER TABLE users DROP COLUMN "passwordResetToken";
@@ -69,7 +69,10 @@ export const down = (pgm) => {
 
 		-- drop user_tokens table
 		DROP TABLE IF EXISTS user_tokens;
-		
+
+		-- drop pending email column from users
+		ALTER TABLE users DROP COLUMN "pendingEmail";
+
 		-- add back emailVerificationToken and passwordResetToken to users
 		ALTER TABLE users ADD COLUMN "emailVerificationToken" VARCHAR(255) UNIQUE;
 		ALTER TABLE users ADD COLUMN "passwordResetToken" VARCHAR(255) UNIQUE;
