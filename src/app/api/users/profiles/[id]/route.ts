@@ -20,9 +20,9 @@ export const POST = withErrorHandler(
     const data = CreateUserProfileSchema.parse(rawProfileData);
 
     const userService = await getUserService();
-    await userService.createUserProfile(id, data);
+    const profile = await userService.createUserProfile(id, data);
 
-    return NextResponse.json(id);
+    return NextResponse.json(profile, { status: 201 });
   },
 );
 
@@ -32,18 +32,18 @@ export const PATCH = withErrorHandler(
     context: { params: Promise<{ id: string }> },
   ) => {
     const { id } = await context.params;
-    // const userService = getUserService();
 
-    // extract form data
+    const formData = await request.formData();
+    const rawData = {
+      ...Object.fromEntries(formData.entries()),
+      interests: formData.getAll('interests'),
+      newPictures: formData.getAll('newPictures'),
+      picturesToRemove: formData.getAll('picturesToRemove'),
+    };
+    const data = CreateUserProfileSchema.parse(rawData);
 
-    // validate form data
-
-    // upload images
-
-    // update user profile
-
-    // return updated profile
-
-    return NextResponse.json(id);
+    const userService = await getUserService();
+    const profile = await userService.updateUserProfile(id, data);
+    return NextResponse.json(profile, { status: 204 });
   },
 );

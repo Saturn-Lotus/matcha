@@ -53,7 +53,28 @@ export const CreateUserProfileSchema = Su.object({
   bio: Su.string(),
   interests: Su.array(Su.string()),
   avatar: Su.string(),
-  pictures: Su.array(Su.file().image().sizeMax(MAX_FILE_SIZE)),
+  pictures: Su.array(Su.file().image().sizeMax(MAX_FILE_SIZE)).length({
+    min: 1,
+    max: 5,
+  }),
+});
+
+export const UpdateUserProfileSchema = Su.object({
+  firstName: Su.optional(Su.string()),
+  lastName: Su.optional(Su.string()),
+  email: Su.optional(Su.string().email()),
+  gender: Su.optional(Su.literal(GENDERS)),
+  sexualPreference: Su.optional(Su.literal(SEXUAL_PREFERENCES)),
+  bio: Su.optional(Su.string()),
+  interests: Su.optional(Su.array(Su.string())),
+  avatar: Su.optional(Su.string()),
+  newPictures: Su.optional(
+    Su.array(Su.file().image().sizeMax(MAX_FILE_SIZE)).length({
+      max: 5,
+    }),
+  ),
+  picturesToRemove: Su.optional(Su.array(Su.string()).length({ max: 5 })),
 });
 
 export type CreateUserProfile = SuInfer<typeof CreateUserProfileSchema>;
+export type UpdateUserProfile = SuInfer<typeof UpdateUserProfileSchema>;

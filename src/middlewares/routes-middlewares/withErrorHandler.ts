@@ -7,7 +7,7 @@ export function withErrorHandler(handler: Handler): Handler {
   return async (req, context) => {
     try {
       return await handler(req, context);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
       return NextResponse.json(...httpExceptionMapper(error));
     }
