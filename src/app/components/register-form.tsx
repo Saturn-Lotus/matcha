@@ -9,24 +9,25 @@ import {
 import { Heart, User, Lock, Mail } from 'lucide-react';
 import Link from 'next/link';
 import FormInputRow from './ui/form-input-row';
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import { Parser, Su } from '@/lib/validator';
 import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
+import { ServerError } from '@/lib/exception-http-mapper';
 
 export const validateField = (value: unknown, validator: Parser<any>) => {
   if (!value) return true;
   try {
     validator.parse(value);
     return true;
-  } catch (error) {
-    console.error('Validation error:', error);
+  } catch {
     return false;
   }
 };
 
 export const RegisterForm = () => {
   const formRef = useRef(null);
-  const [error, setError] = useState<boolean>(false);
+  const router = useRouter();
 
   const registerUser = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -43,16 +44,24 @@ export const RegisterForm = () => {
           .password()
           .match(obj.password as string),
       }).parse(obj);
-      setError(false);
-    } catch (error: any) {
-      toast.error('Error: unable to register user', error.message);
-      setError(true);
+    } catch {
+      toast.error('Please fix the highlighted fields before submitting');
       return;
     }
-    await fetch('api/auth/register/', {
+
+    const response = await fetch('/api/auth/register/', {
       method: 'POST',
       body: JSON.stringify(Object.fromEntries(formData)),
     });
+
+    if (response.ok) {
+      toast.success('Account created! Check your email to verify your account');
+      router.push('/browse');
+      return;
+    }
+
+    const body: ServerError = await response.json();
+    toast.error(body.error?.message ?? 'Registration failed');
   };
 
   return (

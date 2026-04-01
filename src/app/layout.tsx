@@ -13,7 +13,7 @@ export default function RootLayout({
       <head />
       <body className="w-screen h-screen flex flex-col items-center container mx-auto strawberry-matcha-bg">
         <NavigationBar />
-        <main className="flex-1 w-screen">
+        <main className="flex-1 w-screen pb-16 md:pb-0">
           <Toaster />
           {children}
         </main>

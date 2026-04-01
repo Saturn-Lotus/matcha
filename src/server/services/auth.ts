@@ -1,5 +1,6 @@
 import { IMailer } from '@/lib/mailer/Mailer';
 import { UserRepository, UserTokensRepository } from '@/server/repositories';
+import { UserToken } from '@/server/schemas';
 import { randomBytes } from 'crypto';
 import { encrypt } from '@/lib/auth/session';
 import { HTTPError } from '@/lib/exception-http-mapper';
@@ -62,6 +63,14 @@ export class AuthService {
     return randomBytes(32).toString('hex');
   }
 
+  private async findMatchingToken(rawToken: string, candidates: UserToken[]) {
+    for (const candidate of candidates) {
+      const isMatch = await bcrypt.compare(rawToken, candidate.tokenHash);
+      if (isMatch) return candidate;
+    }
+    throw new InvalidVerificationTokenError('Token is invalid');
+  }
+
   async sendVerificationEmail(receiverEmail: string, userId: string) {
     const token = this.generate32ByteToken();
     const expiryDate = new Date(Date.now() + TOKEN_EXPIRY_HOURS * 3600 * 1000);
@@ -75,7 +84,7 @@ export class AuthService {
     if (process.env.NEXT_PUBLIC_CLIENT_URL === undefined) {
       throw new Error('NEXT_PUBLIC_CLIENT_URL is not defined');
     }
-    const link = `${process.env.NEXT_PUBLIC_CLIENT_URL}/api/auth/verify?token=${token}`;
+    const link = `${process.env.NEXT_PUBLIC_CLIENT_URL}/api/auth/verify?token=${token}&id=${userId}`;
     const html = await renderTemplate('verify-email', { link });
     this.mailer.sendEmail(receiverEmail, 'Verify your email address', html);
   }
@@ -102,21 +111,17 @@ export class AuthService {
     }
   }
 
-  async verifyUser(token: string) {
+  async verifyUser(token: string, userId: string) {
     if (!token.trim()) {
       throw new InvalidVerificationTokenError('No token provided');
     }
-    const tokenHash = await bcrypt.hash(token, 10);
+
     const results = await this.userTokensRepo.query(
-      '"tokenHash" = $1 AND "tokenType" = $2',
-      [tokenHash, 'emailVerification'],
+      '"tokenType" = $1 AND "userId" = $2',
+      ['emailVerification', userId],
     );
 
-    const userToken = results.length === 1 ? results[0] : null;
-
-    if (!userToken) {
-      throw new InvalidVerificationTokenError('Token is invalid');
-    }
+    const userToken = await this.findMatchingToken(token, results);
 
     if (userToken.tokenExpiry < new Date()) {
       throw new VerificationTokenExpiredError('Token has expired');
@@ -128,19 +133,20 @@ export class AuthService {
     await this.userTokensRepo.delete(userToken.tokenHash);
   }
 
-  async verifyUserEmailChange(token: string) {
+  async verifyUserEmailChange(token: string, userId: string) {
     if (!token.trim()) {
       throw new InvalidVerificationTokenError('No token provided');
     }
-    const tokenHash = await bcrypt.hash(token, 10);
-    const results = await this.userTokensRepo.query(
-      '"tokenHash" = $1 AND "tokenType" = $2',
-      [tokenHash, 'emailVerification'],
-    );
-    const userToken = results.length === 1 ? results[0] : null;
-    const user = await this.userRepo.findById(userToken?.userId || '');
 
-    if (!userToken || !user) {
+    const results = await this.userTokensRepo.query(
+      '"tokenType" = $1 AND "userId" = $2',
+      ['emailVerification', userId],
+    );
+
+    const userToken = await this.findMatchingToken(token, results);
+    const user = await this.userRepo.findById(userToken.userId);
+
+    if (!user) {
       throw new InvalidVerificationTokenError('Token is invalid');
     }
     if (userToken.tokenExpiry < new Date()) {
@@ -153,7 +159,7 @@ export class AuthService {
     if (emailInUse && emailInUse.id !== user.id) {
       throw new EmailInUseError();
     }
-    this.userRepo.update(user.id, {
+    await this.userRepo.update(user.id, {
       email: user.pendingEmail,
       pendingEmail: null,
     });

@@ -1,4 +1,5 @@
 import { CheckValidationError, TypeValidationError } from './exceptions';
+import { COMMON_PASSWORDS } from './common-passwords';
 
 export type AssertFunc<T> = (value: unknown) => asserts value is T;
 export type CheckFunc<T> = (value: T) => void;
@@ -85,6 +86,12 @@ export class StringParser implements Parser<string> {
         if (!passwordPattern.test(value)) {
           const masked = '*'.repeat(value.length);
           throw new CheckValidationError(masked, 'not a valid password');
+        }
+        if (COMMON_PASSWORDS.has(value.toLowerCase())) {
+          throw new CheckValidationError(
+            '*'.repeat(value.length),
+            'password is too common',
+          );
         }
       },
     ]);

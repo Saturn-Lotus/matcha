@@ -12,6 +12,8 @@ import FormInputRow from './ui/form-input-row';
 import { useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Separator } from './ui/separator';
+import { toast } from 'sonner';
+import { ServerError } from '@/lib/exception-http-mapper';
 
 export function LoginForm() {
   const router = useRouter();
@@ -20,13 +22,26 @@ export function LoginForm() {
   const loginUser = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    const response = await fetch('api/auth/signin', {
-      method: 'POST',
-      body: JSON.stringify(Object.fromEntries(formData)),
-    });
-    if (response.ok) {
-      router.push('/');
+    const username = formData.get('username') as string;
+    const password = formData.get('password') as string;
+
+    if (!username.trim() || !password.trim()) {
+      toast.error('Please enter your username and password');
+      return;
     }
+
+    const response = await fetch('/api/auth/signin', {
+      method: 'POST',
+      body: JSON.stringify({ username, password }),
+    });
+
+    if (response.ok) {
+      router.push('/browse');
+      return;
+    }
+
+    const body: ServerError = await response.json();
+    toast.error(body.error?.message ?? 'Login failed');
   };
 
   return (

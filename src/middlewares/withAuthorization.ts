@@ -6,13 +6,13 @@ import { decrypt } from '@/lib/auth/session';
 const publicRoutes = [
   '/login',
   '/register',
-  '/signup',
   '/reset-password',
   '/',
   '/api/auth/register',
   '/api/auth/signin',
-  '/api/auth/register',
   '/api/auth/reset-password',
+  '/api/auth/verify',
+  '/api/auth/logout',
 ];
 
 const DISABLE_AUTH = process.env.DISABLE_AUTH === 'true';
