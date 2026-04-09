@@ -8,7 +8,7 @@ interface FormInputRowProps {
   name: string;
   type: string;
   placeholder: string;
-  handleValidate: (value: any) => boolean;
+  handleValidate: (value: unknown) => boolean;
   errorMessage: string;
   required?: boolean;
 }
@@ -45,7 +45,13 @@ const FormInputRow = ({
           onBlur={handleInputChange}
         />
       </div>
-      {error && <p className="text-red-500 text-xs ml-2">{error}</p>}
+      <div className="h-4 mt-0.5">
+        {error && (
+          <p className="text-red-500 text-xs ml-2 animate-in fade-in slide-in-from-top-1 duration-150">
+            {error}
+          </p>
+        )}
+      </div>
     </div>
   );
 };

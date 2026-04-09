@@ -35,6 +35,7 @@ export class SimilarPasswordError extends Error {
 export class InvalidCredentialsError extends Error {
   constructor(message = 'Invalid username or password') {
     super(message);
+    this.name = 'InvalidCredentialsError';
   }
 }
 
@@ -75,7 +76,7 @@ export class AuthService {
     if (process.env.NEXT_PUBLIC_CLIENT_URL === undefined) {
       throw new Error('NEXT_PUBLIC_CLIENT_URL is not defined');
     }
-    const link = `${process.env.NEXT_PUBLIC_CLIENT_URL}/api/auth/verify?token=${token}`;
+    const link = `${process.env.NEXT_PUBLIC_CLIENT_URL}/api/auth/verify?token=${token}&id=${userId}`;
     const html = await renderTemplate('verify-email', { link });
     this.mailer.sendEmail(receiverEmail, 'Verify your email address', html);
   }
@@ -102,14 +103,14 @@ export class AuthService {
     }
   }
 
-  async verifyUser(token: string) {
+  async verifyUser(token: string, userId: string) {
     if (!token.trim()) {
       throw new InvalidVerificationTokenError('No token provided');
     }
-    const tokenHash = await bcrypt.hash(token, 10);
+
     const results = await this.userTokensRepo.query(
-      '"tokenHash" = $1 AND "tokenType" = $2',
-      [tokenHash, 'emailVerification'],
+      '"tokenType" = $1 AND "userId" = $2',
+      ['emailVerification', userId],
     );
 
     const userToken = results.length === 1 ? results[0] : null;
@@ -122,20 +123,24 @@ export class AuthService {
       throw new VerificationTokenExpiredError('Token has expired');
     }
 
+    const isTokenMatched = await bcrypt.compare(token, userToken.tokenHash);
+    if (!isTokenMatched) {
+      throw new InvalidVerificationTokenError('Token is invalid');
+    }
+
     await this.userRepo.update(userToken.userId, {
       isVerified: true,
     });
     await this.userTokensRepo.delete(userToken.tokenHash);
   }
 
-  async verifyUserEmailChange(token: string) {
+  async verifyUserEmailChange(token: string, userId: string) {
     if (!token.trim()) {
       throw new InvalidVerificationTokenError('No token provided');
     }
-    const tokenHash = await bcrypt.hash(token, 10);
     const results = await this.userTokensRepo.query(
-      '"tokenHash" = $1 AND "tokenType" = $2',
-      [tokenHash, 'emailVerification'],
+      '"tokenType" = $1 AND "userId" = $2',
+      ['emailVerification', userId],
     );
     const userToken = results.length === 1 ? results[0] : null;
     const user = await this.userRepo.findById(userToken?.userId || '');
@@ -145,6 +150,10 @@ export class AuthService {
     }
     if (userToken.tokenExpiry < new Date()) {
       throw new VerificationTokenExpiredError('Token has expired');
+    }
+    const isTokenMatched = await bcrypt.compare(token, userToken.tokenHash);
+    if (!isTokenMatched) {
+      throw new InvalidVerificationTokenError('Token is invalid');
     }
     if (!user.pendingEmail) {
       throw new Error('No pending email to verify');
@@ -207,14 +216,8 @@ export class AuthService {
   async authenticate(username: string, password: string) {
     const user = await this.userRepo.findByUsername(username);
 
-    if (!user) {
-      throw new InvalidCredentialsError('Invalid username');
-    }
-
-    const isPasswordMatched = await bcrypt.compare(password, user.passwordHash);
-
-    if (!isPasswordMatched) {
-      throw new InvalidCredentialsError('Invalid password');
+    if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
+      throw new InvalidCredentialsError();
     }
 
     return user;

@@ -6,7 +6,8 @@ import { withErrorHandler } from '@/middlewares/routes-middlewares/withErrorHand
 export const GET = withErrorHandler(async (request: NextRequest) => {
   const searchParams = request.nextUrl.searchParams;
   const token = searchParams.get('token') || '';
+  const id = searchParams.get('id') || '';
   const auth = getAuthService();
-  await auth.verifyUser(token);
+  await auth.verifyUser(token, id);
   return NextResponse.redirect(new URL('/', request.url));
 });
