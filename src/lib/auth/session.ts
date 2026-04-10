@@ -3,6 +3,9 @@ import { SignJWT, jwtVerify } from 'jose';
 export type SessionPayload = {
   userId: string;
   email: string;
+  isVerified: boolean;
+  isProfileComplete: boolean;
+  avatarUrl: string | null;
   expiresAt: Date;
 };
 

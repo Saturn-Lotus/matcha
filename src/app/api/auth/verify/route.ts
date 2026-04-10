@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { httpExceptionMapper } from '@/lib/exception-http-mapper';
-import { getAuthService } from '@/server/factories';
+import { getAuthService, getUserRepository } from '@/server/factories';
 import { withErrorHandler } from '@/middlewares/routes-middlewares/withErrorHandler';
+import { cookies } from 'next/headers';
 
 export const GET = withErrorHandler(async (request: NextRequest) => {
   const searchParams = request.nextUrl.searchParams;
@@ -9,5 +9,22 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
   const id = searchParams.get('id') || '';
   const auth = getAuthService();
   await auth.verifyUser(token, id);
-  return NextResponse.redirect(new URL('/', request.url));
+
+  const userRepository = getUserRepository();
+  const [user, profile] = await Promise.all([
+    userRepository.findById(id),
+    userRepository.findProfileByUserId(id),
+  ]);
+
+  if (user) {
+    const session = await auth.createSession(user.id, user.email, {
+      isVerified: true,
+      isProfileComplete: profile?.isProfileComplete ?? false,
+      avatarUrl: profile?.avatarUrl ?? null,
+    });
+    const cookieStore = await cookies();
+    cookieStore.set('session', session);
+  }
+
+  return NextResponse.redirect(new URL('/onboarding', request.url));
 });

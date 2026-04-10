@@ -1,6 +1,5 @@
-import { httpExceptionMapper } from '@/lib/exception-http-mapper';
 import { withErrorHandler } from '@/middlewares/routes-middlewares';
-import { getAuthService } from '@/server/factories';
+import { getAuthService, getUserRepository } from '@/server/factories';
 import { CredentialsSchema } from '@/server/schemas';
 
 import { cookies } from 'next/headers';
@@ -14,7 +13,13 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     credentials.username,
     credentials.password,
   );
-  const session = await auth.createSession(user.id, user.email);
+  const userRepository = getUserRepository();
+  const profile = await userRepository.findProfileByUserId(user.id);
+  const session = await auth.createSession(user.id, user.email, {
+    isVerified: user.isVerified,
+    isProfileComplete: profile?.isProfileComplete ?? false,
+    avatarUrl: profile?.avatarUrl ?? null,
+  });
   const cookieStore = await cookies();
   cookieStore.set('session', session);
   return NextResponse.json({ id: user.id, email: user.email });

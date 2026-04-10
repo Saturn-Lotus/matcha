@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { MiddlewareFactory } from './core';
 import { cookies } from 'next/headers';
 import { decrypt } from '@/lib/auth/session';
@@ -32,6 +32,9 @@ export const withAuthorization: MiddlewareFactory = (next) => {
       if (!session?.userId) {
         return NextResponse.redirect(new URL('/login', request.nextUrl));
       }
+      const headers = new Headers(request.headers);
+      headers.set('x-user-id', session.userId as string);
+      return next(new NextRequest(request, { headers }), event);
     }
     return next(request, event);
   };

@@ -37,6 +37,7 @@ export const UserProfileSchema = Su.object({
   avatarUrl: Su.null(Su.string()),
   interests: Su.null(Su.array(Su.string())),
   pictures: Su.null(Su.array(Su.string())),
+  isProfileComplete: Su.boolean(),
   createdAt: Su.optional(Su.date()),
   updatedAt: Su.optional(Su.date()),
 });

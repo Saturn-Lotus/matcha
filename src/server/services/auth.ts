@@ -1,8 +1,8 @@
 import { IMailer } from '@/lib/mailer/Mailer';
 import { UserRepository, UserTokensRepository } from '@/server/repositories';
 import { randomBytes } from 'crypto';
-import { encrypt } from '@/lib/auth/session';
-import { HTTPError } from '@/lib/exception-http-mapper';
+import { encrypt, decrypt } from '@/lib/auth/session';
+import { HTTPError, NotFoundException } from '@/lib/exception-http-mapper';
 import bcrypt from 'bcrypt';
 import { renderTemplate } from '@/lib/mailer/utils';
 
@@ -46,11 +46,23 @@ export class EmailInUseError extends Error {
   }
 }
 
-const TOKEN_EXPIRY_HOURS = parseInt(process.env.TOKEN_EXPIRY_HOURS || '24', 10);
+@HTTPError(500)
+export class InvalidSessionError extends Error {
+  constructor(message = 'Session is invalid or has expired') {
+    super(message);
+    this.name = 'InvalidSessionError';
+  }
+}
+
+const DEFAULT_TOKEN_EXPIRY_HOURS = '24';
+const DEFAULT_JWT_SESSION_EXPIRY_DAYS = '7';
+const TOKEN_EXPIRY_HOURS = parseInt(process.env.TOKEN_EXPIRY_HOURS || DEFAULT_TOKEN_EXPIRY_HOURS, 10);
 const JWT_SESSION_EXPIRY_DAYS = parseInt(
-  process.env.JWT_SESSION_EXPIRY_DAYS || '7',
+  process.env.JWT_SESSION_EXPIRY_DAYS || DEFAULT_JWT_SESSION_EXPIRY_DAYS,
   10,
 );
+
+const JWT_SESSION_EXPIRY_MS = JWT_SESSION_EXPIRY_DAYS * 24 * 60 * 60 * 1000;
 
 export class AuthService {
   constructor(
@@ -61,6 +73,13 @@ export class AuthService {
 
   private generate32ByteToken(): string {
     return randomBytes(32).toString('hex');
+  }
+
+  async resendVerificationEmail(userId: string) {
+    const user = await this.userRepo.findById(userId);
+    if (!user) throw new NotFoundException('User not found');
+    await this.userTokensRepo.deleteByUserId(userId, 'emailVerification');
+    await this.sendVerificationEmail(user.email, userId);
   }
 
   async sendVerificationEmail(receiverEmail: string, userId: string) {
@@ -109,23 +128,22 @@ export class AuthService {
     }
 
     const results = await this.userTokensRepo.query(
-      '"tokenType" = $1 AND "userId" = $2',
-      ['emailVerification', userId],
+      '"userId" = $1 AND "tokenType" = $2',
+      [userId, 'emailVerification'],
     );
-
     const userToken = results.length === 1 ? results[0] : null;
 
     if (!userToken) {
       throw new InvalidVerificationTokenError('Token is invalid');
     }
 
-    if (userToken.tokenExpiry < new Date()) {
-      throw new VerificationTokenExpiredError('Token has expired');
+    const isTokenValid = await bcrypt.compare(token, userToken.tokenHash);
+    if (!isTokenValid) {
+      throw new InvalidVerificationTokenError('Token is invalid');
     }
 
-    const isTokenMatched = await bcrypt.compare(token, userToken.tokenHash);
-    if (!isTokenMatched) {
-      throw new InvalidVerificationTokenError('Token is invalid');
+    if (userToken.tokenExpiry < new Date()) {
+      throw new VerificationTokenExpiredError('Token has expired');
     }
 
     await this.userRepo.update(userToken.userId, {
@@ -138,16 +156,23 @@ export class AuthService {
     if (!token.trim()) {
       throw new InvalidVerificationTokenError('No token provided');
     }
+
     const results = await this.userTokensRepo.query(
-      '"tokenType" = $1 AND "userId" = $2',
-      ['emailVerification', userId],
+      '"userId" = $1 AND "tokenType" = $2',
+      [userId, 'emailVerification'],
     );
     const userToken = results.length === 1 ? results[0] : null;
-    const user = await this.userRepo.findById(userToken?.userId || '');
+    const user = await this.userRepo.findById(userId);
 
     if (!userToken || !user) {
       throw new InvalidVerificationTokenError('Token is invalid');
     }
+
+    const isTokenValid = await bcrypt.compare(token, userToken.tokenHash);
+    if (!isTokenValid) {
+      throw new InvalidVerificationTokenError('Token is invalid');
+    }
+
     if (userToken.tokenExpiry < new Date()) {
       throw new VerificationTokenExpiredError('Token has expired');
     }
@@ -162,7 +187,7 @@ export class AuthService {
     if (emailInUse && emailInUse.id !== user.id) {
       throw new EmailInUseError();
     }
-    this.userRepo.update(user.id, {
+    await this.userRepo.update(user.id, {
       email: user.pendingEmail,
       pendingEmail: null,
     });
@@ -223,11 +248,41 @@ export class AuthService {
     return user;
   }
 
-  async createSession(userId: string, email: string) {
+  async createSession(
+    userId: string,
+    email: string,
+    options: { isVerified: boolean; isProfileComplete: boolean; avatarUrl?: string | null },
+  ) {
     const expiresAt = new Date(
-      Date.now() + JWT_SESSION_EXPIRY_DAYS * 24 * 60 * 60 * 1000,
+      Date.now() + JWT_SESSION_EXPIRY_MS,
     );
-    const session = await encrypt({ userId, email, expiresAt });
-    return session;
+    return encrypt({
+      userId,
+      email,
+      isVerified: options.isVerified,
+      isProfileComplete: options.isProfileComplete,
+      avatarUrl: options.avatarUrl ?? null,
+      expiresAt,
+    });
+  }
+
+  async refreshSession(
+    currentToken: string,
+    updates: { isVerified?: boolean; isProfileComplete?: boolean; avatarUrl?: string | null },
+  ) {
+    const payload = await decrypt(currentToken);
+    if (!payload?.userId) {
+      throw new InvalidSessionError('Cannot refresh an invalid session');
+    }
+    const expiresAt = new Date(Date.now() + JWT_SESSION_EXPIRY_MS);
+    const avatarUrl = updates.avatarUrl === undefined ? (payload.avatarUrl as string | null) : updates.avatarUrl;
+    return encrypt({
+      userId: payload.userId as string,
+      email: payload.email as string,
+      isVerified: updates.isVerified ?? Boolean(payload.isVerified),
+      isProfileComplete: updates.isProfileComplete ?? Boolean(payload.isProfileComplete),
+      avatarUrl: avatarUrl,
+      expiresAt,
+    });
   }
 }
