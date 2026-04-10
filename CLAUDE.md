@@ -57,6 +57,16 @@ src/
 - Run migrations: `npm run db:migrate`
 - Create a migration: `npm run db:create <name>`
 - Do not alter the DB schema outside of migration files.
+- The migration files should be in raw sql using pgm.sql, not using the helper methods (e.g. pgm.createTable) — this ensures the SQL is explicit and clear.
+
+## Frontend Rules
+- Use shadcn/ui components and Radix primitives for all UI elements — do not create custom components unless necessary.
+- Tailwind CSS for styling — no custom CSS files or inline styles.
+- Use Next.js App Router conventions for page and API route structure.
+- Use zustand for state management if needed — avoid prop drilling but do not overuse global state.
+- The app must be compatible with the latest versions of Chrome and Firefox — no experimental features that lack broad support.
+- The app should be responsive and mobile-friendly, focus on mobile-first design.
+
 
 ## Code Style
 - Use `async/await` — no raw `.then()` chains.
