@@ -25,20 +25,34 @@ src/
 
 ## Architecture Rules
 
-### Repositories
-- All repositories extend `BaseRepositoryClass<T>` from `src/server/repositories/base.ts`.
-- Repositories handle only DB queries — no business logic.
-- Use `query(whereClause, params)` for filtered lookups.
+### Layered architecture — each layer owns exactly one concern
+
+The codebase is strictly layered: **Route → Service → Repository**. Each layer only depends on the one directly below it. Logic must never leak up or down.
+
+| Layer | Owns | Must never contain |
+|---|---|---|
+| Route | HTTP: parse request, call service, return response | Business logic, crypto, SQL, transaction management |
+| Service | Use-case logic: validation, transformation, orchestration, crypto | Raw SQL, `new PostgresDB()`, direct repo instantiation |
+| Repository | Data access: SQL queries, atomicity (transactions) | Business rules, HTTP concerns |
+
+A rule of thumb: if you find yourself writing `bcrypt`, `db.transaction`, or raw SQL in a route, it belongs one layer down. If you find yourself writing HTTP status codes or `NextResponse` in a service, it belongs one layer up.
+
+### Routes
+- Thin by design: parse input → call one service method → return response.
+- Wrap every handler with `withErrorHandler`. Never manually catch errors.
+- Never instantiate services or repositories directly — use factories from `src/server/factories`.
+- Do not import unused identifiers.
 
 ### Services
-- All business logic lives in service classes (e.g. `AuthService`).
-- Services receive repositories and dependencies via constructor injection.
-- Never instantiate services or repos directly in routes — use factories from `src/server/factories`.
+- One method per use-case. The method encapsulates everything needed to complete the operation end-to-end.
+- Receive all dependencies (repositories, other services) via constructor injection.
+- Define domain errors in the service file using `@HTTPError(statusCode)`.
 
-### API Routes
-- All routes wrap handlers with `withErrorHandler` from `src/middlewares/routes-middlewares/withErrorHandler.ts`.
-- Domain errors are mapped to HTTP status codes via the `@HTTPError(statusCode)` decorator — add new error classes this way.
-- Do not import unused identifiers in route files (e.g. `httpExceptionMapper` if not called).
+### Repositories
+- Extend `BaseRepositoryClass<T>` from `src/server/repositories/base.ts`.
+- One repository per aggregate. Methods map 1:1 to DB operations.
+- When an operation requires multiple writes to be atomic, encapsulate it in a dedicated repository method that owns the transaction internally — callers never manage transactions.
+- Prefer passing the transactional `db` as an optional parameter to existing methods over duplicating query logic.
 
 ### Error Handling
 - Define domain errors in the relevant service file using `@HTTPError(statusCode)` decorator.

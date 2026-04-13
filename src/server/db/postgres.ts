@@ -5,8 +5,8 @@ const pool = new Pool({
   max: 20,
   min: 1,
   idleTimeoutMillis: 30000, // 30 seconds
-  connectionTimeoutMillis: 2000, // 2 seconds
-  maxLifetimeSeconds: 60, // 1 minute
+  connectionTimeoutMillis: 10000, // 10 seconds
+  maxLifetimeSeconds: 3600, // 1 hour
 });
 
 /**
