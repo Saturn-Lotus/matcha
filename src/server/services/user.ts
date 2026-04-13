@@ -66,6 +66,14 @@ export class UserService {
     return profile;
   };
 
+  getAvatarFile = async (userId: string): Promise<{ buffer: Buffer; contentType: string }> => {
+    const profile = await this.getProfileByUserId(userId);
+    if (!profile.avatarUrl) {
+      throw new NotFoundException('Avatar not found');
+    }
+    return this.storage.getFile(profile.avatarUrl);
+  };
+
   userExists = async (
     id?: string,
     email?: string,

@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Next.js Dev (Turbopack)",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3000
+    },
+    {
+      "name": "Cypress E2E",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": ["run", "cy:open"],
+      "port": 0
+    }
+  ]
+}

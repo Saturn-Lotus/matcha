@@ -3,5 +3,5 @@ export interface IStorage {
   bulkUploadFiles(files: File[], destination: string): Promise<string[]>;
   deleteFile(filePath: string): Promise<void>;
   getFileUrl(filePath: string): Promise<string>;
-  getFile(filePath: string): Promise<Buffer>;
+  getFile(filePath: string): Promise<{ buffer: Buffer; contentType: string }>;
 }

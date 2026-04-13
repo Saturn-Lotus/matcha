@@ -10,7 +10,6 @@ import { Heart, User, Lock, Loader2, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import FormInputRow from './ui/form-input-row';
 import { useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Separator } from './ui/separator';
 import { cn } from '@/lib/utils';
 import { apiClient } from '@/lib/api/client';
@@ -22,7 +21,6 @@ type SignInResponse = {
 };
 
 export function LoginForm() {
-  const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,7 +53,7 @@ export function LoginForm() {
         return;
       }
 
-      router.push('/');
+      window.location.href = '/';
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to sign in. Please try again.');
     } finally {
