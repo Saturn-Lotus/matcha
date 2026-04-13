@@ -3,6 +3,7 @@ import { UserRepository, UserTokensRepository } from '@/server/repositories';
 import { UserService } from '@/server/services/user';
 import { IStorage } from '@/server/storage/base';
 import { getStorage } from './storage-factory';
+import { getAuthService } from './auth-factory';
 
 const getPostgresDB = (): PostgresDB => {
   return new PostgresDB();
@@ -25,7 +26,8 @@ export const getUserService = async (
   if (!storage) {
     storage = await getStorage();
   }
-  return new UserService(userRepository, storage);
+  const authService = getAuthService();
+  return new UserService(userRepository, storage, authService);
 };
 
 export const getUserTokenRepository = (db?: PostgresDB) => {

@@ -3,6 +3,11 @@ import BaseRepositoryClass from './base';
 import { PostgresDB } from '../db/postgres';
 import { CreateUserInput, CreateUserProfile } from '../types';
 
+type CreateUserWithProfileInput = {
+  user: CreateUserInput;
+  profile: Omit<CreateUserProfile, 'userId'>;
+};
+
 export class UserRepository extends BaseRepositoryClass<User> {
   private readonly db: PostgresDB;
 
@@ -14,8 +19,8 @@ export class UserRepository extends BaseRepositoryClass<User> {
     this.db = db;
   }
 
-  async create(item: CreateUserInput): Promise<User> {
-    const rows = await this.db.query<User>(
+  async create(item: CreateUserInput, db: PostgresDB = this.db): Promise<User> {
+    const rows = await db.query<User>(
       `INSERT INTO ${this.usersTable}("username", "email","pendingEmail", "passwordHash", "isVerified")
 			VALUES ($1, $2, $3, $4, $5) RETURNING *;
 			`,
@@ -34,10 +39,10 @@ export class UserRepository extends BaseRepositoryClass<User> {
     return user;
   }
 
-  async profileCreate(item: CreateUserProfile): Promise<UserProfile> {
-    const rows = await this.db.query<UserProfile>(
+  async profileCreate(item: CreateUserProfile, db: PostgresDB = this.db): Promise<UserProfile> {
+    const rows = await db.query<UserProfile>(
       `Insert INTO ${this.userProfilesTable}
-      ( 
+      (
       "userId",
       "firstName",
       "lastName",
@@ -68,6 +73,14 @@ export class UserRepository extends BaseRepositoryClass<User> {
       throw new Error('User profile creation failed');
     }
     return profile;
+  }
+
+  async createWithProfile({ user, profile }: CreateUserWithProfileInput): Promise<User> {
+    return this.db.transaction(async (txDB) => {
+      const newUser = await this.create(user, txDB);
+      await this.profileCreate({ ...profile, userId: newUser.id }, txDB);
+      return newUser;
+    });
   }
 
   async findById(id: string): Promise<User | null> {
@@ -134,14 +147,18 @@ export class UserRepository extends BaseRepositoryClass<User> {
   }
 
   async update(id: string, item: Partial<User>): Promise<User> {
-    const setClause = Object.entries(item)
-      .map(([columnName, value]) => {
-        return `"${columnName}" = ${typeof value === 'string' ? `'${value}'` : value}`;
+    const entries = Object.entries(item).filter(([, v]) => v !== undefined);
+    const params: any[] = [id];
+    let paramIdx = 2;
+    const setClause = entries
+      .map(([col, val]) => {
+        params.push(val);
+        return `"${col}" = $${paramIdx++}`;
       })
       .join(', ');
 
     const query = `UPDATE ${this.usersTable} SET ${setClause} WHERE id = $1 RETURNING *;`;
-    const rows = await this.db.query<User>(query, [id]);
+    const rows = await this.db.query<User>(query, params);
     if (rows.length === 0) {
       throw new Error(`User with id ${id} not found`);
     }
@@ -152,14 +169,18 @@ export class UserRepository extends BaseRepositoryClass<User> {
     userId: string,
     item: Partial<Omit<UserProfile, 'userId'>>,
   ): Promise<UserProfile> {
-    const setClause = Object.entries(item)
-      .map(([columnName, value]) => {
-        return `"${columnName}" = ${typeof value === 'string' ? `'${value}'` : value}`;
+    const entries = Object.entries(item).filter(([, v]) => v !== undefined);
+    const params: any[] = [userId];
+    let paramIdx = 2;
+    const setClause = entries
+      .map(([col, val]) => {
+        params.push(val);
+        return `"${col}" = $${paramIdx++}`;
       })
       .join(', ');
 
-    const query = `UPDATE ${this.userProfilesTable} SET ${setClause} WHERE userId = $1 RETURNING *;`;
-    const rows = await this.db.query<UserProfile>(query, [userId]);
+    const query = `UPDATE ${this.userProfilesTable} SET ${setClause} WHERE "userId" = $1 RETURNING *;`;
+    const rows = await this.db.query<UserProfile>(query, params);
     if (rows.length === 0) {
       throw new Error(`User profile with userId ${userId} not found`);
     }
