@@ -47,7 +47,9 @@ export const Su = {
     return new LiteralParser<T>(literalValues);
   },
   optional<T>(parser: Parser<T>) {
-    return new OptionalParser<T>(parser);
+    const optionalParser = new OptionalParser<T>(parser);
+    (optionalParser as any)[OPTIONAL] = true;
+    return optionalParser;
   },
   null<T>(parser: Parser<T>) {
     return new NullParser<T>(parser);
