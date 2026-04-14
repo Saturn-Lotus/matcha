@@ -54,6 +54,12 @@ A rule of thumb: if you find yourself writing `bcrypt`, `db.transaction`, or raw
 - When an operation requires multiple writes to be atomic, encapsulate it in a dedicated repository method that owns the transaction internally — callers never manage transactions.
 - Prefer passing the transactional `db` as an optional parameter to existing methods over duplicating query logic.
 
+### Pages & Layouts
+- Pages and layouts are UI boundaries — they may read from the session (via `decrypt`) and derive props, but must never call factories, services, repositories, or storage directly.
+- To pass data to a component that requires server resources (e.g. an avatar URL backed by object storage), expose a dedicated API route that acts as a proxy. The page constructs the route URL from session data and passes it as a prop — it never resolves the resource itself.
+- The session is the only server-side data source a layout or page may access without going through an API route or a server action.
+- Client components (`'use client'`) must never decode or inspect JWTs. If a client component needs identity data (e.g. `userId`), it must receive it as a prop from a parent server component that read it from the session.
+
 ### Error Handling
 - Define domain errors in the relevant service file using `@HTTPError(statusCode)` decorator.
 - `withErrorHandler` catches these and returns the appropriate HTTP response automatically.
