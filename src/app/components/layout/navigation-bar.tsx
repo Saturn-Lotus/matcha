@@ -1,10 +1,19 @@
 'use client';
-import { Heart, LogOut, User } from 'lucide-react';
+import { Heart, LogOut, Settings, User } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/app/components/ui/dropdown-menu';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import Image from 'next/image';
+import { apiClient } from '@/lib/api';
+
 const NO_HEADER_ROUTES = ['/login', '/register', '/reset-password', '/onboarding'];
 
 interface NavigationBarProps {
@@ -13,7 +22,7 @@ interface NavigationBarProps {
   avatarSeed?: string;
 }
 
-function Avatar({ src, seed }: { src?: string | null; seed?: string }) {
+function AvatarImage({ src, seed }: { src?: string | null; seed?: string }) {
   const [errored, setErrored] = useState(false);
   const fallback = seed
     ? `https://api.dicebear.com/9.x/avataaars/svg?seed=${seed}`
@@ -21,27 +30,33 @@ function Avatar({ src, seed }: { src?: string | null; seed?: string }) {
   const imgSrc = !errored && src ? src : fallback;
 
   if (!imgSrc) {
-    return <User className="w-4 h-4" />;
+    return (
+      <div className="w-8 h-8 rounded-full bg-pink-100 flex items-center justify-center">
+        <User className="w-4 h-4 text-pink-400" />
+      </div>
+    );
   }
 
   return (
     <Image
       src={imgSrc}
       alt="avatar"
-      width={28}
-      height={28}
+      width={32}
+      height={32}
       onError={() => setErrored(true)}
-      className="w-7 h-7 rounded-full object-cover border border-gray-200"
+      className="w-8 h-8 rounded-full object-cover border-2 border-pink-200"
     />
   );
 }
 
 export const NavigationBar = ({ isAuthenticated, avatarSrc, avatarSeed }: NavigationBarProps) => {
   const pathName = usePathname();
+  const router = useRouter();
 
   const handleLogout = async () => {
-    await fetch('/api/auth/logout');
-    window.location.href = '/';
+    await apiClient.get('/auth/logout');
+    router.push('/');
+    router.refresh();
   };
 
   if (NO_HEADER_ROUTES.includes(pathName)) {
@@ -57,29 +72,37 @@ export const NavigationBar = ({ isAuthenticated, avatarSrc, avatarSeed }: Naviga
         </h1>
       </Link>
 
-      <div className="md:space-x-2 space-x-1 flex items-center">
+      <div className="flex items-center">
         {isAuthenticated ? (
-          <>
-            <Link href="/profile">
-              <Button
-                variant="ghost"
-                className="text-gray-600 hover:text-green-600 text-xs md:text-base flex items-center gap-2"
+          <DropdownMenu modal={false}>
+            <DropdownMenuTrigger asChild>
+              <button
+                className="rounded-full p-0.5 ring-2 ring-transparent hover:ring-pink-200 transition-all cursor-pointer focus:outline-none"
+                aria-label="Open user menu"
               >
-                <Avatar src={avatarSrc} seed={avatarSeed} />
-                <span className="hidden sm:inline">Profile</span>
-              </Button>
-            </Link>
-            <Button
-              variant="ghost"
-              onClick={handleLogout}
-              className="text-gray-600 hover:text-red-500 text-xs md:text-base flex items-center gap-1"
-            >
-              <LogOut className="w-4 h-4" />
-              <span className="hidden sm:inline">Logout</span>
-            </Button>
-          </>
+                <AvatarImage src={avatarSrc} seed={avatarSeed} />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-44">
+              <DropdownMenuItem asChild>
+                <Link href="/settings" className="flex items-center gap-2 cursor-pointer text-gray-700 hover:text-pink-600">
+                  <Settings className="w-4 h-4" />
+                  Settings
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                variant="destructive"
+                className="flex items-center gap-2 cursor-pointer"
+                onClick={handleLogout}
+              >
+                <LogOut className="w-4 h-4" />
+                Logout
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         ) : (
-          <>
+          <div className="md:space-x-2 space-x-1 flex items-center">
             <Link href="/login">
               <Button
                 variant="ghost"
@@ -93,7 +116,7 @@ export const NavigationBar = ({ isAuthenticated, avatarSrc, avatarSeed }: Naviga
                 Sign Up
               </Button>
             </Link>
-          </>
+          </div>
         )}
       </div>
     </header>

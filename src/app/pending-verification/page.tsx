@@ -16,7 +16,7 @@ const PendingVerification = () => {
   const handleResend = async () => {
     setResending(true);
     try {
-      await apiClient.post('/api/auth/resend-verification');
+      await apiClient.post('/auth/resend-verification');
       toast.success('Verification email sent. Please check your inbox.');
     } catch {
       toast.error('Failed to resend email. Please try again.');

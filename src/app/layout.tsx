@@ -2,22 +2,18 @@ import './globals.css';
 import { Toaster } from '@/app/components/ui/sonner';
 import { NavigationBar } from '@/app/components/layout/navigation-bar';
 import { Footer } from '@/app/components/layout/footer';
-import { cookies } from 'next/headers';
-import { decrypt } from '@/lib/auth/session';
+import { headers } from 'next/headers';
 
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const cookieStore = await cookies();
-  const session = await decrypt(cookieStore.get('session')?.value);
-  const isAuthenticated = !!session?.userId;
+  const headersList = await headers();
+  const userId = headersList.get('x-user-id');
+  const isAuthenticated = !!userId;
 
-  const avatarSrc =
-    session?.userId && session?.avatarUrl
-      ? `/api/users/${session.userId}/avatar`
-      : null;
+  const avatarSrc = userId ? `/api/users/${userId}/avatar` : null;
 
   return (
     <html lang="en">
@@ -26,7 +22,7 @@ export default async function RootLayout({
         <NavigationBar
           isAuthenticated={isAuthenticated}
           avatarSrc={avatarSrc}
-          avatarSeed={session?.userId as string | undefined}
+          avatarSeed={userId ?? undefined}
         />
         <main className="flex-1 w-screen">
           <Toaster />

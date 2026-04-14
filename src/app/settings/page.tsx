@@ -1,11 +1,10 @@
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { getUserService, getUserRepository, getStorage } from '@/server/factories';
-import { EditProfileForm } from './edit-profile-form';
-import { SocialPanels } from './social-panels';
+import { SettingsForm } from './settings-form';
 import { Heart } from 'lucide-react';
 
-export default async function ProfilePage() {
+export default async function SettingsPage() {
   const headersList = await headers();
   const userId = headersList.get('x-user-id');
   if (!userId) redirect('/login');
@@ -36,14 +35,12 @@ export default async function ProfilePage() {
         <div className="text-center">
           <h1 className="text-3xl font-bold strawberry-matcha-gradient flex items-center justify-center gap-2">
             <Heart className="w-7 h-7 fill-current text-pink-400" />
-            Edit Profile
+            Settings
           </h1>
-          <p className="text-gray-500 mt-1">
-            Keep your profile up to date to find better matches
-          </p>
+          <p className="text-gray-500 mt-1">Manage your profile and account information</p>
         </div>
-        <SocialPanels userId={userId} />
-        <EditProfileForm
+
+        <SettingsForm
           userId={userId}
           currentEmail={user.email}
           profile={profile}

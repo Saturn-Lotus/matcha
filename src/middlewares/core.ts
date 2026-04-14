@@ -18,7 +18,8 @@ export class MiddlewarePipeline {
   }
 
   compose(): NextMiddleware {
-    const defaultNext: NextMiddleware = () => NextResponse.next();
+    const defaultNext: NextMiddleware = (request) =>
+      NextResponse.next({ request: { headers: request.headers } });
     return this.factories.reduceRight(
       (next, factory) => factory(next),
       defaultNext,

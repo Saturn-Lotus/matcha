@@ -25,17 +25,21 @@ export const withAuthorization: MiddlewareFactory = (next) => {
 
     const path = request.nextUrl.pathname;
     const isPublicRoute = publicRoutes.includes(path);
-    if (!isPublicRoute) {
-      const cookieStore = await cookies();
-      const sessionCookie = cookieStore.get('session')?.value;
-      const session = await decrypt(sessionCookie);
-      if (!session?.userId) {
-        return NextResponse.redirect(new URL('/login', request.nextUrl));
-      }
+
+    const cookieStore = await cookies();
+    const sessionCookie = cookieStore.get('session')?.value;
+    const session = await decrypt(sessionCookie);
+
+    if (!isPublicRoute && !session?.userId) {
+      return NextResponse.redirect(new URL('/login', request.nextUrl));
+    }
+
+    if (session?.userId) {
       const headers = new Headers(request.headers);
       headers.set('x-user-id', session.userId as string);
       return next(new NextRequest(request, { headers }), event);
     }
+
     return next(request, event);
   };
 };
