@@ -1,4 +1,13 @@
+import { zxcvbn, zxcvbnOptions } from '@zxcvbn-ts/core';
+import * as zxcvbnCommonPackage from '@zxcvbn-ts/language-common';
 import { CheckValidationError, TypeValidationError } from './exceptions';
+
+zxcvbnOptions.setOptions({
+  dictionary: {
+    ...zxcvbnCommonPackage.dictionary,
+  },
+  graphs: zxcvbnCommonPackage.adjacencyGraphs,
+});
 
 export type AssertFunc<T> = (value: unknown) => asserts value is T;
 export type CheckFunc<T> = (value: T) => void;
@@ -85,6 +94,11 @@ export class StringParser implements Parser<string> {
         if (!passwordPattern.test(value)) {
           const masked = '*'.repeat(value.length);
           throw new CheckValidationError(masked, 'not a valid password');
+        }
+        const result = zxcvbn(value);
+        if (result.score < 2) {
+          const masked = '*'.repeat(value.length);
+          throw new CheckValidationError(masked, 'password is too common or contains dictionary words');
         }
       },
     ]);
