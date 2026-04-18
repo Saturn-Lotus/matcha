@@ -8,4 +8,13 @@ class NotFoundException extends Error {
   }
 }
 
-export { NotFoundException };
+@HTTPError(400)
+class BadRequestException extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = this.constructor.name;
+  }
+}
+
+export { NotFoundException, BadRequestException };
+

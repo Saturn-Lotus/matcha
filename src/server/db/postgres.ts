@@ -1,5 +1,6 @@
 import { Pool, PoolClient, QueryResultRow } from 'pg';
 import IBaseDB from './base';
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   max: 20,
