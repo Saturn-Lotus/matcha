@@ -95,8 +95,8 @@ export function SettingsForm({
         .forEach((url) => formData.append('picturesToRemove', url));
       pictures.newFiles.forEach((file) => formData.append('newPictures', file));
 
-      const res = await apiClient.patch(
-        `/api/users/profiles/${userId}`,
+      await apiClient.patch(
+        `/users/profiles/${userId}`,
         formData,
       );
 

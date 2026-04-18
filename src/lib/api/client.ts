@@ -76,7 +76,8 @@ class ApiClient {
   }
 
   async patch<T>(url: string, data?: unknown): Promise<T> {
-    const response: AxiosResponse<T> = await this.client.patch(url, data);
+    const headers = data instanceof FormData ? { 'Content-Type': undefined } : {};
+    const response: AxiosResponse<T> = await this.client.patch(url, data, { headers });
     return response.data;
   }
 

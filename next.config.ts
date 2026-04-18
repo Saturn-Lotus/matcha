@@ -17,6 +17,11 @@ if (storageType === 'vercel-blob') {
   });
 }
 
+remotePatterns.push({
+  protocol: 'https',
+  hostname: 'api.dicebear.com',
+});
+
 const nextConfig: NextConfig = {
   images: { remotePatterns },
 };

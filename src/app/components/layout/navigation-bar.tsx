@@ -43,6 +43,7 @@ function AvatarImage({ src, seed }: { src?: string | null; seed?: string }) {
       alt="avatar"
       width={32}
       height={32}
+      unoptimized
       onError={() => setErrored(true)}
       className="w-8 h-8 rounded-full object-cover border-2 border-pink-200"
     />
