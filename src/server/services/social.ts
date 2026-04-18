@@ -30,4 +30,16 @@ export class SocialService {
   unlikeUser = async (likerUserId: string, likedUserId: string) => {
     await this.socialRepository.unlikeUser(likerUserId, likedUserId);
   };
+
+  getViewers = async (userId: string) => {
+    return this.socialRepository.getViewers(userId);
+  };
+
+  recordView = async (viewerId: string, viewedUserId: string) => {
+    const skipSelfView = viewerId === viewedUserId;
+    
+    if (skipSelfView) return;
+
+    await this.socialRepository.recordView(viewerId, viewedUserId);
+  };
 }
