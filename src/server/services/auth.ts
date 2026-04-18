@@ -268,7 +268,11 @@ export class AuthService {
 
   async refreshSession(
     currentToken: string,
-    updates: { isVerified?: boolean; isProfileComplete?: boolean; avatarUrl?: string | null },
+    updates: { 
+      isVerified?: boolean;
+      isProfileComplete?: boolean;
+      avatarUrl?: string | null;
+     }
   ) {
     const payload = await decrypt(currentToken);
     if (!payload?.userId) {
