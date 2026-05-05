@@ -8,6 +8,14 @@ class NotFoundException extends Error {
   }
 }
 
+@HTTPError(401)
+class UnauthorizedException extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = this.constructor.name;
+  }
+}
+
 @HTTPError(400)
 class BadRequestException extends Error {
   constructor(message: string) {
@@ -16,5 +24,5 @@ class BadRequestException extends Error {
   }
 }
 
-export { NotFoundException, BadRequestException };
+export { NotFoundException, BadRequestException, UnauthorizedException };
 

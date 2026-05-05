@@ -1,8 +1,9 @@
 'use client';
 
 import { useRef } from 'react';
-import { Upload, X, Heart } from 'lucide-react';
+import { Star, Trash2, Camera } from 'lucide-react';
 import Image from 'next/image';
+import { cn } from '@/lib/utils';
 
 export type ExistingPicture = { url: string; isAvatar: boolean };
 
@@ -60,69 +61,106 @@ export function PhotoGallery({ state, presignedUrls, onChange }: PhotoGalleryPro
     e.target.value = '';
   };
 
+  type PhotoItem =
+    | { kind: 'existing'; pic: ExistingPicture }
+    | { kind: 'new'; file: File; index: number; isAvatar: boolean };
+
+  const photos: PhotoItem[] = [
+    ...state.existing.map((pic) => ({ kind: 'existing' as const, pic })),
+    ...state.newFiles.map((file, index) => ({
+      kind: 'new' as const,
+      file,
+      index,
+      isAvatar: state.newAvatarIndex === index && !state.existing.find((p) => p.isAvatar),
+    })),
+  ];
+
+  const avatarIdx = photos.findIndex((p) =>
+    p.kind === 'existing' ? p.pic.isAvatar : p.isAvatar,
+  );
+  const isAvatar = (i: number) => i === avatarIdx;
+
   return (
     <div>
-      <p className="text-sm text-gray-500 mb-4">
-        Click a photo to set it as your profile picture. Up to 5 photos.
-      </p>
-      <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
-        {state.existing.map((pic) => (
-          <div
-            key={pic.url}
-            className="relative group aspect-square rounded-lg overflow-hidden border-2 cursor-pointer"
-            style={{ borderColor: pic.isAvatar ? '#ec4899' : 'transparent' }}
-            onClick={() => setExistingAsAvatar(pic.url)}
-          >
-            <Image src={presignedUrls[pic.url] ?? pic.url} alt="Profile photo" fill className="object-cover" />
-            {pic.isAvatar && (
-              <div className="absolute top-1 left-1 bg-pink-500 text-white px-1.5 py-0.5 rounded text-xs font-medium">
-                <Heart className="w-3 h-3 inline mr-0.5" />Profile
-              </div>
-            )}
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); removeExisting(pic.url); }}
-              className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
-            >
-              <X className="w-3 h-3" />
-            </button>
-          </div>
-        ))}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        onChange={handleFileChange}
+      />
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        {photos.map((item, i) => {
+          const avatar = isAvatar(i);
+          const src =
+            item.kind === 'existing'
+              ? (presignedUrls[item.pic.url] ?? item.pic.url)
+              : URL.createObjectURL(item.file);
 
-        {state.newFiles.map((file, index) => {
-          const isAvatar = state.newAvatarIndex === index && !state.existing.find((p) => p.isAvatar);
           return (
             <div
-              key={index}
-              className="relative group aspect-square rounded-lg overflow-hidden border-2 cursor-pointer"
-              style={{ borderColor: isAvatar ? '#ec4899' : 'transparent' }}
-              onClick={() => setNewAsAvatar(index)}
+              key={item.kind === 'existing' ? item.pic.url : `new-${item.index}`}
+              className={cn('relative group rounded-2xl overflow-hidden bg-zinc-100', {
+                'col-span-2 aspect-[3/4] ring-2 ring-rose-400 order-first': avatar,
+                'col-span-1 aspect-[3/4]': !avatar,
+              })}
             >
-              <Image src={URL.createObjectURL(file)} alt={`New photo ${index + 1}`} fill className="object-cover" />
-              {isAvatar && (
-                <div className="absolute top-1 left-1 bg-pink-500 text-white px-1.5 py-0.5 rounded text-xs font-medium">
-                  <Heart className="w-3 h-3 inline mr-0.5" />Profile
+              <Image src={src} alt="Profile photo" fill className="object-cover" />
+
+              {avatar && (
+                <div className="absolute top-3 left-3 bg-rose-400 text-white text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider">
+                  Main
                 </div>
               )}
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); removeNew(index); }}
-                className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
-              >
-                <X className="w-3 h-3" />
-              </button>
+
+              <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                {!avatar && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      item.kind === 'existing'
+                        ? setExistingAsAvatar(item.pic.url)
+                        : setNewAsAvatar(item.index)
+                    }
+                    title="Set as main"
+                    className="bg-white/90 p-2 rounded-full text-rose-500 hover:bg-white transition-colors"
+                  >
+                    <Star className="w-4 h-4" />
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() =>
+                    item.kind === 'existing'
+                      ? removeExisting(item.pic.url)
+                      : removeNew(item.index)
+                  }
+                  title="Remove photo"
+                  className="bg-white/90 p-2 rounded-full text-zinc-600 hover:bg-white transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           );
         })}
 
         {total < 5 && (
-          <label className="aspect-square rounded-lg border-2 border-dashed border-gray-300 hover:border-pink-400 transition-colors cursor-pointer flex flex-col items-center justify-center">
-            <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
-            <Upload className="w-7 h-7 text-gray-400 mb-1" />
-            <span className="text-xs text-gray-500">Upload</span>
-          </label>
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            className={`aspect-[3/4] rounded-2xl border-2 border-dashed border-zinc-200 flex flex-col items-center justify-center gap-1.5 bg-white/50 hover:border-emerald-400 hover:bg-emerald-50/30 transition-all cursor-pointer ${
+              total === 0 ? 'col-span-2' : 'col-span-1'
+            }`}
+          >
+            <Camera className="w-6 h-6 text-zinc-300" />
+            <span className="text-[11px] text-zinc-400 font-medium">Add Photo</span>
+          </div>
         )}
       </div>
+      <p className="text-xs text-zinc-400 mt-3">
+        Click a photo to set it as your profile picture. Up to 5 photos.
+      </p>
     </div>
   );
 }

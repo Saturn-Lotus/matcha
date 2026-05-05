@@ -67,6 +67,7 @@
   --color-link-alt-hover: var(--color-link-alt-hover);
   --color-glass-bg: var(--color-glass-bg);
   --color-black: var(--color-black);
+  --color-settings-bg: var(--color-settings-bg);
 }
 
 :root {
@@ -133,6 +134,7 @@
   --color-link-alt-hover: #166534;
   --color-card-border: #ffe4e6;
   --color-glass-bg: rgba(255, 255, 255, 0.85);
+  --color-settings-bg: #fbf9f8;
   --glass-blur: 10px;
   --color-black: #000;
 }

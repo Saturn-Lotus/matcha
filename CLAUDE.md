@@ -86,14 +86,22 @@ A rule of thumb: if you find yourself writing `bcrypt`, `db.transaction`, or raw
 - Use zustand for state management if needed — avoid prop drilling but do not overuse global state.
 - The app must be compatible with the latest versions of Chrome and Firefox — no experimental features that lack broad support.
 - The app should be responsive and mobile-friendly, focus on mobile-first design.
+- always use Next.js Image component for images, never raw `<img>` tags.
+- alwasy use classnames (`cn`) for conditional classes, never template literals or manual string concatenation.
 
 
 ## Code Style
 - Use `async/await` — no raw `.then()` chains.
 - Prefer named exports. Default exports only for Next.js page/route conventions.
-- Do not add comments unless the logic is non-obvious.
+- Do not add comments unless the logic is non-obvious. including but not limited to jsx comments
 - Do not add error handling for scenarios that cannot happen.
 - TypeScript strict mode is on — no `any` unless absolutely necessary.
+
+## PRD maintenance
+- Product specs live in `/prds` (gitignored, local only). Each file maps one subject requirement.
+- When building or modifying code that implements a PRD, you MUST update the relevant PRD in the same change — reflect new scope, data model, API, or acceptance-criteria deltas. The PRD is the canonical product spec; let it drift and it becomes lies.
+- If work spans multiple PRDs, update each one touched.
+- If a change has no matching PRD, create one in `/prds` before (or alongside) the code.
 
 ## Commands
 | Task | Command |

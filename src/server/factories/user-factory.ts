@@ -4,10 +4,9 @@ import { UserService } from '@/server/services/user';
 import { IStorage } from '@/server/storage/base';
 import { getStorage } from './storage-factory';
 import { getAuthService } from './auth-factory';
+import { getPostgresDB } from './db-factory';
 
-const getPostgresDB = (): PostgresDB => {
-  return new PostgresDB();
-};
+
 
 export const getUserRepository = (db?: PostgresDB) => {
   if (!db) {
