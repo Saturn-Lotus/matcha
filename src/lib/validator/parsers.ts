@@ -98,7 +98,10 @@ export class StringParser implements Parser<string> {
         const result = zxcvbn(value);
         if (result.score < 2) {
           const masked = '*'.repeat(value.length);
-          throw new CheckValidationError(masked, 'password is too common or contains dictionary words');
+          throw new CheckValidationError(
+            masked,
+            'password is too common or contains dictionary words',
+          );
         }
       },
     ]);

@@ -74,17 +74,24 @@ export class MinioStorage implements IStorage {
     return url;
   }
 
-  async getFile(filePath: string): Promise<{ buffer: Buffer; contentType: string }> {
+  async getFile(
+    filePath: string,
+  ): Promise<{ buffer: Buffer; contentType: string }> {
     const [stat, stream] = await Promise.all([
       this.client.statObject(this.bucket, filePath),
       this.client.getObject(this.bucket, filePath),
     ]);
-    const contentType = stat.metaData?.['content-type'] ?? 'application/octet-stream';
+    const contentType =
+      stat.metaData?.['content-type'] ?? 'application/octet-stream';
     const chunks: Buffer[] = [];
-    return new Promise<{ buffer: Buffer; contentType: string }>((resolve, reject) => {
-      stream.on('data', (chunk) => chunks.push(chunk));
-      stream.on('end', () => resolve({ buffer: Buffer.concat(chunks), contentType }));
-      stream.on('error', reject);
-    });
+    return new Promise<{ buffer: Buffer; contentType: string }>(
+      (resolve, reject) => {
+        stream.on('data', (chunk) => chunks.push(chunk));
+        stream.on('end', () =>
+          resolve({ buffer: Buffer.concat(chunks), contentType }),
+        );
+        stream.on('error', reject);
+      },
+    );
   }
 }

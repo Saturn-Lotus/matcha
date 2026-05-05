@@ -25,4 +25,3 @@ class BadRequestException extends Error {
 }
 
 export { NotFoundException, BadRequestException, UnauthorizedException };
-

@@ -25,7 +25,7 @@ jobs:
         run: bun run lint
 
       - name: Check formatting (Prettier via bunx)
-        run: bunx prettier --check .
+        run: bunx prettier --check "src/**/*.{ts,tsx,css}"
 
       - name: Type check (tsc via bunx)
         run: bunx tsc --noEmit

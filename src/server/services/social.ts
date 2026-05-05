@@ -37,7 +37,7 @@ export class SocialService {
 
   recordView = async (viewerId: string, viewedUserId: string) => {
     const skipSelfView = viewerId === viewedUserId;
-    
+
     if (skipSelfView) return;
 
     await this.socialRepository.recordView(viewerId, viewedUserId);

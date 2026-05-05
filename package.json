@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
-    "format": "prettier --write .",
+    "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
     "db:create": "node-pg-migrate create",
     "db:migrate": "node-pg-migrate up ",
     "cy:open": "cypress open"

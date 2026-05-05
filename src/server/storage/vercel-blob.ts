@@ -40,7 +40,9 @@ export class VercelBlobStorage implements IStorage {
     return blobMetadata.url;
   }
 
-  async getFile(filePath: string): Promise<{ buffer: Buffer; contentType: string }> {
+  async getFile(
+    filePath: string,
+  ): Promise<{ buffer: Buffer; contentType: string }> {
     const blobMetadata = await head(filePath);
     const res = await fetch(blobMetadata.downloadUrl);
     if (!res.ok) {

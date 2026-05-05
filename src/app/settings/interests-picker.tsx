@@ -6,9 +6,24 @@ import { X } from 'lucide-react';
 import { useState } from 'react';
 
 const POPULAR_INTERESTS = [
-  'Travel', 'Photography', 'Hiking', 'Coffee', 'Dogs', 'Music',
-  'Fitness', 'Reading', 'Cooking', 'Art', 'Gaming', 'Yoga',
-  'Vegan', 'Geek', 'Piercing', 'Tattoos', 'Dancing', 'Movies',
+  'Travel',
+  'Photography',
+  'Hiking',
+  'Coffee',
+  'Dogs',
+  'Music',
+  'Fitness',
+  'Reading',
+  'Cooking',
+  'Art',
+  'Gaming',
+  'Yoga',
+  'Vegan',
+  'Geek',
+  'Piercing',
+  'Tattoos',
+  'Dancing',
+  'Movies',
 ];
 
 const POPULAR_LOWER = POPULAR_INTERESTS.map((i) => i.toLowerCase());
@@ -87,7 +102,12 @@ export function InterestsPicker({ selected, onChange }: InterestsPickerProps) {
           }}
           className="flex-1"
         />
-        <Button type="button" variant="outline" onClick={addCustom} className="border-gray-300">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={addCustom}
+          className="border-gray-300"
+        >
           Add
         </Button>
       </div>

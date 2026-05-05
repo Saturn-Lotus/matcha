@@ -39,7 +39,10 @@ export class UserRepository extends BaseRepositoryClass<User> {
     return user;
   }
 
-  async profileCreate(item: CreateUserProfile, db: PostgresDB = this.db): Promise<UserProfile> {
+  async profileCreate(
+    item: CreateUserProfile,
+    db: PostgresDB = this.db,
+  ): Promise<UserProfile> {
     const rows = await db.query<UserProfile>(
       `Insert INTO ${this.userProfilesTable}
       (
@@ -75,7 +78,10 @@ export class UserRepository extends BaseRepositoryClass<User> {
     return profile;
   }
 
-  async createWithProfile({ user, profile }: CreateUserWithProfileInput): Promise<User> {
+  async createWithProfile({
+    user,
+    profile,
+  }: CreateUserWithProfileInput): Promise<User> {
     return this.db.transaction(async (txDB) => {
       const newUser = await this.create(user, txDB);
       await this.profileCreate({ ...profile, userId: newUser.id }, txDB);

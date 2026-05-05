@@ -19,7 +19,11 @@ interface PhotoGalleryProps {
   onChange: (state: PicturesState) => void;
 }
 
-export function PhotoGallery({ state, presignedUrls, onChange }: PhotoGalleryProps) {
+export function PhotoGallery({
+  state,
+  presignedUrls,
+  onChange,
+}: PhotoGalleryProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const total = state.existing.length + state.newFiles.length;
 
@@ -50,7 +54,8 @@ export function PhotoGallery({ state, presignedUrls, onChange }: PhotoGalleryPro
     const next = state.newFiles.filter((_, i) => i !== index);
     let newAvatarIndex = state.newAvatarIndex;
     if (newAvatarIndex === index) newAvatarIndex = null;
-    else if (newAvatarIndex !== null && newAvatarIndex > index) newAvatarIndex--;
+    else if (newAvatarIndex !== null && newAvatarIndex > index)
+      newAvatarIndex--;
     onChange({ ...state, newFiles: next, newAvatarIndex });
   };
 
@@ -71,7 +76,9 @@ export function PhotoGallery({ state, presignedUrls, onChange }: PhotoGalleryPro
       kind: 'new' as const,
       file,
       index,
-      isAvatar: state.newAvatarIndex === index && !state.existing.find((p) => p.isAvatar),
+      isAvatar:
+        state.newAvatarIndex === index &&
+        !state.existing.find((p) => p.isAvatar),
     })),
   ];
 
@@ -100,13 +107,24 @@ export function PhotoGallery({ state, presignedUrls, onChange }: PhotoGalleryPro
 
           return (
             <div
-              key={item.kind === 'existing' ? item.pic.url : `new-${item.index}`}
-              className={cn('relative group rounded-2xl overflow-hidden bg-zinc-100', {
-                'col-span-2 aspect-[3/4] ring-2 ring-rose-400 order-first': avatar,
-                'col-span-1 aspect-[3/4]': !avatar,
-              })}
+              key={
+                item.kind === 'existing' ? item.pic.url : `new-${item.index}`
+              }
+              className={cn(
+                'relative group rounded-2xl overflow-hidden bg-zinc-100',
+                {
+                  'col-span-2 aspect-[3/4] ring-2 ring-rose-400 order-first':
+                    avatar,
+                  'col-span-1 aspect-[3/4]': !avatar,
+                },
+              )}
             >
-              <Image src={src} alt="Profile photo" fill className="object-cover" />
+              <Image
+                src={src}
+                alt="Profile photo"
+                fill
+                className="object-cover"
+              />
 
               {avatar && (
                 <div className="absolute top-3 left-3 bg-rose-400 text-white text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider">
@@ -154,7 +172,9 @@ export function PhotoGallery({ state, presignedUrls, onChange }: PhotoGalleryPro
             }`}
           >
             <Camera className="w-6 h-6 text-zinc-300" />
-            <span className="text-[11px] text-zinc-400 font-medium">Add Photo</span>
+            <span className="text-[11px] text-zinc-400 font-medium">
+              Add Photo
+            </span>
           </div>
         )}
       </div>

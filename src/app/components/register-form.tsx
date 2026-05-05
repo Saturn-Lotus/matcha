@@ -78,14 +78,20 @@ export const RegisterForm = () => {
 
       const validationResult = registerResponseSchema.safeParse(response);
       if (!validationResult.success) {
-        setError('Registration completed but something went wrong. Please sign in.');
+        setError(
+          'Registration completed but something went wrong. Please sign in.',
+        );
         setIsLoading(false);
         return;
       }
 
       setSuccess(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to create account. Please try again.');
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Unable to create account. Please try again.',
+      );
     } finally {
       setIsLoading(false);
     }

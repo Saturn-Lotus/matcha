@@ -2,7 +2,12 @@
 
 import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import { User, Mail, Info } from 'lucide-react';
 
@@ -19,8 +24,14 @@ interface UserInfoTabProps {
   onChange: (fields: UserInfoFields) => void;
 }
 
-export function UserInfoTab({ fields, currentEmail, submitting, onChange }: UserInfoTabProps) {
-  const set = (patch: Partial<UserInfoFields>) => onChange({ ...fields, ...patch });
+export function UserInfoTab({
+  fields,
+  currentEmail,
+  submitting,
+  onChange,
+}: UserInfoTabProps) {
+  const set = (patch: Partial<UserInfoFields>) =>
+    onChange({ ...fields, ...patch });
 
   return (
     <div className="space-y-6">
@@ -67,15 +78,19 @@ export function UserInfoTab({ fields, currentEmail, submitting, onChange }: User
             />
             {fields.email !== currentEmail && (
               <p className="text-xs text-amber-600 flex items-center gap-1 mt-1">
-                <Info className="w-3 h-3" />
-                A verification link will be sent to confirm the new address.
+                <Info className="w-3 h-3" />A verification link will be sent to
+                confirm the new address.
               </p>
             )}
           </div>
         </CardContent>
       </Card>
 
-      <Button type="submit" disabled={submitting} className="w-full strawberry-matcha-btn hover:opacity-90 text-white">
+      <Button
+        type="submit"
+        disabled={submitting}
+        className="w-full strawberry-matcha-btn hover:opacity-90 text-white"
+      >
         {submitting ? 'Saving...' : 'Save Changes'}
       </Button>
     </div>

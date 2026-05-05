@@ -55,7 +55,11 @@ export function LoginForm() {
 
       window.location.href = '/';
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to sign in. Please try again.');
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Unable to sign in. Please try again.',
+      );
     } finally {
       setIsLoading(false);
     }

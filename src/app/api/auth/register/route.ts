@@ -26,7 +26,11 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   const auth = getAuthService();
   await auth.sendVerificationEmail(data.email, user.id);
 
-  const session = await auth.createSession(user.id, user.email, { isVerified: false, isProfileComplete: false, avatarUrl: null });
+  const session = await auth.createSession(user.id, user.email, {
+    isVerified: false,
+    isProfileComplete: false,
+    avatarUrl: null,
+  });
   const cookieStore = await cookies();
   cookieStore.set('session', session);
 

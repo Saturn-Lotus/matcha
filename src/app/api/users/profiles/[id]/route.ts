@@ -41,7 +41,10 @@ export const POST = withErrorHandler(
     const cookieStore = await cookies();
     const currentToken = cookieStore.get('session')?.value!;
     const authService = getAuthService();
-    const newSession = await authService.refreshSession(currentToken, { isProfileComplete: true, avatarUrl: profile.avatarUrl ?? null });
+    const newSession = await authService.refreshSession(currentToken, {
+      isProfileComplete: true,
+      avatarUrl: profile.avatarUrl ?? null,
+    });
     cookieStore.set('session', newSession);
 
     return NextResponse.json(profile, { status: 201 });

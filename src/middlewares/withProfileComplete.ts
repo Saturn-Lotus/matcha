@@ -17,7 +17,12 @@ const INCOMPLETE_PROFILE_ALLOWED_ROUTES = [
 ];
 
 const isAllowed = (path: string, routes: string[]) =>
-  routes.some((r) => path === r || path.startsWith(r + '/') || (r.endsWith('/') && path.startsWith(r)));
+  routes.some(
+    (r) =>
+      path === r ||
+      path.startsWith(r + '/') ||
+      (r.endsWith('/') && path.startsWith(r)),
+  );
 
 const DISABLE_AUTH = process.env.DISABLE_AUTH === 'true';
 
@@ -37,7 +42,9 @@ export const withProfileComplete: MiddlewareFactory = (next) => {
 
     if (!isVerified) {
       if (!isAllowed(path, UNVERIFIED_ALLOWED_ROUTES)) {
-        return NextResponse.redirect(new URL('/pending-verification', request.nextUrl));
+        return NextResponse.redirect(
+          new URL('/pending-verification', request.nextUrl),
+        );
       }
     } else if (!isProfileComplete) {
       if (!isAllowed(path, INCOMPLETE_PROFILE_ALLOWED_ROUTES)) {

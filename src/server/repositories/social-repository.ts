@@ -14,7 +14,7 @@ export interface UserLike {
   likerUserId: string;
   likedUserId: string;
   likedAt: Date;
-  
+
   firstName?: string;
   lastName?: string;
   avatarUrl?: string | null;

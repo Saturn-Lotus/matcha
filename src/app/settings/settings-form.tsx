@@ -37,7 +37,9 @@ export function SettingsForm({
   presignedUrls,
 }: SettingsFormProps) {
   const [gender, setGender] = useState(profile.gender || '');
-  const [sexualPreference, setSexualPreference] = useState(profile.sexualPreference || '');
+  const [sexualPreference, setSexualPreference] = useState(
+    profile.sexualPreference || '',
+  );
   const [bio, setBio] = useState(profile.bio || '');
   const [interests, setInterests] = useState<string[]>(profile.interests || []);
   const [firstName, setFirstName] = useState(profile.firstName || '');
@@ -81,14 +83,18 @@ export function SettingsForm({
       if (email && email !== currentEmail) formData.append('email', email);
       if (bio) formData.append('bio', bio);
       if (gender) formData.append('gender', gender);
-      if (sexualPreference) formData.append('sexualPreference', sexualPreference);
+      if (sexualPreference)
+        formData.append('sexualPreference', sexualPreference);
       interests.forEach((i) => formData.append('interests', i));
 
       const existingAvatar = pictures.existing.find((p) => p.isAvatar);
       if (existingAvatar) {
         formData.append('avatar', existingAvatar.url);
       } else if (pictures.newAvatarIndex !== null) {
-        formData.append('avatar', pictures.newFiles[pictures.newAvatarIndex].name);
+        formData.append(
+          'avatar',
+          pictures.newFiles[pictures.newAvatarIndex].name,
+        );
       }
 
       const originalUrls = profile.pictures || [];
@@ -134,7 +140,11 @@ export function SettingsForm({
     'rounded-[2.5rem] p-8 backdrop-blur-xl bg-white/70 border border-white/40 shadow-[0_8px_40px_rgba(255,141,161,0.08)]';
 
   const navItems = [
-    { id: 'profile', icon: <UserCircle className="w-4 h-4" />, label: 'Profile Details' },
+    {
+      id: 'profile',
+      icon: <UserCircle className="w-4 h-4" />,
+      label: 'Profile Details',
+    },
     { id: 'pictures', icon: <Images className="w-4 h-4" />, label: 'Pictures' },
     { id: 'account', icon: <User className="w-4 h-4" />, label: 'Account' },
     { id: 'location', icon: <MapPin className="w-4 h-4" />, label: 'Location' },
@@ -162,7 +172,9 @@ export function SettingsForm({
 
         <div className="flex-1 space-y-8">
           <section id="profile" className={sectionCls}>
-            <h2 className="text-2xl font-bold text-rose-500 mb-1">Profile Details</h2>
+            <h2 className="text-2xl font-bold text-rose-500 mb-1">
+              Profile Details
+            </h2>
             <p className="text-zinc-500 text-sm mb-6">
               Share a little more about yourself to find your perfect blend.
             </p>
@@ -217,15 +229,23 @@ export function SettingsForm({
           </section>
 
           <section id="pictures" className={sectionCls}>
-            <h2 className="text-2xl font-bold text-rose-500 mb-1">Manage Pictures</h2>
+            <h2 className="text-2xl font-bold text-rose-500 mb-1">
+              Manage Pictures
+            </h2>
             <p className="text-zinc-500 text-sm mb-6">
               The first picture is your primary profile photo.
             </p>
-            <PhotoGallery state={pictures} presignedUrls={presignedUrls} onChange={setPictures} />
+            <PhotoGallery
+              state={pictures}
+              presignedUrls={presignedUrls}
+              onChange={setPictures}
+            />
           </section>
 
           <section id="account" className={sectionCls}>
-            <h2 className="text-2xl font-bold text-rose-500 mb-1">Account Settings</h2>
+            <h2 className="text-2xl font-bold text-rose-500 mb-1">
+              Account Settings
+            </h2>
             <p className="text-zinc-500 text-sm mb-6">
               Keep your contact information up to date.
             </p>
@@ -272,7 +292,11 @@ export function SettingsForm({
             <p className="text-zinc-500 text-sm mb-6">
               Manage how you connect with people nearby.
             </p>
-            <LocationTab userId={userId} location={location} onChange={setLocation} />
+            <LocationTab
+              userId={userId}
+              location={location}
+              onChange={setLocation}
+            />
           </section>
 
           <div className="flex justify-end pb-10">

@@ -33,7 +33,13 @@ interface MapPreviewProps {
   onDragEnd: (e: google.maps.MapMouseEvent) => void;
 }
 
-function MapPreview({ center, zoom, markerPosition, draggable, onDragEnd }: MapPreviewProps) {
+function MapPreview({
+  center,
+  zoom,
+  markerPosition,
+  draggable,
+  onDragEnd,
+}: MapPreviewProps) {
   const { isLoaded } = useJsApiLoader({ googleMapsApiKey: MAPS_API_KEY });
 
   if (!isLoaded) return null;
@@ -43,10 +49,18 @@ function MapPreview({ center, zoom, markerPosition, draggable, onDragEnd }: MapP
       mapContainerStyle={MAP_CONTAINER_STYLE}
       center={center}
       zoom={zoom}
-      options={{ streetViewControl: false, mapTypeControl: false, fullscreenControl: false }}
+      options={{
+        streetViewControl: false,
+        mapTypeControl: false,
+        fullscreenControl: false,
+      }}
     >
       {markerPosition && (
-        <Marker position={markerPosition} draggable={draggable} onDragEnd={onDragEnd} />
+        <Marker
+          position={markerPosition}
+          draggable={draggable}
+          onDragEnd={onDragEnd}
+        />
       )}
     </GoogleMap>
   );
@@ -62,7 +76,9 @@ export function LocationTab({ userId, location, onChange }: LocationTabProps) {
   const [loading, setLoading] = useState(true);
   const [locating, setLocating] = useState(false);
   const onChangeRef = useRef(onChange);
-  useEffect(() => { onChangeRef.current = onChange; });
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  });
 
   useEffect(() => {
     apiClient
@@ -83,7 +99,8 @@ export function LocationTab({ userId, location, onChange }: LocationTabProps) {
       .finally(() => setLoading(false));
   }, [userId]);
 
-  const set = (patch: Partial<LocationState>) => onChange({ ...location, ...patch });
+  const set = (patch: Partial<LocationState>) =>
+    onChange({ ...location, ...patch });
 
   const handleLocateMe = () => {
     if (!navigator.geolocation) {
@@ -95,7 +112,12 @@ export function LocationTab({ userId, location, onChange }: LocationTabProps) {
       async (position) => {
         const lat = position.coords.latitude;
         const lon = position.coords.longitude;
-        set({ latitude: lat, longitude: lon, locationType: 'gps', consentGiven: true });
+        set({
+          latitude: lat,
+          longitude: lon,
+          locationType: 'gps',
+          consentGiven: true,
+        });
 
         try {
           const res = await fetch(
@@ -113,7 +135,9 @@ export function LocationTab({ userId, location, onChange }: LocationTabProps) {
             neighborhood: addr.neighbourhood || addr.suburb || '',
           });
         } catch {
-          toast.warning('Could not reverse geocode your location. Coordinates have been saved, but city and neighborhood are unavailable.');
+          toast.warning(
+            'Could not reverse geocode your location. Coordinates have been saved, but city and neighborhood are unavailable.',
+          );
         }
 
         setLocating(false);
@@ -154,8 +178,8 @@ export function LocationTab({ userId, location, onChange }: LocationTabProps) {
           className="mt-1 h-4 w-4 rounded border-gray-300 accent-pink-500"
         />
         <span className="text-sm text-gray-600">
-          I consent to sharing my location to enable nearby matching features. Your exact
-          coordinates are never shown to other users.
+          I consent to sharing my location to enable nearby matching features.
+          Your exact coordinates are never shown to other users.
         </span>
       </label>
 
@@ -163,8 +187,8 @@ export function LocationTab({ userId, location, onChange }: LocationTabProps) {
         <div className="flex items-start gap-2 p-3 bg-amber-50 rounded-lg border border-amber-200">
           <AlertCircle className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
           <p className="text-sm text-amber-700">
-            Location sharing is required for matching. You can provide your city manually if you
-            prefer not to use GPS.
+            Location sharing is required for matching. You can provide your city
+            manually if you prefer not to use GPS.
           </p>
         </div>
       )}
@@ -181,7 +205,7 @@ export function LocationTab({ userId, location, onChange }: LocationTabProps) {
                 'flex-1 py-2 px-4 rounded-lg text-sm font-medium border transition-colors',
                 location.locationType === type
                   ? 'bg-pink-50 border-pink-300 text-pink-700'
-                  : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
+                  : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300',
               )}
             >
               {type === 'gps' ? 'GPS (Automatic)' : 'Manual'}

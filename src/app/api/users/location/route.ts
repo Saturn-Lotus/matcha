@@ -9,7 +9,7 @@ export const GET = withErrorHandler(async () => {
   const headersList = await headers();
   const userId = headersList.get('x-user-id');
   if (!userId) {
-   throw new UnauthorizedException('Unauthorized');
+    throw new UnauthorizedException('Unauthorized');
   }
 
   const service = getLocationService();

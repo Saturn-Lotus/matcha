@@ -6,8 +6,6 @@ import { getStorage } from './storage-factory';
 import { getAuthService } from './auth-factory';
 import { getPostgresDB } from './db-factory';
 
-
-
 export const getUserRepository = (db?: PostgresDB) => {
   if (!db) {
     db = getPostgresDB();

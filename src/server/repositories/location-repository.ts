@@ -27,7 +27,10 @@ export class LocationRepository {
     return rows[0] ?? null;
   }
 
-  async upsert(userId: string, data: UpsertLocationInput): Promise<UserLocation> {
+  async upsert(
+    userId: string,
+    data: UpsertLocationInput,
+  ): Promise<UserLocation> {
     const rows = await this.db.query<UserLocation>(
       `INSERT INTO user_locations
          ("userId", "latitude", "longitude", "city", "neighborhood", "locationType", "consentGiven", "location")
@@ -43,7 +46,15 @@ export class LocationRepository {
          "updatedAt"     = CURRENT_TIMESTAMP
        RETURNING "userId", "latitude", "longitude", "city", "neighborhood",
                  "locationType", "consentGiven", "createdAt", "updatedAt";`,
-      [userId, data.latitude, data.longitude, data.city ?? null, data.neighborhood ?? null, data.locationType, data.consentGiven],
+      [
+        userId,
+        data.latitude,
+        data.longitude,
+        data.city ?? null,
+        data.neighborhood ?? null,
+        data.locationType,
+        data.consentGiven,
+      ],
     );
     const location = rows[0];
     if (!location) throw new Error('Location upsert failed');

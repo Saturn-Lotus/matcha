@@ -1,6 +1,10 @@
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { getUserService, getUserRepository, getStorage } from '@/server/factories';
+import {
+  getUserService,
+  getUserRepository,
+  getStorage,
+} from '@/server/factories';
 import { EditProfileForm } from './edit-profile-form';
 import { SocialPanels } from './social-panels';
 import { Heart } from 'lucide-react';
@@ -25,7 +29,9 @@ export default async function ProfilePage() {
   if (!profile) redirect('/onboarding');
 
   const pictureKeys = profile.pictures ?? [];
-  const resolvedUrls = await Promise.all(pictureKeys.map((key) => storage.getFileUrl(key)));
+  const resolvedUrls = await Promise.all(
+    pictureKeys.map((key) => storage.getFileUrl(key)),
+  );
   const presignedUrls: Record<string, string> = Object.fromEntries(
     pictureKeys.map((key, i) => [key, resolvedUrls[i]]),
   );

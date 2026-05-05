@@ -171,9 +171,7 @@ const SetNewPasswordCard = ({ token, id }: SetNewPasswordCardProps) => {
     try {
       Su.string().password().parse(password);
     } catch {
-      setError(
-        'Password must meet security requirements',
-      );
+      setError('Password must meet security requirements');
       setIsLoading(false);
       return;
     }
@@ -194,7 +192,11 @@ const SetNewPasswordCard = ({ token, id }: SetNewPasswordCardProps) => {
       setSuccess(true);
       setTimeout(() => router.push('/login'), 2000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to reset password. Please try again.');
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Unable to reset password. Please try again.',
+      );
     } finally {
       setIsLoading(false);
     }
@@ -217,11 +219,7 @@ const SetNewPasswordCard = ({ token, id }: SetNewPasswordCardProps) => {
   }
 
   return (
-    <form
-      ref={formRef}
-      onSubmit={handleSubmit}
-      className="flex flex-col gap-4"
-    >
+    <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-4">
       {error && (
         <div className="flex items-center gap-2 p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg animate-in fade-in slide-in-from-top-1 duration-150">
           <AlertCircle className="h-4 w-4 shrink-0" />
@@ -234,9 +232,7 @@ const SetNewPasswordCard = ({ token, id }: SetNewPasswordCardProps) => {
         type="password"
         placeholder="New password"
         icon={<Lock className="h-5 w-5 text-gray-400" />}
-        handleValidate={(value) =>
-          validateField(value, Su.string().password())
-        }
+        handleValidate={(value) => validateField(value, Su.string().password())}
         errorMessage="Password must be at least 8 characters, contain at least one uppercase letter, one lowercase letter, one number"
       />
       <FormInputRow
@@ -308,7 +304,11 @@ const ResetPasswordForm = () => {
       });
       setSent(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to send reset link. Please try again.');
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Unable to send reset link. Please try again.',
+      );
     } finally {
       setLoading(false);
     }

@@ -14,7 +14,12 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { apiClient } from '@/lib/api';
 
-const NO_HEADER_ROUTES = ['/login', '/register', '/reset-password', '/onboarding'];
+const NO_HEADER_ROUTES = [
+  '/login',
+  '/register',
+  '/reset-password',
+  '/onboarding',
+];
 
 interface NavigationBarProps {
   isAuthenticated: boolean;
@@ -50,7 +55,11 @@ function AvatarImage({ src, seed }: { src?: string | null; seed?: string }) {
   );
 }
 
-export const NavigationBar = ({ isAuthenticated, avatarSrc, avatarSeed }: NavigationBarProps) => {
+export const NavigationBar = ({
+  isAuthenticated,
+  avatarSrc,
+  avatarSeed,
+}: NavigationBarProps) => {
   const pathName = usePathname();
   const router = useRouter();
 
@@ -86,7 +95,10 @@ export const NavigationBar = ({ isAuthenticated, avatarSrc, avatarSeed }: Naviga
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-44">
               <DropdownMenuItem asChild>
-                <Link href="/settings" className="flex items-center gap-2 cursor-pointer text-gray-700 hover:text-pink-600">
+                <Link
+                  href="/settings"
+                  className="flex items-center gap-2 cursor-pointer text-gray-700 hover:text-pink-600"
+                >
                   <Settings className="w-4 h-4" />
                   Settings
                 </Link>

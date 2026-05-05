@@ -4,7 +4,8 @@ import { ApiError } from './types';
 const USER_FRIENDLY_MESSAGES: Record<string, string> = {
   ValidationError: 'Please check your information and try again',
   NotFoundError: 'The requested resource was not found',
-  UnauthorizedError: 'Invalid credentials. Please check your username and password',
+  UnauthorizedError:
+    'Invalid credentials. Please check your username and password',
   ForbiddenError: 'You do not have permission to access this resource',
   ConflictError: 'This information already exists in our system',
   NetworkError: 'Unable to connect. Please check your internet connection',
@@ -76,8 +77,11 @@ class ApiClient {
   }
 
   async patch<T>(url: string, data?: unknown): Promise<T> {
-    const headers = data instanceof FormData ? { 'Content-Type': undefined } : {};
-    const response: AxiosResponse<T> = await this.client.patch(url, data, { headers });
+    const headers =
+      data instanceof FormData ? { 'Content-Type': undefined } : {};
+    const response: AxiosResponse<T> = await this.client.patch(url, data, {
+      headers,
+    });
     return response.data;
   }
 

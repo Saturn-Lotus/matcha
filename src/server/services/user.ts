@@ -66,7 +66,9 @@ export class UserService {
     return profile;
   };
 
-  getAvatarFile = async (userId: string): Promise<{ buffer: Buffer; contentType: string }> => {
+  getAvatarFile = async (
+    userId: string,
+  ): Promise<{ buffer: Buffer; contentType: string }> => {
     const profile = await this.getProfileByUserId(userId);
     if (!profile.avatarUrl) {
       throw new NotFoundException('Avatar not found');
@@ -228,7 +230,8 @@ export class UserService {
       updateData.firstName = profileData.firstName;
     if (profileData.lastName !== undefined)
       updateData.lastName = profileData.lastName;
-    if (profileData.gender !== undefined) updateData.gender = profileData.gender;
+    if (profileData.gender !== undefined)
+      updateData.gender = profileData.gender;
     if (profileData.sexualPreference !== undefined)
       updateData.sexualPreference = profileData.sexualPreference;
     if (profileData.bio !== undefined) updateData.bio = profileData.bio;

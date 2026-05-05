@@ -10,4 +10,3 @@ export type ApiResponse<T> = {
   data?: T;
   error?: ApiError['error'];
 };
-

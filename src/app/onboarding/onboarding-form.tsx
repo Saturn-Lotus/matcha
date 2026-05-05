@@ -3,18 +3,40 @@ import { useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/app/components/ui/button';
 import { Label } from '@/app/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/app/components/ui/card';
 import { Upload, X, Heart } from 'lucide-react';
 import Image from 'next/image';
 import { toast } from 'sonner';
 
 const POPULAR_INTERESTS = [
-  'Travel', 'Photography', 'Hiking', 'Coffee', 'Dogs', 'Music',
-  'Fitness', 'Reading', 'Cooking', 'Art', 'Gaming', 'Yoga',
-  'Vegan', 'Geek', 'Piercing', 'Tattoos', 'Dancing', 'Movies',
+  'Travel',
+  'Photography',
+  'Hiking',
+  'Coffee',
+  'Dogs',
+  'Music',
+  'Fitness',
+  'Reading',
+  'Cooking',
+  'Art',
+  'Gaming',
+  'Yoga',
+  'Vegan',
+  'Geek',
+  'Piercing',
+  'Tattoos',
+  'Dancing',
+  'Movies',
 ];
 
-const POPULAR_INTERESTS_LOWERCASE = POPULAR_INTERESTS.map((i) => i.toLowerCase());
+const POPULAR_INTERESTS_LOWERCASE = POPULAR_INTERESTS.map((i) =>
+  i.toLowerCase(),
+);
 
 const STEPS = [1, 2, 3];
 
@@ -26,10 +48,22 @@ interface Step1Props {
   onNext: () => void;
 }
 
-function Step1({ gender, sexualPreference, onGenderChange, onPreferenceChange, onNext }: Step1Props) {
+function Step1({
+  gender,
+  sexualPreference,
+  onGenderChange,
+  onPreferenceChange,
+  onNext,
+}: Step1Props) {
   const handleNext = () => {
-    if (!gender) { toast.error('Please select a gender'); return; }
-    if (!sexualPreference) { toast.error('Please select a preference'); return; }
+    if (!gender) {
+      toast.error('Please select a gender');
+      return;
+    }
+    if (!sexualPreference) {
+      toast.error('Please select a preference');
+      return;
+    }
     onNext();
   };
 
@@ -140,10 +174,20 @@ function Step2({
             placeholder="Add custom interest..."
             value={customInterest}
             onChange={(e) => onCustomInterestChange(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); onAddCustomInterest(); } }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                onAddCustomInterest();
+              }
+            }}
             className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm"
           />
-          <Button type="button" variant="outline" onClick={onAddCustomInterest} className="border-gray-300">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onAddCustomInterest}
+            className="border-gray-300"
+          >
             Add
           </Button>
         </div>
@@ -156,7 +200,10 @@ function Step2({
                 className="flex items-center gap-1 px-4 py-2 strawberry-matcha-btn text-white rounded-full text-sm font-medium"
               >
                 #{interest}
-                <button type="button" onClick={() => onToggleInterest(interest)}>
+                <button
+                  type="button"
+                  onClick={() => onToggleInterest(interest)}
+                >
                   <X className="w-3 h-3" />
                 </button>
               </span>
@@ -166,10 +213,17 @@ function Step2({
       </div>
 
       <div className="flex gap-3">
-        <Button onClick={onBack} variant="outline" className="flex-1 border border-gray-300">
+        <Button
+          onClick={onBack}
+          variant="outline"
+          className="flex-1 border border-gray-300"
+        >
           Back
         </Button>
-        <Button onClick={onNext} className="flex-1 strawberry-matcha-btn hover:opacity-90 text-white">
+        <Button
+          onClick={onNext}
+          className="flex-1 strawberry-matcha-btn hover:opacity-90 text-white"
+        >
           Next
         </Button>
       </div>
@@ -205,7 +259,8 @@ function Step3({
       <div>
         <Label>Upload Photos (1–5) *</Label>
         <p className="text-sm mb-4 text-gray-400">
-          Upload up to 5 photos. Click on a photo to set it as your profile picture.
+          Upload up to 5 photos. Click on a photo to set it as your profile
+          picture.
         </p>
 
         <div className="grid grid-cols-3 gap-4 mb-4">
@@ -213,7 +268,10 @@ function Step3({
             <div
               key={index}
               className="relative group aspect-square rounded-lg overflow-hidden border-2 cursor-pointer"
-              style={{ borderColor: index === profilePictureIndex ? '#ec4899' : 'transparent' }}
+              style={{
+                borderColor:
+                  index === profilePictureIndex ? '#ec4899' : 'transparent',
+              }}
               onClick={() => onSetProfilePicture(index)}
             >
               <Image
@@ -230,7 +288,10 @@ function Step3({
               )}
               <button
                 type="button"
-                onClick={(e) => { e.stopPropagation(); onRemovePhoto(index); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRemovePhoto(index);
+                }}
                 className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
               >
                 <X className="w-4 h-4" />
@@ -259,7 +320,11 @@ function Step3({
       </div>
 
       <div className="flex gap-3">
-        <Button onClick={onBack} variant="outline" className="flex-1 border border-gray-300">
+        <Button
+          onClick={onBack}
+          variant="outline"
+          className="flex-1 border border-gray-300"
+        >
           Back
         </Button>
         <Button
@@ -286,18 +351,25 @@ export function OnboardingForm({ userId }: { userId: string }) {
   const [photos, setPhotos] = useState<File[]>([]);
   const [profilePictureIndex, setProfilePictureIndex] = useState(0);
 
-  const photoUrls = useMemo(() => photos.map((p) => URL.createObjectURL(p)), [photos]);
+  const photoUrls = useMemo(
+    () => photos.map((p) => URL.createObjectURL(p)),
+    [photos],
+  );
 
   const toggleInterest = useCallback((interest: string) => {
     setSelectedInterests((prev) =>
-      prev.includes(interest) ? prev.filter((i) => i !== interest) : [...prev, interest],
+      prev.includes(interest)
+        ? prev.filter((i) => i !== interest)
+        : [...prev, interest],
     );
   }, []);
 
   const addCustomInterest = useCallback(() => {
     const trimmed = customInterest.trim().toLowerCase();
     if (trimmed) {
-      setSelectedInterests((prev) => prev.includes(trimmed) ? prev : [...prev, trimmed]);
+      setSelectedInterests((prev) =>
+        prev.includes(trimmed) ? prev : [...prev, trimmed],
+      );
     }
     setCustomInterest('');
   }, [customInterest]);
@@ -306,16 +378,22 @@ export function OnboardingForm({ userId }: { userId: string }) {
     setPhotos((prev) => [...prev, ...files]);
   }, []);
 
-  const removePhoto = useCallback((index: number) => {
-    const next = photos.filter((_, i) => i !== index);
-    setPhotos(next);
-    if (profilePictureIndex >= next.length) {
-      setProfilePictureIndex(Math.max(0, next.length - 1));
-    }
-  }, [photos, profilePictureIndex]);
+  const removePhoto = useCallback(
+    (index: number) => {
+      const next = photos.filter((_, i) => i !== index);
+      setPhotos(next);
+      if (profilePictureIndex >= next.length) {
+        setProfilePictureIndex(Math.max(0, next.length - 1));
+      }
+    },
+    [photos, profilePictureIndex],
+  );
 
   const handleSubmit = async () => {
-    if (photos.length === 0) { toast.error('Please upload at least one photo'); return; }
+    if (photos.length === 0) {
+      toast.error('Please upload at least one photo');
+      return;
+    }
 
     setSubmitting(true);
     try {

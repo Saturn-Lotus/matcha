@@ -59,7 +59,12 @@ interface EditProfileFormProps {
   presignedUrls: Record<string, string>;
 }
 
-export function EditProfileForm({ userId, currentEmail, profile, presignedUrls }: EditProfileFormProps) {
+export function EditProfileForm({
+  userId,
+  currentEmail,
+  profile,
+  presignedUrls,
+}: EditProfileFormProps) {
   const [firstName, setFirstName] = useState(profile.firstName || '');
   const [lastName, setLastName] = useState(profile.lastName || '');
   const [email, setEmail] = useState(currentEmail || '');
@@ -175,7 +180,8 @@ export function EditProfileForm({ userId, currentEmail, profile, presignedUrls }
       if (email && email !== currentEmail) formData.append('email', email);
       if (bio) formData.append('bio', bio);
       if (gender) formData.append('gender', gender);
-      if (sexualPreference) formData.append('sexualPreference', sexualPreference);
+      if (sexualPreference)
+        formData.append('sexualPreference', sexualPreference);
       selectedInterests.forEach((i) => formData.append('interests', i));
 
       // Determine the avatar value to send
@@ -258,8 +264,8 @@ export function EditProfileForm({ userId, currentEmail, profile, presignedUrls }
             />
             {email !== currentEmail && (
               <p className="text-xs text-amber-600 flex items-center gap-1 mt-1">
-                <Info className="w-3 h-3" />
-                A verification link will be sent to confirm the new address.
+                <Info className="w-3 h-3" />A verification link will be sent to
+                confirm the new address.
               </p>
             )}
           </div>
@@ -346,9 +352,9 @@ export function EditProfileForm({ userId, currentEmail, profile, presignedUrls }
                 {selectedInterests
                   .filter(
                     (i) =>
-                      !POPULAR_INTERESTS.map((p) =>
-                        p.toLowerCase(),
-                      ).includes(i),
+                      !POPULAR_INTERESTS.map((p) => p.toLowerCase()).includes(
+                        i,
+                      ),
                   )
                   .map((interest) => (
                     <span

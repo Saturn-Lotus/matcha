@@ -1,7 +1,12 @@
 'use client';
 
 import { Label } from '@/app/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import { UserCircle, FileText, Upload } from 'lucide-react';
 import { InterestsPicker } from './interests-picker';
@@ -45,7 +50,8 @@ export function ProfileTab({
   onFieldChange,
   onPicturesChange,
 }: ProfileTabProps) {
-  const set = (patch: Partial<ProfileFields>) => onFieldChange({ ...fields, ...patch });
+  const set = (patch: Partial<ProfileFields>) =>
+    onFieldChange({ ...fields, ...patch });
 
   return (
     <div className="space-y-6">
@@ -67,7 +73,9 @@ export function ProfileTab({
             >
               <option value="">Select gender</option>
               {GENDERS.map((g) => (
-                <option key={g.value} value={g.value}>{g.label}</option>
+                <option key={g.value} value={g.value}>
+                  {g.label}
+                </option>
               ))}
             </select>
           </div>
@@ -82,7 +90,9 @@ export function ProfileTab({
             >
               <option value="">Select preference</option>
               {SEXUAL_PREFERENCES.map((p) => (
-                <option key={p.value} value={p.value}>{p.label}</option>
+                <option key={p.value} value={p.value}>
+                  {p.label}
+                </option>
               ))}
             </select>
           </div>
@@ -135,7 +145,11 @@ export function ProfileTab({
         </CardContent>
       </Card>
 
-      <Button type="submit" disabled={submitting} className="w-full strawberry-matcha-btn hover:opacity-90 text-white">
+      <Button
+        type="submit"
+        disabled={submitting}
+        className="w-full strawberry-matcha-btn hover:opacity-90 text-white"
+      >
         {submitting ? 'Saving...' : 'Save Changes'}
       </Button>
     </div>

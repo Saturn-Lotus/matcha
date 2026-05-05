@@ -23,7 +23,12 @@ function Avatar({ user }: { user: SocialUser }) {
     <div className="flex items-center gap-3 py-2 border-b border-gray-100 last:border-0">
       <div className="relative w-10 h-10 rounded-full overflow-hidden bg-pink-100 flex-shrink-0">
         {user.avatarUrl ? (
-          <Image src={user.avatarUrl} alt={user.firstName} fill className="object-cover" />
+          <Image
+            src={user.avatarUrl}
+            alt={user.firstName}
+            fill
+            className="object-cover"
+          />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-pink-400 font-bold text-sm">
             {user.firstName?.[0]?.toUpperCase()}
@@ -38,8 +43,8 @@ function Avatar({ user }: { user: SocialUser }) {
           {user.viewedAt
             ? new Date(user.viewedAt).toLocaleDateString()
             : user.likedAt
-            ? new Date(user.likedAt).toLocaleDateString()
-            : ''}
+              ? new Date(user.likedAt).toLocaleDateString()
+              : ''}
         </p>
       </div>
     </div>
@@ -85,11 +90,16 @@ function SocialList({
         {loading ? (
           <div className="space-y-2">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-12 rounded-lg bg-gray-100 animate-pulse" />
+              <div
+                key={i}
+                className="h-12 rounded-lg bg-gray-100 animate-pulse"
+              />
             ))}
           </div>
         ) : users.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-4">{emptyMessage}</p>
+          <p className="text-sm text-gray-400 text-center py-4">
+            {emptyMessage}
+          </p>
         ) : (
           <div className="max-h-56 overflow-y-auto">
             {users.map((u, i) => (

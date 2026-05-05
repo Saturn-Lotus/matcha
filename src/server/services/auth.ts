@@ -56,7 +56,10 @@ export class InvalidSessionError extends Error {
 
 const DEFAULT_TOKEN_EXPIRY_HOURS = '24';
 const DEFAULT_JWT_SESSION_EXPIRY_DAYS = '7';
-const TOKEN_EXPIRY_HOURS = parseInt(process.env.TOKEN_EXPIRY_HOURS || DEFAULT_TOKEN_EXPIRY_HOURS, 10);
+const TOKEN_EXPIRY_HOURS = parseInt(
+  process.env.TOKEN_EXPIRY_HOURS || DEFAULT_TOKEN_EXPIRY_HOURS,
+  10,
+);
 const JWT_SESSION_EXPIRY_DAYS = parseInt(
   process.env.JWT_SESSION_EXPIRY_DAYS || DEFAULT_JWT_SESSION_EXPIRY_DAYS,
   10,
@@ -251,11 +254,13 @@ export class AuthService {
   async createSession(
     userId: string,
     email: string,
-    options: { isVerified: boolean; isProfileComplete: boolean; avatarUrl?: string | null },
+    options: {
+      isVerified: boolean;
+      isProfileComplete: boolean;
+      avatarUrl?: string | null;
+    },
   ) {
-    const expiresAt = new Date(
-      Date.now() + JWT_SESSION_EXPIRY_MS,
-    );
+    const expiresAt = new Date(Date.now() + JWT_SESSION_EXPIRY_MS);
     return encrypt({
       userId,
       email,
@@ -268,23 +273,27 @@ export class AuthService {
 
   async refreshSession(
     currentToken: string,
-    updates: { 
+    updates: {
       isVerified?: boolean;
       isProfileComplete?: boolean;
       avatarUrl?: string | null;
-     }
+    },
   ) {
     const payload = await decrypt(currentToken);
     if (!payload?.userId) {
       throw new InvalidSessionError('Cannot refresh an invalid session');
     }
     const expiresAt = new Date(Date.now() + JWT_SESSION_EXPIRY_MS);
-    const avatarUrl = updates.avatarUrl === undefined ? (payload.avatarUrl as string | null) : updates.avatarUrl;
+    const avatarUrl =
+      updates.avatarUrl === undefined
+        ? (payload.avatarUrl as string | null)
+        : updates.avatarUrl;
     return encrypt({
       userId: payload.userId as string,
       email: payload.email as string,
       isVerified: updates.isVerified ?? Boolean(payload.isVerified),
-      isProfileComplete: updates.isProfileComplete ?? Boolean(payload.isProfileComplete),
+      isProfileComplete:
+        updates.isProfileComplete ?? Boolean(payload.isProfileComplete),
       avatarUrl: avatarUrl,
       expiresAt,
     });
