@@ -1,0 +1,50 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Buttons</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin:0; padding:24px; background: var(--sm-cream-50); font-family: var(--font-sans);}
+  .row { display:flex; gap:12px; align-items:flex-start; margin-bottom:16px; flex-wrap:wrap;}
+  .grp { display:flex; flex-direction:column; gap:5px;}
+  .lbl { font-size:11px; color:var(--sm-gray-500); font-family: var(--font-mono);}
+  .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px;
+         height:40px; padding:0 20px; border-radius:9999px; font-size:14px; font-weight:600;
+         border:0; cursor:pointer; box-shadow: 0 1px 2px rgba(0,0,0,.04); transition: all .15s; }
+  .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,.06); }
+
+  /* Pastel fills */
+  .btn-strawberry { background: #ffe4ec; color: #be4778; }
+  .btn-matcha     { background: #e3f3da; color: #4d7a3a; }
+  .btn-cream      { background: #f5ece2; color: #8a6f4f; }
+  .btn-lavender   { background: #ece4f3; color: #6b5a8a; }
+
+  /* Outline / ghost */
+  .btn-outline { background: #fff; color: var(--sm-gray-700); border:1px solid var(--sm-gray-200); box-shadow:none; }
+  .btn-outline:hover { border-color: #ffadc2; color:#be4778; }
+  .btn-ghost { background: transparent; color: var(--sm-gray-600); box-shadow:none; }
+  .btn-ghost:hover { background: #fff1f4; color:#be4778; }
+
+  /* Destructive — soft */
+  .btn-destructive { background: #ffe2e2; color: #b94545; }
+
+  /* Hero — slightly larger pastel pill, no harsh gradient */
+  .btn-lg { height:50px; padding:0 30px; font-size:15px;
+            background: linear-gradient(135deg, #ffe4ec 0%, #fde6e9 50%, #e7f3da 100%);
+            color: #a04a6e; box-shadow: 0 6px 18px rgba(255,173,194,.28); }
+  .btn-lg:hover { box-shadow: 0 10px 24px rgba(255,173,194,.35); }
+</style></head>
+<body>
+  <div class="row">
+    <div class="grp"><button class="btn btn-strawberry">Like</button><div class="lbl">strawberry · primary</div></div>
+    <div class="grp"><button class="btn btn-matcha">Match</button><div class="lbl">matcha · success</div></div>
+    <div class="grp"><button class="btn btn-cream">Skip</button><div class="lbl">cream · neutral</div></div>
+    <div class="grp"><button class="btn btn-lavender">More</button><div class="lbl">lavender · accent</div></div>
+  </div>
+  <div class="row">
+    <div class="grp"><button class="btn btn-outline">Cancel</button><div class="lbl">outline</div></div>
+    <div class="grp"><button class="btn btn-ghost">Login</button><div class="lbl">ghost</div></div>
+    <div class="grp"><button class="btn btn-destructive">Delete</button><div class="lbl">destructive · soft</div></div>
+  </div>
+  <div class="row">
+    <div class="grp"><button class="btn btn-lg">Start Your Journey</button><div class="lbl">hero · pastel pill</div></div>
+  </div>
+</body></html>

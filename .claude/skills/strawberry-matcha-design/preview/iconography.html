@@ -1,0 +1,35 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Iconography</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+  body { margin:0; padding:20px; font-family: var(--font-sans); background:#fff;}
+  .grid { display:grid; grid-template-columns: repeat(8, 1fr); gap:12px;}
+  .cell { display:flex; flex-direction:column; align-items:center; gap:6px;}
+  .cell i { width:24px; height:24px; color: var(--sm-gray-700);}
+  .cell .name { font-size:10px; color: var(--sm-gray-500); font-family: var(--font-mono);}
+  .pink i { color: var(--sm-strawberry-500);}
+  .green i { color: var(--sm-matcha-600);}
+  .muted i { color: var(--sm-gray-400);}
+</style></head>
+<body>
+  <div class="grid">
+    <div class="cell pink"><i data-lucide="heart" style="fill:currentColor"></i><div class="name">heart</div></div>
+    <div class="cell muted"><i data-lucide="user"></i><div class="name">user</div></div>
+    <div class="cell muted"><i data-lucide="lock"></i><div class="name">lock</div></div>
+    <div class="cell muted"><i data-lucide="mail"></i><div class="name">mail</div></div>
+    <div class="cell green"><i data-lucide="message-square"></i><div class="name">message</div></div>
+    <div class="cell green"><i data-lucide="users"></i><div class="name">users</div></div>
+    <div class="cell"><i data-lucide="settings"></i><div class="name">settings</div></div>
+    <div class="cell"><i data-lucide="log-out"></i><div class="name">log-out</div></div>
+    <div class="cell"><i data-lucide="x"></i><div class="name">x</div></div>
+    <div class="cell"><i data-lucide="loader-2"></i><div class="name">loader</div></div>
+    <div class="cell"><i data-lucide="alert-circle"></i><div class="name">alert</div></div>
+    <div class="cell green"><i data-lucide="check-circle-2"></i><div class="name">check</div></div>
+    <div class="cell"><i data-lucide="map-pin"></i><div class="name">map-pin</div></div>
+    <div class="cell"><i data-lucide="bell"></i><div class="name">bell</div></div>
+    <div class="cell"><i data-lucide="search"></i><div class="name">search</div></div>
+    <div class="cell"><i data-lucide="camera"></i><div class="name">camera</div></div>
+  </div>
+  <script>lucide.createIcons();</script>
+</body></html>

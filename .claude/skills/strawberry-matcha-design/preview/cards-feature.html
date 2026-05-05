@@ -1,0 +1,37 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Cards</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+  body { margin:0; padding:20px; font-family: var(--font-sans);}
+  body { background: linear-gradient(135deg,#f8f5f2 0%,#e8f5e8 30%,#fce7e7 70%,#f5f0f8 100%);}
+  .grid { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:14px;}
+  .card-glass { background: rgba(255,255,255,.85); backdrop-filter: blur(10px); border-radius: 16px; padding: 18px; border: 1px solid var(--color-card-border); text-align:center;}
+  .card-glass.alt { border-color: var(--sm-matcha-200);}
+  .title { font-weight:700; font-size:15px; margin: 8px 0 4px;}
+  .desc { font-size:12px; color: var(--sm-gray-600); line-height:1.4;}
+  .icon-wrap { display:inline-flex; }
+  .icon-wrap [data-lucide]{ width:32px; height:32px; stroke-width:2;}
+  .icon-strawberry { color: var(--sm-strawberry-500); }   /* #f472b6 */
+  .icon-matcha     { color: var(--sm-matcha-600); }       /* #22c55e */
+</style></head>
+<body>
+  <div class="grid">
+    <div class="card-glass alt">
+      <span class="icon-wrap icon-matcha"><i data-lucide="users"></i></span>
+      <div class="title matcha-gradient">Sweet Matching</div>
+      <div class="desc">Like finding the perfect matcha blend, we match you with compatible souls</div>
+    </div>
+    <div class="card-glass">
+      <span class="icon-wrap icon-strawberry"><i data-lucide="message-square"></i></span>
+      <div class="title strawberry-gradient">Fresh Conversations</div>
+      <div class="desc">Start sweet conversations that bloom into meaningful connections</div>
+    </div>
+    <div class="card-glass alt">
+      <span class="icon-wrap icon-matcha"><i data-lucide="heart" fill="currentColor"></i></span>
+      <div class="title matcha-gradient">Authentic Love</div>
+      <div class="desc">Build genuine relationships with verified, authentic profiles</div>
+    </div>
+  </div>
+  <script>lucide.createIcons();</script>
+</body></html>

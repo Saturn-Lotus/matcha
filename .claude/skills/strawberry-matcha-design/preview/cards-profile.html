@@ -1,0 +1,32 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Profile card</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+  body { margin:0; padding:20px; font-family: var(--font-sans); background: #fce7e7;}
+  .card { background:#fff; border-radius:14px; box-shadow: 0 6px 18px rgba(0,0,0,.08); width: 280px; aspect-ratio: 3/4; overflow:hidden; display:grid; grid-template-rows: 60% 40%; position:relative; margin: 0 auto;}
+  .photo { background: linear-gradient(135deg,#ffadc2,#ff8fab,#94b894); display:flex; align-items:flex-end; justify-content:center;}
+  .actions { position:absolute; left:0; right:0; bottom:calc(40% - 24px); display:flex; gap:12px; justify-content:center;}
+  .iconbtn { width:48px; height:48px; border-radius:9999px; border:0; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; box-shadow: 0 4px 10px rgba(0,0,0,.12);}
+  .iconbtn.no { background: var(--sm-gray-100); color: var(--sm-gray-700);}
+  .iconbtn.yes { background: var(--sm-matcha-300); color:#fff;}
+  .body { padding: 28px 16px 16px; display:flex; flex-direction:column; gap:10px;}
+  .bio { font-size:13px; color: var(--sm-gray-700); text-align:center;}
+  .tags { display:flex; flex-wrap:wrap; gap:6px; justify-content:center;}
+  .tag { background: var(--sm-strawberry-50); color: var(--sm-strawberry-700); padding: 3px 10px; font-size:11px; border-radius:9999px;}
+  [data-lucide]{ width:20px; height:20px;}
+</style></head>
+<body>
+  <div class="card">
+    <div class="photo"></div>
+    <div class="actions">
+      <button class="iconbtn no"><i data-lucide="x"></i></button>
+      <button class="iconbtn yes"><i data-lucide="heart" style="fill:currentColor"></i></button>
+    </div>
+    <div class="body">
+      <div class="bio">Matcha latte enthusiast looking for someone to share strawberry season with.</div>
+      <div class="tags"><span class="tag">#vegan</span><span class="tag">#hiking</span><span class="tag">#film-photo</span></div>
+    </div>
+  </div>
+  <script>lucide.createIcons();</script>
+</body></html>

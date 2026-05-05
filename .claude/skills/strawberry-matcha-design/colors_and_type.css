@@ -1,0 +1,237 @@
+/* ============================================================
+   Strawberry Matcha — Colors & Type
+   Brand: a Tinder-style dating app. The mood is sweet, soft,
+   playful — strawberry pinks meet matcha greens on warm cream
+   backgrounds. Glass cards, gentle gradients, rounded forms.
+   ============================================================ */
+
+/* ---------- Web fonts (matches Next.js next/font/google: Geist) ---------- */
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap');
+
+:root {
+  /* ============ Brand colors ============ */
+  /* Strawberry */
+  --sm-strawberry-50: #fff1f4;
+  --sm-strawberry-100: #ffe4e6;          /* card-border */
+  --sm-strawberry-200: #ffadc2;          /* button-gradient-alt */
+  --sm-strawberry-300: #ff8fab;          /* button-gradient-end */
+  --sm-strawberry-400: #ff6b9d;          /* button-gradient-start */
+  --sm-strawberry-500: #f472b6;          /* icon-primary */
+  --sm-strawberry-600: #ec4899;          /* link */
+  --sm-strawberry-700: #be185d;          /* link-hover */
+
+  /* Matcha */
+  --sm-matcha-50:  #f0f7ec;
+  --sm-matcha-100: #e8f5e8;              /* header-bg-2 */
+  --sm-matcha-200: #bbf7d0;              /* success-bg */
+  --sm-matcha-300: #94b894;              /* heart button bg (home) */
+  --sm-matcha-400: #8bc34a;              /* button-gradient-mid */
+  --sm-matcha-500: #4ade80;              /* success */
+  --sm-matcha-600: #22c55e;              /* success-dark / icon-secondary */
+  --sm-matcha-700: #16a34a;              /* link-alt */
+  --sm-matcha-800: #166534;              /* link-alt-hover */
+
+  /* Warm cream / neutrals */
+  --sm-cream-50:  #fbf9f8;               /* settings-bg */
+  --sm-cream-100: #f8f5f2;               /* header-bg-1 */
+  --sm-cream-200: #fce7e7;               /* header-bg-3 */
+  --sm-cream-300: #f5f0f8;               /* header-bg-4 */
+
+  --sm-gray-50:  #f9fafb;
+  --sm-gray-100: #f3f4f6;                /* border-light */
+  --sm-gray-200: #e5e7eb;                /* border */
+  --sm-gray-300: #d1d5db;
+  --sm-gray-400: #9ca3af;                /* icon-muted */
+  --sm-gray-500: #6b7280;
+  --sm-gray-600: #4b5563;                /* text-muted */
+  --sm-gray-700: #374151;
+  --sm-gray-800: #1f2937;                /* text-strong */
+  --sm-gray-900: #111827;
+  --sm-black: #000;
+  --sm-white: #fff;
+
+  /* Semantic */
+  --sm-destructive: #ef4444;
+  --sm-destructive-bg: #fee2e2;
+  --sm-destructive-border: #fecaca;
+
+  /* ============ Semantic CSS vars (mirrors globals.css) ============ */
+  --color-icon-primary: var(--sm-strawberry-500);
+  --color-icon-secondary: var(--sm-matcha-600);
+  --color-icon-muted: var(--sm-gray-400);
+
+  --color-text-strong: var(--sm-gray-800);
+  --color-text-muted: var(--sm-gray-600);
+
+  --color-link: var(--sm-strawberry-600);
+  --color-link-hover: var(--sm-strawberry-700);
+  --color-link-alt: var(--sm-matcha-700);
+  --color-link-alt-hover: var(--sm-matcha-800);
+
+  --color-card-border: var(--sm-strawberry-100);
+  --color-border-light: var(--sm-gray-100);
+  --color-border: var(--sm-gray-200);
+
+  --color-header-bg-1: var(--sm-cream-100);
+  --color-header-bg-2: var(--sm-matcha-100);
+  --color-header-bg-3: var(--sm-cream-200);
+  --color-header-bg-4: var(--sm-cream-300);
+
+  --color-button-gradient-start: var(--sm-strawberry-400);
+  --color-button-gradient-mid:   var(--sm-matcha-400);
+  --color-button-gradient-end:   var(--sm-strawberry-300);
+  --color-button-gradient-alt:   var(--sm-strawberry-200);
+
+  --color-success: var(--sm-matcha-500);
+  --color-success-bg: var(--sm-matcha-200);
+  --color-success-dark: var(--sm-matcha-600);
+
+  --color-glass-bg: rgba(255, 255, 255, 0.85);
+  --color-settings-bg: var(--sm-cream-50);
+
+  /* Tailwind/shadcn primary (the seeded magenta in globals.css) */
+  --sm-primary: oklch(0.656 0.241 354.308);
+  --sm-accent:  hsl(348 86% 95%);
+
+  /* ============ Type ============ */
+  --font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Text scale (matches usage in app) */
+  --text-xs:   0.75rem;   /* 12px — disclaimers, helper */
+  --text-sm:   0.875rem;  /* 14px — body small, captions */
+  --text-base: 1rem;      /* 16px — default body */
+  --text-md:   1.125rem;  /* 18px */
+  --text-lg:   1.25rem;   /* 20px — card titles */
+  --text-xl:   1.5rem;    /* 24px — section titles */
+  --text-2xl:  1.875rem;  /* 30px — page titles */
+  --text-3xl:  2.25rem;   /* 36px */
+  --text-6xl:  3.75rem;   /* 60px — hero */
+
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --leading-tight: 1.1;
+  --leading-snug:  1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+
+  /* ============ Spacing / radius / shadow ============ */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 1rem;        /* default --radius in app */
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.5rem;
+  --radius-full: 9999px;
+
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.06), 0 2px 4px rgba(0,0,0,0.04);
+  --shadow-lg: 0 10px 30px rgba(244, 114, 182, 0.15), 0 4px 8px rgba(0,0,0,0.04);
+  --shadow-xl: 0 20px 50px rgba(244, 114, 182, 0.25);
+
+  --glass-blur: 10px;
+}
+
+/* ============ Base type rules ============ */
+html, body {
+  font-family: var(--font-sans);
+  color: var(--color-text-strong);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, .h1 {
+  font-family: var(--font-sans);
+  font-size: var(--text-2xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--leading-tight);
+  color: var(--color-text-strong);
+}
+h2, .h2 {
+  font-family: var(--font-sans);
+  font-size: var(--text-xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--leading-tight);
+  color: var(--color-text-strong);
+}
+h3, .h3 {
+  font-family: var(--font-sans);
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-snug);
+  color: var(--color-text-strong);
+}
+p {
+  font-size: var(--text-base);
+  line-height: var(--leading-relaxed);
+  color: var(--color-text-strong);
+}
+.p-muted { color: var(--color-text-muted); }
+small, .small { font-size: var(--text-sm); color: var(--color-text-muted); }
+code, pre {
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+}
+
+/* ============ Brand utility classes (mirror globals.css) ============ */
+.strawberry-matcha-bg {
+  background: linear-gradient(135deg,
+    var(--color-header-bg-1) 0%,
+    var(--color-header-bg-2) 30%,
+    var(--color-header-bg-3) 70%,
+    var(--color-header-bg-4) 100%);
+}
+.strawberry-gradient {
+  background: linear-gradient(135deg,
+    var(--color-button-gradient-start),
+    var(--color-button-gradient-end),
+    var(--color-button-gradient-alt));
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+}
+.matcha-gradient {
+  background: linear-gradient(135deg,
+    var(--color-button-gradient-mid),
+    var(--color-button-gradient-end),
+    var(--color-button-gradient-alt));
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+}
+.strawberry-matcha-gradient {
+  background: linear-gradient(135deg,
+    var(--color-button-gradient-start) 0%,
+    var(--color-button-gradient-mid)   50%,
+    var(--color-button-gradient-end)   100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+}
+.glass-effect {
+  backdrop-filter: blur(var(--glass-blur));
+  background: var(--color-glass-bg);
+}
+.strawberry-btn {
+  background: linear-gradient(45deg,
+    var(--color-button-gradient-start),
+    var(--color-button-gradient-end));
+  color: #fff;
+}
+.matcha-btn {
+  background: linear-gradient(45deg,
+    var(--color-button-gradient-mid),
+    var(--color-button-gradient-end));
+  color: #fff;
+}
+.strawberry-matcha-btn {
+  background: linear-gradient(45deg,
+    var(--color-button-gradient-start),
+    var(--color-button-gradient-mid),
+    var(--color-button-gradient-end));
+  color: #fff;
+}
+.strawberry-matcha-btn:hover,
+.strawberry-btn:hover,
+.matcha-btn:hover { opacity: 0.9; }

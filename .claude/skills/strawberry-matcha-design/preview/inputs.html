@@ -1,0 +1,28 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Form input rows</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+  body { margin:0; padding:20px; background:#fff; font-family: var(--font-sans);}
+  .field { display:flex; flex-direction:column; gap:4px; margin-bottom:14px;}
+  .row { border:1px solid var(--sm-gray-300); border-radius:4px; height:40px; display:flex; align-items:center; padding:0 12px; gap:10px;}
+  .row.error { border-color: var(--sm-destructive);}
+  .row.focus { border-color: var(--sm-strawberry-300); box-shadow: 0 0 0 3px rgba(244,114,182,.18);}
+  .row input { border:0; outline:0; flex:1; font-size:14px; color: var(--sm-gray-700); background: transparent;}
+  .row input::placeholder { color: var(--sm-gray-400);}
+  .err { color:var(--sm-destructive); font-size:11px; margin-left:8px;}
+  [data-lucide]{ width:18px; height:18px; color:var(--sm-gray-400);}
+</style></head>
+<body>
+  <div class="field">
+    <div class="row"><i data-lucide="user"></i><input placeholder="Username" value="kira"/></div>
+  </div>
+  <div class="field">
+    <div class="row focus"><i data-lucide="mail"></i><input placeholder="Email" value="kira@matcha.app"/></div>
+  </div>
+  <div class="field">
+    <div class="row error"><i data-lucide="lock"></i><input placeholder="Password" type="password" value="abc"/></div>
+    <div class="err">Password must be at least 8 characters, contain at least one uppercase letter, one lowercase letter, one number</div>
+  </div>
+  <script>lucide.createIcons();</script>
+</body></html>

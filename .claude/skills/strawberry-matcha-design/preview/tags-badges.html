@@ -1,0 +1,19 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Tags & badges</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin:0; padding:20px; font-family: var(--font-sans); background:#fff;}
+  .row { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; align-items:center;}
+  .tag { background: var(--sm-strawberry-50); color: var(--sm-strawberry-700); padding: 4px 11px; font-size:12px; border-radius:9999px; font-weight:500;}
+  .tag.selected { background: var(--sm-strawberry-500); color:#fff;}
+  .tag.matcha { background: var(--sm-matcha-100); color: var(--sm-matcha-700);}
+  .badge { display:inline-flex; align-items:center; gap:5px; padding: 3px 9px; font-size:11px; border-radius:9999px; font-weight:600;}
+  .badge.success { background: var(--sm-matcha-200); color: var(--sm-matcha-800);}
+  .badge.online::before { content:""; width:6px; height:6px; border-radius:9999px; background: var(--sm-matcha-500);}
+  .badge.unread { background: var(--sm-strawberry-500); color:#fff; min-width:20px; justify-content:center;}
+  .lbl { font-size:11px; color:var(--sm-gray-500); font-family: var(--font-mono); margin-right:8px;}
+</style></head>
+<body>
+  <div class="row"><span class="lbl">tags</span><span class="tag">#vegan</span><span class="tag">#hiking</span><span class="tag">#coffee</span><span class="tag matcha">#tea</span><span class="tag selected">#film-photo</span></div>
+  <div class="row"><span class="lbl">status</span><span class="badge online">online</span><span class="badge success">verified</span><span class="badge unread">3</span></div>
+</body></html>

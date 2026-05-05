@@ -1,0 +1,25 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Radii & shadows</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin:0; padding:20px; background:#fff; font-family: var(--font-sans);}
+  .grid { display:grid; grid-template-columns: repeat(5, 1fr); gap:14px; margin-bottom:18px;}
+  .tile { height:64px; background:#fff; border:1px solid var(--sm-gray-200); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; color:var(--sm-gray-700); font-family: var(--font-mono);}
+  .shadow-tile { background:#fff; height:80px; display:flex; align-items:center; justify-content:center; border-radius: 12px; font-size:11px; font-weight:600; color:var(--sm-gray-700); font-family: var(--font-mono);}
+  .label { font-size:11px; color:var(--sm-gray-500); margin-top:4px; text-align:center; font-family: var(--font-mono);}
+</style></head>
+<body>
+  <div class="grid">
+    <div><div class="tile" style="border-radius:4px">sm 4</div><div class="label">--radius-sm</div></div>
+    <div><div class="tile" style="border-radius:8px">md 8</div><div class="label">--radius-md</div></div>
+    <div><div class="tile" style="border-radius:16px">lg 16</div><div class="label">--radius-lg</div></div>
+    <div><div class="tile" style="border-radius:20px">xl 20</div><div class="label">--radius-xl</div></div>
+    <div><div class="tile" style="border-radius:9999px">full</div><div class="label">--radius-full</div></div>
+  </div>
+  <div class="grid" style="grid-template-columns: repeat(4, 1fr);">
+    <div><div class="shadow-tile" style="box-shadow: var(--shadow-sm); border:1px solid var(--sm-gray-100);">sm</div><div class="label">cards</div></div>
+    <div><div class="shadow-tile" style="box-shadow: var(--shadow-md);">md</div><div class="label">menus</div></div>
+    <div><div class="shadow-tile" style="box-shadow: var(--shadow-lg);">lg</div><div class="label">hero CTAs</div></div>
+    <div><div class="shadow-tile" style="box-shadow: var(--shadow-xl);">xl</div><div class="label">elevated</div></div>
+  </div>
+</body></html>

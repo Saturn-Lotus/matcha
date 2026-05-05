@@ -1,0 +1,20 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Spacing scale</title>
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body { margin:0; padding:20px; background:#fff; font-family: var(--font-sans);}
+  .row { display:flex; align-items:center; gap:14px; margin-bottom:8px;}
+  .name { width:60px; font-family: var(--font-mono); font-size:12px; color:var(--sm-gray-700);}
+  .bar { background: linear-gradient(90deg, var(--sm-strawberry-300), var(--sm-matcha-400)); height:14px; border-radius:4px;}
+  .px { font-family: var(--font-mono); font-size:11px; color:var(--sm-gray-500);}
+</style></head>
+<body>
+  <div class="row"><div class="name">1</div><div class="bar" style="width:4px"></div><div class="px">4px</div></div>
+  <div class="row"><div class="name">2</div><div class="bar" style="width:8px"></div><div class="px">8px</div></div>
+  <div class="row"><div class="name">3</div><div class="bar" style="width:12px"></div><div class="px">12px · form gap</div></div>
+  <div class="row"><div class="name">4</div><div class="bar" style="width:16px"></div><div class="px">16px</div></div>
+  <div class="row"><div class="name">6</div><div class="bar" style="width:24px"></div><div class="px">24px · card padding</div></div>
+  <div class="row"><div class="name">8</div><div class="bar" style="width:32px"></div><div class="px">32px</div></div>
+  <div class="row"><div class="name">12</div><div class="bar" style="width:48px"></div><div class="px">48px · section</div></div>
+  <div class="row"><div class="name">16</div><div class="bar" style="width:64px"></div><div class="px">64px · hero margin</div></div>
+</body></html>
