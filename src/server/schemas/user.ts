@@ -77,5 +77,11 @@ export const UpdateUserProfileSchema = Su.object({
   picturesToRemove: Su.optional(Su.array(Su.string()).length({ max: 5 })),
 });
 
+export const ChangePasswordSchema = Su.object({
+  oldPassword: Su.string(),
+  newPassword: Su.string().password(),
+});
+
 export type CreateUserProfile = SuInfer<typeof CreateUserProfileSchema>;
 export type UpdateUserProfile = SuInfer<typeof UpdateUserProfileSchema>;
+export type ChangePassword = SuInfer<typeof ChangePasswordSchema>;
