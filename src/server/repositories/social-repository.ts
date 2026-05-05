@@ -90,4 +90,44 @@ export class SocialRepository {
     );
     return rows[0]?.exists ?? false;
   }
+
+  async isMutualLike(user1Id: string, user2Id: string): Promise<boolean> {
+    const rows = await this.db.query<{ is_mutual: boolean }>(
+      `SELECT (
+         EXISTS(SELECT 1 FROM user_likes WHERE "likerUserId" = $1 AND "likedUserId" = $2)
+         AND
+         EXISTS(SELECT 1 FROM user_likes WHERE "likerUserId" = $2 AND "likedUserId" = $1)
+       ) AS is_mutual;`,
+      [user1Id, user2Id],
+    );
+    return rows[0]?.is_mutual ?? false;
+  }
+
+  async blockUser(blockerId: string, blockedId: string): Promise<void> {
+    await this.db.query(
+      `INSERT INTO user_blocks ("blockerUserId", "blockedUserId", "blockedAt")
+       VALUES ($1, $2, CURRENT_TIMESTAMP)
+       ON CONFLICT DO NOTHING;`,
+      [blockerId, blockedId],
+    );
+  }
+
+  async unblockUser(blockerId: string, blockedId: string): Promise<void> {
+    await this.db.query(
+      `DELETE FROM user_blocks WHERE "blockerUserId" = $1 AND "blockedUserId" = $2;`,
+      [blockerId, blockedId],
+    );
+  }
+
+  async isBlocked(user1Id: string, user2Id: string): Promise<boolean> {
+    const rows = await this.db.query<{ exists: boolean }>(
+      `SELECT EXISTS(
+         SELECT 1 FROM user_blocks
+         WHERE ("blockerUserId" = $1 AND "blockedUserId" = $2)
+            OR ("blockerUserId" = $2 AND "blockedUserId" = $1)
+       ) AS exists;`,
+      [user1Id, user2Id],
+    );
+    return rows[0]?.exists ?? false;
+  }
 }

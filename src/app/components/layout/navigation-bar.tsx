@@ -1,5 +1,5 @@
 'use client';
-import { Heart, LogOut, Settings, User } from 'lucide-react';
+import { Heart, LogOut, MessageSquare, Settings, User } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import {
   DropdownMenu,
@@ -13,6 +13,8 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import Image from 'next/image';
 import { apiClient } from '@/lib/api';
+import { useChatStore } from '@/app/components/chat/chat-store';
+
 
 const NO_HEADER_ROUTES = ['/login', '/register', '/reset-password', '/onboarding'];
 
@@ -73,7 +75,13 @@ export const NavigationBar = ({ isAuthenticated, avatarSrc, avatarSeed }: Naviga
         </h1>
       </Link>
 
-      <div className="flex items-center">
+      <div className="flex items-center gap-4">
+        {isAuthenticated && (
+          <Link href="/messages" className="relative p-2 text-gray-600 hover:text-pink-600 transition-colors">
+            <MessageSquare className="w-6 h-6" />
+            <UnreadBadge />
+          </Link>
+        )}
         {isAuthenticated ? (
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
@@ -123,3 +131,16 @@ export const NavigationBar = ({ isAuthenticated, avatarSrc, avatarSeed }: Naviga
     </header>
   );
 };
+
+function UnreadBadge() {
+  const { conversations } = useChatStore();
+  const unreadTotal = conversations.reduce((acc, conv) => acc + (conv.unreadCount || 0), 0);
+
+  if (unreadTotal === 0) return null;
+
+  return (
+    <span className="absolute top-0 right-0 bg-pink-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center border border-white">
+      {unreadTotal > 9 ? '9+' : unreadTotal}
+    </span>
+  );
+}

@@ -3,6 +3,7 @@ import { Toaster } from '@/app/components/ui/sonner';
 import { NavigationBar } from '@/app/components/layout/navigation-bar';
 import { Footer } from '@/app/components/layout/footer';
 import { headers } from 'next/headers';
+import { SocketProvider } from '@/app/components/chat/socket-provider';
 
 export default async function RootLayout({
   children,
@@ -19,16 +20,18 @@ export default async function RootLayout({
     <html lang="en">
       <head />
       <body className="w-screen h-screen flex flex-col items-center container mx-auto strawberry-matcha-bg">
-        <NavigationBar
-          isAuthenticated={isAuthenticated}
-          avatarSrc={avatarSrc}
-          avatarSeed={userId ?? undefined}
-        />
-        <main className="flex-1 w-screen">
-          <Toaster />
-          {children}
-        </main>
-        <Footer />
+        <SocketProvider isAuthenticated={isAuthenticated}>
+          <NavigationBar
+            isAuthenticated={isAuthenticated}
+            avatarSrc={avatarSrc}
+            avatarSeed={userId ?? undefined}
+          />
+          <main className="flex-1 w-screen">
+            <Toaster />
+            {children}
+          </main>
+          <Footer />
+        </SocketProvider>
       </body>
     </html>
   );
