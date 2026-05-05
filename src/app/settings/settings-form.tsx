@@ -1,12 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { MapPin, UserCircle, User, Images } from 'lucide-react';
+import { MapPin, UserCircle, User, Images, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { UserProfile } from '@/server/schemas';
 import { PhotoGallery, PicturesState } from './photo-gallery';
 import { LocationTab, LocationState } from './location-tab';
 import { InterestsPicker } from './interests-picker';
+import { PasswordInput } from './password-input';
 import { apiClient } from '@/lib/api/client';
 
 interface SettingsFormProps {
@@ -65,6 +66,11 @@ export function SettingsForm({
   });
 
   const [submitting, setSubmitting] = useState(false);
+
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordSubmitting, setPasswordSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -133,6 +139,29 @@ export function SettingsForm({
     }
   };
 
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      toast.error('New passwords do not match');
+      return;
+    }
+    setPasswordSubmitting(true);
+    try {
+      await apiClient.post(`/users/${userId}/change-password`, {
+        oldPassword,
+        newPassword,
+      });
+      toast.success('Password updated successfully');
+      setOldPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Something went wrong');
+    } finally {
+      setPasswordSubmitting(false);
+    }
+  };
+
   const inputCls =
     'w-full h-14 bg-[#F9F1E7] border border-transparent focus:border-emerald-400 rounded-xl px-4 focus:ring-0 outline-none text-base transition-colors appearance-none';
   const labelCls = 'block text-xs font-semibold text-zinc-500 px-1 mb-1.5';
@@ -148,10 +177,11 @@ export function SettingsForm({
     { id: 'pictures', icon: <Images className="w-4 h-4" />, label: 'Pictures' },
     { id: 'account', icon: <User className="w-4 h-4" />, label: 'Account' },
     { id: 'location', icon: <MapPin className="w-4 h-4" />, label: 'Location' },
+    { id: 'security', icon: <Lock className="w-4 h-4" />, label: 'Security' },
   ];
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-[1200px] mx-auto px-5 py-10">
+    <div className="max-w-[1200px] mx-auto px-5 py-10">
       <div className="flex flex-col md:flex-row gap-6">
         <aside className="w-full md:w-52 shrink-0">
           <div className="sticky top-24 rounded-[2rem] p-2 backdrop-blur-xl bg-white/70 border border-white/40 shadow-[0_8px_30px_rgba(255,141,161,0.08)]">
@@ -171,6 +201,7 @@ export function SettingsForm({
         </aside>
 
         <div className="flex-1 space-y-8">
+        <form onSubmit={handleSubmit}>
           <section id="profile" className={sectionCls}>
             <h2 className="text-2xl font-bold text-rose-500 mb-1">
               Profile Details
@@ -299,17 +330,65 @@ export function SettingsForm({
             />
           </section>
 
-          <div className="flex justify-end pb-10">
+          <div className="flex justify-end py-8">
             <button
               type="submit"
               disabled={submitting}
               className="strawberry-matcha-btn text-white px-8 py-3.5 rounded-full font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-60 cursor-pointer"
             >
-              {submitting ? 'Saving...' : 'Save Changes'}
+              {submitting ? 'Saving...' : 'Save Profile'}
             </button>
           </div>
+        </form>
+
+        <form onSubmit={handlePasswordChange}>
+          <section id="security" className={sectionCls}>
+            <h2 className="text-2xl font-bold text-rose-500 mb-1">Security</h2>
+            <p className="text-zinc-500 text-sm mb-6">
+              Change your password to keep your account secure.
+            </p>
+            <div className="space-y-5">
+              <div>
+                <label className={labelCls}>Current Password</label>
+                <PasswordInput
+                  value={oldPassword}
+                  onChange={setOldPassword}
+                  placeholder="Enter current password"
+                  autoComplete="current-password"
+                />
+              </div>
+              <div>
+                <label className={labelCls}>New Password</label>
+                <PasswordInput
+                  value={newPassword}
+                  onChange={setNewPassword}
+                  placeholder="At least 8 characters"
+                  autoComplete="new-password"
+                />
+              </div>
+              <div>
+                <label className={labelCls}>Confirm New Password</label>
+                <PasswordInput
+                  value={confirmPassword}
+                  onChange={setConfirmPassword}
+                  placeholder="Repeat new password"
+                  autoComplete="new-password"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end mt-6 pb-10">
+              <button
+                type="submit"
+                disabled={passwordSubmitting}
+                className="strawberry-matcha-btn text-white px-8 py-3.5 rounded-full font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-60 cursor-pointer"
+              >
+                {passwordSubmitting ? 'Updating...' : 'Update Password'}
+              </button>
+            </div>
+          </section>
+        </form>
         </div>
       </div>
-    </form>
+    </div>
   );
 }

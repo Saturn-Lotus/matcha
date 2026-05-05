@@ -3,6 +3,7 @@ import {
   UpdateUserProfile,
   UserProfile,
 } from '@/server/schemas';
+import { UnauthorizedException } from '@/lib/exception-http-mapper';
 import { UserRepository } from '@/server/repositories/user-repository';
 import { NotFoundException } from '@/lib/exception-http-mapper';
 import { IStorage } from '@/server/storage';
@@ -261,5 +262,15 @@ export class UserService {
       );
       throw error;
     }
+  };
+
+  changePassword = async (userId: string, oldPassword: string, newPassword: string): Promise<void> => {
+    const user = await this.getUserById(userId);
+    const match = await bcrypt.compare(oldPassword, user.passwordHash);
+    if (!match) {
+      throw new UnauthorizedException('Current password is incorrect');
+    }
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    await this.userRepository.update(userId, { passwordHash });
   };
 }
