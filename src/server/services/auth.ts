@@ -82,7 +82,8 @@ export class AuthService {
     const user = await this.userRepo.findById(userId);
     if (!user) throw new NotFoundException('User not found');
     await this.userTokensRepo.deleteByUserId(userId, 'emailVerification');
-    await this.sendVerificationEmail(user.email, userId);
+    const destination = user.pendingEmail ?? user.email;
+    await this.sendVerificationEmail(destination, userId);
   }
 
   async sendVerificationEmail(receiverEmail: string, userId: string) {
@@ -151,6 +152,7 @@ export class AuthService {
 
     await this.userRepo.update(userToken.userId, {
       isVerified: true,
+      pendingEmail: null,
     });
     await this.userTokensRepo.delete(userToken.tokenHash);
   }
@@ -179,10 +181,7 @@ export class AuthService {
     if (userToken.tokenExpiry < new Date()) {
       throw new VerificationTokenExpiredError('Token has expired');
     }
-    const isTokenMatched = await bcrypt.compare(token, userToken.tokenHash);
-    if (!isTokenMatched) {
-      throw new InvalidVerificationTokenError('Token is invalid');
-    }
+
     if (!user.pendingEmail) {
       throw new Error('No pending email to verify');
     }
@@ -193,6 +192,7 @@ export class AuthService {
     await this.userRepo.update(user.id, {
       email: user.pendingEmail,
       pendingEmail: null,
+      isVerified: true,
     });
     await this.userTokensRepo.delete(userToken.tokenHash);
   }

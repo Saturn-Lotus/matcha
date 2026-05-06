@@ -211,17 +211,18 @@ export class UserService {
     );
     const finalPictures = [...remainingPictures, ...uploadedPictures];
 
-    // Handle email change — store as pendingEmail and send a verification email
+    let emailChanged = false;
     if (profileData.email !== undefined) {
       const existingUser = await this.userRepository.findById(id);
       if (existingUser && profileData.email !== existingUser.email) {
         await this.userRepository.update(id, {
           pendingEmail: profileData.email,
+          isVerified: false,
         });
-        // Send verification link to the new address so the user can confirm it
         if (this.authService) {
           await this.authService.sendVerificationEmail(profileData.email, id);
         }
+        emailChanged = true;
       }
     }
 
@@ -252,7 +253,7 @@ export class UserService {
         );
       }
 
-      return profile;
+      return { profile, emailChanged };
     } catch (error) {
       // DB update failed — clean up newly uploaded files
       await Promise.allSettled(
