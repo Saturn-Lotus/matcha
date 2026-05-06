@@ -7,17 +7,26 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
   const searchParams = request.nextUrl.searchParams;
   const token = searchParams.get('token') || '';
   const id = searchParams.get('id') || '';
-  const auth = getAuthService();
-  await auth.verifyUser(token, id);
 
   const userRepository = getUserRepository();
-  const [user, profile] = await Promise.all([
+  const auth = getAuthService();
+
+  const userBefore = await userRepository.findById(id);
+  const isEmailChange = !!userBefore?.pendingEmail;
+
+  if (isEmailChange) {
+    await auth.verifyUserEmailChange(token, id);
+  } else {
+    await auth.verifyUser(token, id);
+  }
+
+  const [updatedUser, profile] = await Promise.all([
     userRepository.findById(id),
     userRepository.findProfileByUserId(id),
   ]);
 
-  if (user) {
-    const session = await auth.createSession(user.id, user.email, {
+  if (updatedUser) {
+    const session = await auth.createSession(updatedUser.id, updatedUser.email, {
       isVerified: true,
       isProfileComplete: profile?.isProfileComplete ?? false,
       avatarUrl: profile?.avatarUrl ?? null,
@@ -26,5 +35,6 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
     cookieStore.set('session', session);
   }
 
-  return NextResponse.redirect(new URL('/onboarding', request.url));
+  const redirectPath = isEmailChange ? '/settings' : '/onboarding';
+  return NextResponse.redirect(new URL(redirectPath, request.url));
 });
