@@ -1,7 +1,8 @@
-import { ChatService, NotConnectedError, MessageTooLongError, ConversationNotFoundError } from '../src/server/services/chat';
+import { ChatService, NotConnectedError, MessageTooLongError } from '../src/server/services/chat';
 import { ConversationRepository } from '../src/server/repositories/conversation-repository';
 import { MessageRepository } from '../src/server/repositories/message-repository';
 import { SocialRepository } from '../src/server/repositories/social-repository';
+import { UserRepository } from '../src/server/repositories/user-repository';
 import { PostgresDB } from '../src/server/db/postgres';
 
 jest.mock('../src/server/db/postgres');
@@ -14,6 +15,7 @@ describe('ChatService', () => {
   let conversationRepo: jest.Mocked<ConversationRepository>;
   let messageRepo: jest.Mocked<MessageRepository>;
   let socialRepo: jest.Mocked<SocialRepository>;
+  let userRepo: jest.Mocked<Pick<UserRepository, 'findByUsername'>>;
   let db: jest.Mocked<PostgresDB>;
 
   beforeEach(() => {
@@ -21,7 +23,13 @@ describe('ChatService', () => {
     conversationRepo = new ConversationRepository(db) as jest.Mocked<ConversationRepository>;
     messageRepo = new MessageRepository(db) as jest.Mocked<MessageRepository>;
     socialRepo = new SocialRepository(db) as jest.Mocked<SocialRepository>;
-    chatService = new ChatService(conversationRepo, messageRepo, socialRepo);
+    userRepo = { findByUsername: jest.fn() };
+    chatService = new ChatService(
+      conversationRepo,
+      messageRepo,
+      socialRepo,
+      userRepo as unknown as UserRepository,
+    );
   });
 
   describe('sendMessage', () => {

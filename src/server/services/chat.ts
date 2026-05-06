@@ -1,9 +1,14 @@
-import { HTTPError } from '@/lib/exception-http-mapper';
+import {
+  BadRequestException,
+  HTTPError,
+  NotFoundException,
+} from '@/lib/exception-http-mapper';
 import { chatEvents, CHAT_EVENT } from '../events';
-import { 
-  ConversationRepository, 
-  MessageRepository, 
-  SocialRepository 
+import {
+  ConversationRepository,
+  MessageRepository,
+  SocialRepository,
+  UserRepository,
 } from '../repositories';
 
 @HTTPError(403)
@@ -35,6 +40,7 @@ export class ChatService {
     private readonly conversationRepo: ConversationRepository,
     private readonly messageRepo: MessageRepository,
     private readonly socialRepo: SocialRepository,
+    private readonly userRepo: UserRepository,
   ) {}
 
   async sendMessage(senderId: string, conversationId: string, body: string) {
@@ -97,9 +103,22 @@ export class ChatService {
     return this.conversationRepo.findByUser(userId);
   }
 
+  async startConversationWithUsername(currentUserId: string, username: string) {
+    const trimmed = username.trim();
+    if (!trimmed) {
+      throw new BadRequestException('Username is required');
+    }
+    const other = await this.userRepo.findByUsername(trimmed);
+    if (!other) {
+      throw new NotFoundException('User not found');
+    }
+    if (other.id === currentUserId) {
+      throw new BadRequestException('Cannot start a conversation with yourself');
+    }
+    return this.getOrCreateConversation(currentUserId, other.id);
+  }
+
   async getOrCreateConversation(user1Id: string, user2Id: string) {
-    // Verify connection before creating conversation?
-    // PRD says connected users can exchange messages.
     const isMutual = await this.socialRepo.isMutualLike(user1Id, user2Id);
     if (!isMutual) {
       throw new NotConnectedError('No mutual like');

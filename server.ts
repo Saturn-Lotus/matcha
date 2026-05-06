@@ -1,10 +1,10 @@
+import { loadEnvConfig } from '@next/env';
 import { createServer } from 'http';
 import { parse } from 'url';
 import next from 'next';
-import { SocketServer } from './src/server/socket.ts';
-import dotenv from 'dotenv';
+import { SocketServer } from './src/server/socket';
 
-dotenv.config();
+loadEnvConfig(process.cwd(), process.env.NODE_ENV !== 'production');
 
 const dev = process.env.NODE_ENV !== 'production';
 const hostname = 'localhost';

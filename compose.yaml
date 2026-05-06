@@ -12,7 +12,8 @@ services:
       - /app/node_modules
 
   postgresDb:
-    image: postgres:latest
+    image: postgis/postgis:18-3.6
+    platform: linux/amd64
     env_file:
       - .env
     ports:

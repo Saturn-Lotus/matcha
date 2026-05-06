@@ -4,13 +4,16 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
+    "dev:all": "tsx server.ts",
     "build": "next build",
     "start": "next start",
+    "start:all": "NODE_ENV=production tsx server.ts",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
     "format": "prettier --write .",
     "db:create": "node-pg-migrate create",
     "db:migrate": "node-pg-migrate up ",
+    "db:seed:chat": "tsx scripts/seed-chat-test-users.ts",
     "cy:open": "cypress open"
   },
   "dependencies": {
