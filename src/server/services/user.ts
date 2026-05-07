@@ -264,7 +264,11 @@ export class UserService {
     }
   };
 
-  changePassword = async (userId: string, oldPassword: string, newPassword: string): Promise<void> => {
+  changePassword = async (
+    userId: string,
+    oldPassword: string,
+    newPassword: string,
+  ): Promise<void> => {
     const user = await this.getUserById(userId);
     const match = await bcrypt.compare(oldPassword, user.passwordHash);
     if (!match) {

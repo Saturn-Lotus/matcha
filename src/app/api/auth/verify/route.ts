@@ -26,11 +26,15 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
   ]);
 
   if (updatedUser) {
-    const session = await auth.createSession(updatedUser.id, updatedUser.email, {
-      isVerified: true,
-      isProfileComplete: profile?.isProfileComplete ?? false,
-      avatarUrl: profile?.avatarUrl ?? null,
-    });
+    const session = await auth.createSession(
+      updatedUser.id,
+      updatedUser.email,
+      {
+        isVerified: true,
+        isProfileComplete: profile?.isProfileComplete ?? false,
+        avatarUrl: profile?.avatarUrl ?? null,
+      },
+    );
     const cookieStore = await cookies();
     cookieStore.set('session', session);
   }

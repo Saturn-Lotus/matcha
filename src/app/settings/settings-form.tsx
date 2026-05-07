@@ -201,192 +201,200 @@ export function SettingsForm({
         </aside>
 
         <div className="flex-1 space-y-8">
-        <form onSubmit={handleSubmit}>
-          <section id="profile" className={sectionCls}>
-            <h2 className="text-2xl font-bold text-rose-500 mb-1">
-              Profile Details
-            </h2>
-            <p className="text-zinc-500 text-sm mb-6">
-              Share a little more about yourself to find your perfect blend.
-            </p>
-            <div className="space-y-5">
+          <form onSubmit={handleSubmit}>
+            <section id="profile" className={sectionCls}>
+              <h2 className="text-2xl font-bold text-rose-500 mb-1">
+                Profile Details
+              </h2>
+              <p className="text-zinc-500 text-sm mb-6">
+                Share a little more about yourself to find your perfect blend.
+              </p>
+              <div className="space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div>
+                    <label className={labelCls}>Gender</label>
+                    <select
+                      className={inputCls}
+                      value={gender}
+                      onChange={(e) => setGender(e.target.value)}
+                    >
+                      <option value="">Select gender</option>
+                      {GENDERS.map((g) => (
+                        <option key={g.value} value={g.value}>
+                          {g.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className={labelCls}>Interested In</label>
+                    <select
+                      className={inputCls}
+                      value={sexualPreference}
+                      onChange={(e) => setSexualPreference(e.target.value)}
+                    >
+                      <option value="">Select preference</option>
+                      {SEXUAL_PREFERENCES.map((p) => (
+                        <option key={p.value} value={p.value}>
+                          {p.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label className={labelCls}>Bio</label>
+                  <textarea
+                    className="w-full bg-[#F9F1E7] border border-transparent focus:border-emerald-400 rounded-xl p-4 focus:ring-0 outline-none text-base resize-none transition-colors"
+                    placeholder="A cozy morning for me looks like..."
+                    rows={4}
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className={labelCls}>Interests</label>
+                  <InterestsPicker
+                    selected={interests}
+                    onChange={setInterests}
+                  />
+                </div>
+              </div>
+            </section>
+
+            <section id="pictures" className={sectionCls}>
+              <h2 className="text-2xl font-bold text-rose-500 mb-1">
+                Manage Pictures
+              </h2>
+              <p className="text-zinc-500 text-sm mb-6">
+                The first picture is your primary profile photo.
+              </p>
+              <PhotoGallery
+                state={pictures}
+                presignedUrls={presignedUrls}
+                onChange={setPictures}
+              />
+            </section>
+
+            <section id="account" className={sectionCls}>
+              <h2 className="text-2xl font-bold text-rose-500 mb-1">
+                Account Settings
+              </h2>
+              <p className="text-zinc-500 text-sm mb-6">
+                Keep your contact information up to date.
+              </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
-                  <label className={labelCls}>Gender</label>
-                  <select
+                  <label className={labelCls}>First Name</label>
+                  <input
+                    type="text"
                     className={inputCls}
-                    value={gender}
-                    onChange={(e) => setGender(e.target.value)}
-                  >
-                    <option value="">Select gender</option>
-                    {GENDERS.map((g) => (
-                      <option key={g.value} value={g.value}>
-                        {g.label}
-                      </option>
-                    ))}
-                  </select>
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    placeholder="First name"
+                  />
                 </div>
                 <div>
-                  <label className={labelCls}>Interested In</label>
-                  <select
+                  <label className={labelCls}>Last Name</label>
+                  <input
+                    type="text"
                     className={inputCls}
-                    value={sexualPreference}
-                    onChange={(e) => setSexualPreference(e.target.value)}
-                  >
-                    <option value="">Select preference</option>
-                    {SEXUAL_PREFERENCES.map((p) => (
-                      <option key={p.value} value={p.value}>
-                        {p.label}
-                      </option>
-                    ))}
-                  </select>
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    placeholder="Last name"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className={labelCls}>Email Address</label>
+                  <input
+                    type="email"
+                    className={inputCls}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                  {email !== currentEmail && (
+                    <p className="text-xs text-amber-600 mt-1.5 px-1">
+                      A verification link will be sent to confirm the new
+                      address.
+                    </p>
+                  )}
                 </div>
               </div>
-              <div>
-                <label className={labelCls}>Bio</label>
-                <textarea
-                  className="w-full bg-[#F9F1E7] border border-transparent focus:border-emerald-400 rounded-xl p-4 focus:ring-0 outline-none text-base resize-none transition-colors"
-                  placeholder="A cozy morning for me looks like..."
-                  rows={4}
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className={labelCls}>Interests</label>
-                <InterestsPicker selected={interests} onChange={setInterests} />
-              </div>
-            </div>
-          </section>
+            </section>
 
-          <section id="pictures" className={sectionCls}>
-            <h2 className="text-2xl font-bold text-rose-500 mb-1">
-              Manage Pictures
-            </h2>
-            <p className="text-zinc-500 text-sm mb-6">
-              The first picture is your primary profile photo.
-            </p>
-            <PhotoGallery
-              state={pictures}
-              presignedUrls={presignedUrls}
-              onChange={setPictures}
-            />
-          </section>
+            <section id="location" className={sectionCls}>
+              <h2 className="text-2xl font-bold text-rose-500 mb-1">
+                Location
+              </h2>
+              <p className="text-zinc-500 text-sm mb-6">
+                Manage how you connect with people nearby.
+              </p>
+              <LocationTab
+                userId={userId}
+                location={location}
+                onChange={setLocation}
+              />
+            </section>
 
-          <section id="account" className={sectionCls}>
-            <h2 className="text-2xl font-bold text-rose-500 mb-1">
-              Account Settings
-            </h2>
-            <p className="text-zinc-500 text-sm mb-6">
-              Keep your contact information up to date.
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div>
-                <label className={labelCls}>First Name</label>
-                <input
-                  type="text"
-                  className={inputCls}
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  placeholder="First name"
-                />
-              </div>
-              <div>
-                <label className={labelCls}>Last Name</label>
-                <input
-                  type="text"
-                  className={inputCls}
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  placeholder="Last name"
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label className={labelCls}>Email Address</label>
-                <input
-                  type="email"
-                  className={inputCls}
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-                {email !== currentEmail && (
-                  <p className="text-xs text-amber-600 mt-1.5 px-1">
-                    A verification link will be sent to confirm the new address.
-                  </p>
-                )}
-              </div>
-            </div>
-          </section>
-
-          <section id="location" className={sectionCls}>
-            <h2 className="text-2xl font-bold text-rose-500 mb-1">Location</h2>
-            <p className="text-zinc-500 text-sm mb-6">
-              Manage how you connect with people nearby.
-            </p>
-            <LocationTab
-              userId={userId}
-              location={location}
-              onChange={setLocation}
-            />
-          </section>
-
-          <div className="flex justify-end py-8">
-            <button
-              type="submit"
-              disabled={submitting}
-              className="strawberry-matcha-btn text-white px-8 py-3.5 rounded-full font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-60 cursor-pointer"
-            >
-              {submitting ? 'Saving...' : 'Save Profile'}
-            </button>
-          </div>
-        </form>
-
-        <form onSubmit={handlePasswordChange}>
-          <section id="security" className={sectionCls}>
-            <h2 className="text-2xl font-bold text-rose-500 mb-1">Security</h2>
-            <p className="text-zinc-500 text-sm mb-6">
-              Change your password to keep your account secure.
-            </p>
-            <div className="space-y-5">
-              <div>
-                <label className={labelCls}>Current Password</label>
-                <PasswordInput
-                  value={oldPassword}
-                  onChange={setOldPassword}
-                  placeholder="Enter current password"
-                  autoComplete="current-password"
-                />
-              </div>
-              <div>
-                <label className={labelCls}>New Password</label>
-                <PasswordInput
-                  value={newPassword}
-                  onChange={setNewPassword}
-                  placeholder="At least 8 characters"
-                  autoComplete="new-password"
-                />
-              </div>
-              <div>
-                <label className={labelCls}>Confirm New Password</label>
-                <PasswordInput
-                  value={confirmPassword}
-                  onChange={setConfirmPassword}
-                  placeholder="Repeat new password"
-                  autoComplete="new-password"
-                />
-              </div>
-            </div>
-            <div className="flex justify-end mt-6 pb-10">
+            <div className="flex justify-end py-8">
               <button
                 type="submit"
-                disabled={passwordSubmitting}
+                disabled={submitting}
                 className="strawberry-matcha-btn text-white px-8 py-3.5 rounded-full font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-60 cursor-pointer"
               >
-                {passwordSubmitting ? 'Updating...' : 'Update Password'}
+                {submitting ? 'Saving...' : 'Save Profile'}
               </button>
             </div>
-          </section>
-        </form>
+          </form>
+
+          <form onSubmit={handlePasswordChange}>
+            <section id="security" className={sectionCls}>
+              <h2 className="text-2xl font-bold text-rose-500 mb-1">
+                Security
+              </h2>
+              <p className="text-zinc-500 text-sm mb-6">
+                Change your password to keep your account secure.
+              </p>
+              <div className="space-y-5">
+                <div>
+                  <label className={labelCls}>Current Password</label>
+                  <PasswordInput
+                    value={oldPassword}
+                    onChange={setOldPassword}
+                    placeholder="Enter current password"
+                    autoComplete="current-password"
+                  />
+                </div>
+                <div>
+                  <label className={labelCls}>New Password</label>
+                  <PasswordInput
+                    value={newPassword}
+                    onChange={setNewPassword}
+                    placeholder="At least 8 characters"
+                    autoComplete="new-password"
+                  />
+                </div>
+                <div>
+                  <label className={labelCls}>Confirm New Password</label>
+                  <PasswordInput
+                    value={confirmPassword}
+                    onChange={setConfirmPassword}
+                    placeholder="Repeat new password"
+                    autoComplete="new-password"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end mt-6 pb-10">
+                <button
+                  type="submit"
+                  disabled={passwordSubmitting}
+                  className="strawberry-matcha-btn text-white px-8 py-3.5 rounded-full font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-60 cursor-pointer"
+                >
+                  {passwordSubmitting ? 'Updating...' : 'Update Password'}
+                </button>
+              </div>
+            </section>
+          </form>
         </div>
       </div>
     </div>

@@ -68,14 +68,19 @@ export const PATCH = withErrorHandler(
     const data = UpdateUserProfileSchema.parse(rawData);
 
     const userService = await getUserService();
-    const { profile, emailChanged } = await userService.updateUserProfile(id, data);
+    const { profile, emailChanged } = await userService.updateUserProfile(
+      id,
+      data,
+    );
 
     if (emailChanged) {
       const cookieStore = await cookies();
       const currentToken = cookieStore.get('session')?.value;
       if (currentToken) {
         const authService = getAuthService();
-        const newSession = await authService.refreshSession(currentToken, { isVerified: false });
+        const newSession = await authService.refreshSession(currentToken, {
+          isVerified: false,
+        });
         cookieStore.set('session', newSession);
       }
     }

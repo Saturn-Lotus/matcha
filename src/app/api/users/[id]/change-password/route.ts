@@ -5,7 +5,10 @@ import { ChangePasswordSchema } from '@/server/schemas';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const POST = withErrorHandler(
-  async (request: NextRequest, context: { params: Promise<{ id: string }> }) => {
+  async (
+    request: NextRequest,
+    context: { params: Promise<{ id: string }> },
+  ) => {
     const { id } = await context.params;
     const userId = request.headers.get('x-user-id');
     if (userId !== id) {
