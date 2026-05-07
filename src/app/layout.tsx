@@ -2,6 +2,7 @@ import './globals.css';
 import { Toaster } from '@/app/components/ui/sonner';
 import { NavigationBar } from '@/app/components/layout/navigation-bar';
 import { Footer } from '@/app/components/layout/footer';
+import { HeartbeatProvider } from '@/app/components/heartbeat-provider';
 import { headers } from 'next/headers';
 
 export default async function RootLayout({
@@ -26,6 +27,7 @@ export default async function RootLayout({
         />
         <main className="flex-1 w-screen">
           <Toaster />
+          {isAuthenticated && <HeartbeatProvider />}
           {children}
         </main>
         <Footer />
