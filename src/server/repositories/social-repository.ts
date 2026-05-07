@@ -79,6 +79,22 @@ export class SocialRepository {
     );
   }
 
+  async getLikesCount(userId: string): Promise<number> {
+    const rows = await this.db.query<{ count: string }>(
+      `SELECT COUNT(*) AS count FROM user_likes WHERE "likedUserId" = $1;`,
+      [userId],
+    );
+    return parseInt(rows[0]?.count ?? '0', 10);
+  }
+
+  async getViewsCount(userId: string): Promise<number> {
+    const rows = await this.db.query<{ count: string }>(
+      `SELECT COUNT(*) AS count FROM profile_views WHERE "viewedUserId" = $1;`,
+      [userId],
+    );
+    return parseInt(rows[0]?.count ?? '0', 10);
+  }
+
   /** Check if a user has liked another user */
   async hasLiked(likerUserId: string, likedUserId: string): Promise<boolean> {
     const rows = await this.db.query<{ exists: boolean }>(

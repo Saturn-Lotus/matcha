@@ -1,5 +1,6 @@
 import { HTTPError } from '@/lib/exception-http-mapper';
 import { SocialRepository } from '../repositories';
+import { FameService } from './fame';
 
 @HTTPError(400)
 export class InvalidLikeError extends Error {
@@ -11,9 +12,11 @@ export class InvalidLikeError extends Error {
 
 export class SocialService {
   private readonly socialRepository: SocialRepository;
+  private readonly fameService: FameService;
 
-  constructor(socialRepository: SocialRepository) {
+  constructor(socialRepository: SocialRepository, fameService: FameService) {
     this.socialRepository = socialRepository;
+    this.fameService = fameService;
   }
 
   listLikers = async (userId: string) => {
@@ -25,10 +28,12 @@ export class SocialService {
       throw new InvalidLikeError('Cannot like yourself');
     }
     await this.socialRepository.likeUser(likerUserId, likedUserId);
+    await this.fameService.recompute(likedUserId);
   };
 
   unlikeUser = async (likerUserId: string, likedUserId: string) => {
     await this.socialRepository.unlikeUser(likerUserId, likedUserId);
+    await this.fameService.recompute(likedUserId);
   };
 
   getViewers = async (userId: string) => {
@@ -41,5 +46,6 @@ export class SocialService {
     if (skipSelfView) return;
 
     await this.socialRepository.recordView(viewerId, viewedUserId);
+    await this.fameService.recompute(viewedUserId);
   };
 }
