@@ -8,7 +8,8 @@ const HEARTBEAT_INTERVAL_MS = 60_000;
 
 function sendOnline() {
   try {
-    apiClient.post(HEARTBEAT_URL, { online: true });
+    const purePath = HEARTBEAT_URL.replace(/^\/api/, '');
+    apiClient.post(purePath, { online: true });
   } catch {
     // Silently ignore errors — heartbeat is best-effort and should not disrupt user experience
   }
