@@ -21,7 +21,7 @@ export class UserRepository extends BaseRepositoryClass<User> {
 
   async create(item: CreateUserInput, db: PostgresDB = this.db): Promise<User> {
     const rows = await db.query<User>(
-      `INSERT INTO ${this.usersTable}("username", "email","pendingEmail", "passwordHash", "isVerified")
+      `INSERT INTO ${this.usersTable}("username", "email", "pendingEmail", "passwordHash", "isVerified")
 			VALUES ($1, $2, $3, $4, $5) RETURNING *;
 			`,
       [

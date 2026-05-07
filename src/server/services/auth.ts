@@ -152,7 +152,6 @@ export class AuthService {
 
     await this.userRepo.update(userToken.userId, {
       isVerified: true,
-      pendingEmail: null,
     });
     await this.userTokensRepo.delete(userToken.tokenHash);
   }

@@ -34,9 +34,9 @@ export class UserService {
       user: {
         username: data.username,
         email: data.email,
+        pendingEmail: null,
         passwordHash,
         isVerified: false,
-        pendingEmail: data.email,
       },
       profile: {
         firstName: data.firstName,

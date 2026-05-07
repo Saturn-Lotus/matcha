@@ -18,13 +18,13 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <head />
-      <body className="w-screen h-screen flex flex-col items-center container mx-auto strawberry-matcha-bg">
+      <body className="w-screen min-h-screen flex flex-col items-center container mx-auto strawberry-matcha-bg">
         <NavigationBar
           isAuthenticated={isAuthenticated}
           avatarSrc={avatarSrc}
           avatarSeed={userId ?? undefined}
         />
-        <main className="flex-1 w-screen">
+        <main className="flex-1 w-screen flex flex-col">
           <Toaster />
           {children}
         </main>

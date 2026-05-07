@@ -35,7 +35,7 @@ export default async function SettingsPage() {
   );
 
   return (
-    <div className="min-h-screen bg-settings-bg">
+    <div>
       <SettingsForm
         userId={userId}
         currentEmail={user.email}
