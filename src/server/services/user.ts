@@ -10,8 +10,9 @@ import { IStorage } from '@/server/storage';
 import { getUserProfilePicturesPath } from '@/server/storage/utils/path';
 import { ValidationError } from '@/lib/validator';
 import type { AuthService } from '@/server/services/auth';
-import { RegisterUserInput } from '@/server/types';
+import { BrowseSuggestion, RegisterUserInput } from '@/server/types';
 import bcrypt from 'bcrypt';
+
 
 export class UserService {
   private readonly userRepository: UserRepository;
@@ -283,5 +284,24 @@ export class UserService {
     }
     const passwordHash = await bcrypt.hash(newPassword, 10);
     await this.userRepository.update(userId, { passwordHash });
+  };
+
+  getUsersWithProfiles = async (): Promise<BrowseSuggestion[]> => {
+    const rows = await this.userRepository.getUsersWithProfiles();
+    return rows.map((row) => ({
+      id: row.id,
+      username: row.username,
+      firstName: row.firstName,
+      age: 0,
+      distanceKm: 0,
+      fameRating: row.fameRating,
+      sharedTagCount: 0,
+      previewPictureUrl: row.avatarUrl,
+      photos: row.pictures ?? [],
+      isOnline: row.isOnline,
+      lastSeenAt: row.lastSeenAt?.toISOString() ?? null,
+      bio: row.bio,
+      tags: row.interests ?? [],
+    }));
   };
 }
