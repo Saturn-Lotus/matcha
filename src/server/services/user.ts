@@ -51,6 +51,13 @@ export class UserService {
     });
   };
 
+  setOnlineStatus = async (
+    userId: string,
+    isOnline: boolean,
+  ): Promise<void> => {
+    await this.userRepository.setOnline(userId, isOnline);
+  };
+
   getUserById = async (id: string) => {
     const user = await this.userRepository.findById(id);
     if (!user) {

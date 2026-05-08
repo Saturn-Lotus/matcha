@@ -193,6 +193,15 @@ export class UserRepository extends BaseRepositoryClass<User> {
     return rows[0];
   }
 
+  async setOnline(userId: string, isOnline: boolean): Promise<void> {
+    await this.db.query(
+      `UPDATE ${this.userProfilesTable}
+       SET "isOnline" = $1, "lastSeenAt" = NOW()
+       WHERE "userId" = $2;`,
+      [isOnline, userId],
+    );
+  }
+
   async delete(id: string): Promise<void> {
     await this.db.query<User>(`DELETE FROM ${this.usersTable} WHERE id = $1;`, [
       id,

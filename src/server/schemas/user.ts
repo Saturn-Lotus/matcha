@@ -38,6 +38,9 @@ export const UserProfileSchema = Su.object({
   interests: Su.null(Su.array(Su.string())),
   pictures: Su.null(Su.array(Su.string())),
   isProfileComplete: Su.boolean(),
+  fameRating: Su.number(),
+  lastSeenAt: Su.null(Su.date()),
+  isOnline: Su.boolean(),
   createdAt: Su.optional(Su.date()),
   updatedAt: Su.optional(Su.date()),
 });

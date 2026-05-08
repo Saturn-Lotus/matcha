@@ -16,7 +16,7 @@ Required fields (editable at any time):
 - Location: GPS with explicit consent; manual fallback (city/neighborhood) if declined. User can modify location any time.
 
 Profile read surface:
-- Fame rating (public, computed — formula TBD, see "Fame rating" below).
+- Fame rating (public, computed — see "Fame rating" below).
 - "Who viewed me" list (populated by PRD 05).
 - "Who liked me" list (populated by PRD 05).
 
@@ -35,7 +35,7 @@ Profile read surface:
 - `user_locations` — userId (PK), location (PostGIS POINT), city, locationType (enum), consentGiven (bool), updatedAt.
 
 ### Needs migration
-- `user_profiles` — add: `fame_rating` (int, default 0), `last_seen_at` (timestamptz), `is_online` (bool, default false).
+- `user_profiles` — add: `fameRating` (float, NOT NULL, default 0), `lastSeenAt` (timestamptz, nullable), `isOnline` (bool, NOT NULL, default false).
 
 ---
 
@@ -59,13 +59,20 @@ Profile read surface:
 ---
 
 ## Fame rating
-Formula not yet defined. Once agreed, it will be owned by `FameService.recompute(userId)`:
-- Coefficients must be declared as named constants in the service file.
-- Score floored at 0, no upper cap.
-- Recomputed on: like, unlike, profile view, block.
-- Cached in `user_profiles.fame_rating`; publicly visible on profile cards.
+**Status: DEFINED — implemented in `FameService` (`src/server/services/fame.ts`).**
 
-**Status: OPEN — formula must be agreed before implementation.**
+```
+fame = max(0, view_count * VIEW_WEIGHT + active_likes_count * LIKE_WEIGHT)
+```
+
+| Constant | Value | Signal |
+|---|---|---|
+| `VIEW_WEIGHT` | 1 | unique profile view |
+| `LIKE_WEIGHT` | 5 | active like (unlike removes it, cancelling its weight) |
+
+- Score floored at 0, no upper cap.
+- Recomputed on: like, unlike, profile view. Blocks and matches deferred.
+- Cached in `user_profiles.fameRating` (float); publicly visible on profile cards.
 
 ---
 
@@ -99,14 +106,14 @@ Formula not yet defined. Once agreed, it will be owned by `FameService.recompute
 ## Tasks
 
 ### Migrations
-- [ ] Migration `add-online-status-and-fame-to-user-profiles` — add `fame_rating int default 0`, `last_seen_at timestamptz`, `is_online bool default false` to `user_profiles`
+- [ ] Migration `add-online-status-and-fame-to-user-profiles` — add `fameRating float NOT NULL default 0`, `lastSeenAt timestamptz`, `isOnline bool NOT NULL default false` to `user_profiles` *(file created, pending DB order issue)*
 
 ### Repository — `UserRepository` (extend)
 - [ ] `setOnline(userId, isOnline)` — update `is_online`, `last_seen_at`
 
-### Service — `FameService` (blocked — formula TBD)
-- [ ] `recompute(userId)` — fetch counts (likes, views, connections), apply agreed formula, update `user_profiles.fame_rating`
-- [ ] Expose coefficients as named constants
+### Service — `FameService`
+- [x] `recompute(userId)` — fetch view/like counts, apply formula, update `user_profiles.fameRating`
+- [x] Expose coefficients as named constants (`VIEW_WEIGHT`, `LIKE_WEIGHT`)
 
 ### Service — `UserService` (extend)
 - [ ] `changePassword(userId, oldPassword, newPassword)` — `bcrypt.compare` old, hash new, call `UserRepository.update`
@@ -137,5 +144,4 @@ Formula not yet defined. Once agreed, it will be owned by `FameService.recompute
 ---
 
 ## Open questions
-- Fame rating formula — coefficients and events to be agreed before `FameService` is implemented.
 - Storage backend (local vs. Vercel Blob) — currently using Vercel Blob; confirm for production and update this PRD.
