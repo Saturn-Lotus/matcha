@@ -426,7 +426,7 @@ export function OnboardingForm({ userId }: { userId: string }) {
   };
 
   return (
-    <div className="h-full w-full strawberry-matcha-bg flex items-center justify-center p-4">
+    <div className="flex-1 h-full w-full strawberry-matcha-bg flex items-center justify-center p-4">
       <Card className="w-full max-w-2xl glass-effect border-0 shadow-xl">
         <CardHeader>
           <CardTitle className="text-3xl font-bold text-center strawberry-matcha-gradient">

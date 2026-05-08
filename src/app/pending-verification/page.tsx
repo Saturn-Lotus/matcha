@@ -26,7 +26,7 @@ const PendingVerification = () => {
   };
 
   return (
-    <div className="h-full w-full strawberry-matcha-bg flex items-center justify-center p-4">
+    <div className="flex-1 w-full flex items-center justify-center p-4">
       <Card className="w-full max-w-md glass-effect border-0 shadow-xl text-center">
         <CardHeader>
           <CardTitle className="text-2xl font-bold strawberry-matcha-gradient">

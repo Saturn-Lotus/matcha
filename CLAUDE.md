@@ -74,14 +74,16 @@ A rule of thumb: if you find yourself writing `bcrypt`, `db.transaction`, or raw
 
 ## Database
 - Migrations live in `migrations/` and are managed with `node-pg-migrate`.
-- Run migrations: `npm run db:migrate`
-- Create a migration: `npm run db:create <name>`
+
+- Run migrations: `bun db:migrate` - always ask for permission before running migrations
+- Create a migration: `bun db:create <name>` - always create a new migration file for schema changes using this command, never alter existing ones or create them manually.
 - Do not alter the DB schema outside of migration files.
 - The migration files should be in raw sql using pgm.sql, not using the helper methods (e.g. pgm.createTable) — this ensures the SQL is explicit and clear.
 
 ## Frontend Rules
 - Use shadcn/ui components and Radix primitives for all UI elements — do not create custom components unless necessary.
 - Tailwind CSS for styling — no custom CSS files or inline styles.
+- Follow the theme config in globals.css for colors, fonts, etc. Do not introduce new custom styles without adding them to the theme and do not use Arbitrary Value notation.
 - Use Next.js App Router conventions for page and API route structure.
 - Use zustand for state management if needed — avoid prop drilling but do not overuse global state.
 - The app must be compatible with the latest versions of Chrome and Firefox — no experimental features that lack broad support.
@@ -89,6 +91,11 @@ A rule of thumb: if you find yourself writing `bcrypt`, `db.transaction`, or raw
 - always use Next.js Image component for images, never raw `<img>` tags.
 - alwasy use classnames (`cn`) for conditional classes, never template literals or manual string concatenation.
 
+
+## Shared utilities
+- **`src/lib/utils.ts`** is the single home for shared, stateless helper functions (e.g. `cn`, `relativeTime`).
+- Before writing a new helper inside a component or page, check `src/lib/utils.ts` first.
+- If a helper is useful beyond its immediate callsite, add it to `src/lib/utils.ts` — never define the same logic twice.
 
 ## Code Style
 - Use `async/await` — no raw `.then()` chains.
@@ -106,10 +113,10 @@ A rule of thumb: if you find yourself writing `bcrypt`, `db.transaction`, or raw
 ## Commands
 | Task | Command |
 |------|---------|
-| Dev server | `npm run dev` |
-| Lint | `npm run lint` |
-| Lint fix | `npm run lint:fix` |
-| Format | `npm run format` |
-| Migrate DB | `npm run db:migrate` |
-| Unit tests | `npx jest` |
-| E2E tests | `npm run cy:open` |
+| Dev server | `bun run dev` |
+| Lint | `bun run lint` |
+| Lint fix | `bun run lint:fix` |
+| Format | `bun run format` |
+| Migrate DB | `bun db:migrate` |
+| Unit tests | `bun x jest` |
+| E2E tests | `bun run cy:open` |

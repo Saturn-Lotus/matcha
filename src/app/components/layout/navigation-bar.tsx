@@ -1,5 +1,5 @@
 'use client';
-import { Heart, LogOut, Settings, User } from 'lucide-react';
+import { Heart, LogOut, Settings, User, Search, Compass, Flame } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import {
   DropdownMenu,
@@ -13,12 +13,14 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import Image from 'next/image';
 import { apiClient } from '@/lib/api';
+import { cn } from '@/lib/utils';
 
 const NO_HEADER_ROUTES = [
   '/login',
   '/register',
   '/reset-password',
   '/onboarding',
+  '/pending-verification',
 ];
 
 interface NavigationBarProps {
@@ -36,7 +38,7 @@ function AvatarImage({ src, seed }: { src?: string | null; seed?: string }) {
 
   if (!imgSrc) {
     return (
-      <div className="w-8 h-8 rounded-full bg-pink-100 flex items-center justify-center">
+      <div className="w-full h-full rounded-full bg-pink-100 flex items-center justify-center">
         <User className="w-4 h-4 text-pink-400" />
       </div>
     );
@@ -50,10 +52,39 @@ function AvatarImage({ src, seed }: { src?: string | null; seed?: string }) {
       height={32}
       unoptimized
       onError={() => setErrored(true)}
-      className="w-8 h-8 rounded-full object-cover border-2 border-pink-200"
+      className="w-full h-full rounded-full object-cover"
     />
   );
 }
+
+const NavLink = ({
+  href,
+  children,
+  active,
+  badge,
+}: {
+  href: string;
+  children: React.ReactNode;
+  active?: boolean;
+  badge?: number;
+}) => (
+  <Link
+    href={href}
+    className={cn(
+      'relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-150',
+      active
+        ? 'text-gray-900 bg-gray-100'
+        : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50',
+    )}
+  >
+    {children}
+    {badge !== undefined && badge > 0 && (
+      <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-semibold rounded-full text-white strawberry-matcha-btn leading-none">
+        {badge > 9 ? '9+' : badge}
+      </span>
+    )}
+  </Link>
+);
 
 export const NavigationBar = ({
   isAuthenticated,
@@ -74,64 +105,103 @@ export const NavigationBar = ({
   }
 
   return (
-    <header className="flex md:h-[8vh] justify-between w-screen items-center px-4 md:px-20">
-      <Link href="/" className="flex items-center space-x-2 py-4">
-        <Heart className="md:h-8 md:w-8 w-6 h-6 text-pink-400 fill-current" />
-        <h1 className="md:text-2xl text-md font-bold strawberry-matcha-gradient">
-          Strawberry Matcha
-        </h1>
-      </Link>
+    <div className="sticky top-0 z-50 w-full px-4 pt-3 pb-1.5">
+      <header className="max-w-5xl mx-auto rounded-2xl bg-white border border-gray-200/80 shadow-[0_2px_20px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.02)] flex items-center justify-between px-3 h-14 gap-2">
+        <Link href="/" className="flex items-center gap-2 shrink-0 pl-1 group">
+          <Heart className="h-5 w-5 text-pink-400 fill-current transition-transform duration-200 group-hover:scale-110" />
+          <span className="text-[15px] font-bold strawberry-matcha-gradient tracking-tight hidden sm:block">
+            Strawberry Matcha
+          </span>
+        </Link>
 
-      <div className="flex items-center">
         {isAuthenticated ? (
-          <DropdownMenu modal={false}>
-            <DropdownMenuTrigger asChild>
+          <>
+            <nav className="flex items-center gap-0.5">
+              <NavLink href="/browse" active={pathName === '/browse'}>
+                <Compass className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">Browse</span>
+              </NavLink>
+              <NavLink href="/settings" active={pathName === '/settings'}>
+                <Settings className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">Settings</span>
+              </NavLink>
+            </nav>
+
+            <div className="flex items-center gap-1.5">
               <button
-                className="rounded-full p-0.5 ring-2 ring-transparent hover:ring-pink-200 transition-all cursor-pointer focus:outline-none"
-                aria-label="Open user menu"
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-all duration-150"
+                aria-label="Search"
               >
-                <AvatarImage src={avatarSrc} seed={avatarSeed} />
+                <Search className="w-4 h-4" />
               </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-44">
-              <DropdownMenuItem asChild>
-                <Link
-                  href="/settings"
-                  className="flex items-center gap-2 cursor-pointer text-gray-700 hover:text-pink-600"
+
+              <DropdownMenu modal={false}>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    aria-label="Open user menu"
+                    className="relative w-8 h-8 rounded-full ring-2 ring-gray-200 hover:ring-pink-300 transition-all duration-200 focus:outline-none"
+                  >
+                    <AvatarImage src={avatarSrc} seed={avatarSeed} />
+                    <span className="absolute -bottom-px -right-px w-2.5 h-2.5 bg-emerald-400 border-2 border-white rounded-full" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  sideOffset={10}
+                  className="w-44 rounded-xl border border-gray-200/80 shadow-lg shadow-black/5 bg-white p-1"
                 >
-                  <Settings className="w-4 h-4" />
-                  Settings
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                variant="destructive"
-                className="flex items-center gap-2 cursor-pointer"
-                onClick={handleLogout}
+                  <DropdownMenuItem asChild>
+                    <Link
+                      href="/settings"
+                      className="flex items-center gap-2 cursor-pointer text-gray-700 rounded-lg px-2.5 py-2 text-sm"
+                    >
+                      <Settings className="w-4 h-4 text-gray-400" />
+                      Settings
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator className="my-1" />
+                  <DropdownMenuItem
+                    variant="destructive"
+                    className="flex items-center gap-2 cursor-pointer rounded-lg px-2.5 py-2 text-sm"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <Button
+                size="sm"
+                className="strawberry-matcha-btn text-white text-xs font-semibold h-8 px-3.5 rounded-lg hover:opacity-90 shadow-sm hidden sm:flex items-center gap-1.5"
               >
-                <LogOut className="w-4 h-4" />
-                Logout
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <Flame className="w-3.5 h-3.5" />
+                Discover
+              </Button>
+            </div>
+          </>
         ) : (
-          <div className="md:space-x-2 space-x-1 flex items-center">
+          <div className="flex items-center gap-2 pr-1">
             <Link href="/login">
               <Button
                 variant="ghost"
-                className="text-gray-600 hover:text-green-600 text-xs md:text-lg"
+                size="sm"
+                className="h-8 px-3.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 font-medium rounded-lg transition-all duration-150"
               >
                 Login
               </Button>
             </Link>
             <Link href="/register">
-              <Button className="strawberry-matcha-btn hover:opacity-90 text-white md:px-6 px-4 text-xs md:text-lg">
-                Sign Up
+              <Button
+                size="sm"
+                className="h-8 px-4 text-sm font-semibold text-white strawberry-matcha-btn hover:opacity-90 rounded-lg shadow-sm transition-all duration-150"
+              >
+                Sign up
               </Button>
             </Link>
           </div>
         )}
-      </div>
-    </header>
+      </header>
+    </div>
   );
 };

@@ -37,7 +37,7 @@ export default async function ProfilePage() {
   );
 
   return (
-    <div className="min-h-screen strawberry-matcha-bg py-10 px-4">
+    <div className="py-10 px-4">
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="text-center">
           <h1 className="text-3xl font-bold strawberry-matcha-gradient flex items-center justify-center gap-2">
