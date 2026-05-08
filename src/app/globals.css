@@ -4,6 +4,9 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --animate-seg-fill: seg-fill 4s linear forwards;
+  --animate-like-burst: like-burst 0.7s ease-out forwards;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
@@ -254,4 +257,20 @@
       var(--color-button-gradient-end)
     );
   }
+}
+
+@keyframes seg-fill {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes like-burst {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
+  20%  { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+  60%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.3); }
+}
+
+.feed-viewport {
+  height: calc(100dvh - 6.5rem); /* 3.5rem nav + 3rem tabs */
 }

@@ -216,6 +216,41 @@ export class UserRepository extends BaseRepositoryClass<User> {
     );
     // ! handle error if no rows were deleted
   }
+
+  async getUsersWithProfiles(): Promise<UserWithProfileRow[]> {
+    return this.db.query<UserWithProfileRow>(
+      `SELECT
+         u.id,
+         u.username,
+         up."firstName",
+         up."fameRating",
+         up."isOnline",
+         up."lastSeenAt",
+         up."avatarUrl",
+         up.pictures,
+         up.interests,
+         up.bio
+       FROM users u
+       JOIN user_profiles up ON up."userId" = u.id
+       WHERE up."isProfileComplete" = TRUE
+         AND u."isVerified" = TRUE
+       LIMIT 20;`,
+      [],
+    );
+  }
 }
+
+export type UserWithProfileRow = {
+  id: string;
+  username: string;
+  firstName: string;
+  fameRating: number;
+  isOnline: boolean;
+  lastSeenAt: Date | null;
+  avatarUrl: string | null;
+  pictures: string[] | null;
+  interests: string[] | null;
+  bio: string | null;
+};
 
 export default UserRepository;

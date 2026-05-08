@@ -19,3 +19,19 @@ export type RegisterUserInput = {
   lastName: string;
   password: string;
 };
+
+export type BrowseSuggestion = {
+  id: string;
+  username: string;
+  firstName: string;
+  age: number;
+  distanceKm: number;
+  fameRating: number;
+  sharedTagCount: number;
+  previewPictureUrl: string | null;
+  photos: string[];
+  isOnline: boolean;
+  lastSeenAt: string | null;
+  bio: string | null;
+  tags: string[];
+};

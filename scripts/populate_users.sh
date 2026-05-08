@@ -1,6 +1,10 @@
 #!/bin/bash
 # populate_users.sh
 # Seeds the database with 500 randomised users via populate_users.sql.
+#
+# Usage:
+#   bash scripts/populate_users.sh          # append seed users
+#   bash scripts/populate_users.sh --clean  # wipe seed users first, then re-seed
 
 set -euo pipefail
 
@@ -23,8 +27,6 @@ if [ -z "${POSTGRES_CONNECTION_STRING:-}" ]; then
   exit 1
 fi
 
-echo "Seeding database with 500 users..."
-
 # Normalize common invalid sslmode values for psql compatibility
 # valid sslmode values: disable|allow|prefer|require|verify-ca|verify-full
 if [[ "${POSTGRES_CONNECTION_STRING}" == *"sslmode=enable"* ]]; then
@@ -37,5 +39,15 @@ if [[ "${POSTGRES_CONNECTION_STRING}" == *"sslmode=on"* ]]; then
   POSTGRES_CONNECTION_STRING="${POSTGRES_CONNECTION_STRING//sslmode=on/sslmode=require}"
 fi
 
+# --clean: delete all seed users (emails matching seed_*@example.com) before re-seeding
+if [[ "${1:-}" == "--clean" ]]; then
+  echo "Cleaning existing seed users..."
+  psql "$POSTGRES_CONNECTION_STRING" -c "
+    DELETE FROM users WHERE email LIKE 'seed\_%@example.com';
+  "
+  echo "Seed users removed."
+fi
+
+echo "Seeding database with 500 users..."
 psql "$POSTGRES_CONNECTION_STRING" -f "$SCRIPT_DIR/populate_users.sql"
 echo "Done."
