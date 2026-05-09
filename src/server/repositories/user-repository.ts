@@ -217,7 +217,11 @@ export class UserRepository extends BaseRepositoryClass<User> {
     // ! handle error if no rows were deleted
   }
 
-  async getUsersWithProfiles(): Promise<UserWithProfileRow[]> {
+  async getUsersWithProfiles(
+    viewerId: string,
+    viewerGender: 'male' | 'female',
+    allowedGenders: readonly ('male' | 'female')[],
+  ): Promise<UserWithProfileRow[]> {
     return this.db.query<UserWithProfileRow>(
       `SELECT
          u.id,
@@ -234,8 +238,15 @@ export class UserRepository extends BaseRepositoryClass<User> {
        JOIN user_profiles up ON up."userId" = u.id
        WHERE up."isProfileComplete" = TRUE
          AND u."isVerified" = TRUE
+         AND u.id <> $1
+         AND up.gender = ANY($2::gender_t[])
+         AND (
+           up."sexualPreference" IS NULL
+           OR up."sexualPreference" = 'both'
+           OR up."sexualPreference" = $3::sexual_preference_t
+         )
        LIMIT 20;`,
-      [],
+      [viewerId, allowedGenders, viewerGender],
     );
   }
 }
