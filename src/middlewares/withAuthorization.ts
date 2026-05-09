@@ -19,10 +19,6 @@ const DISABLE_AUTH = process.env.DISABLE_AUTH === 'true';
 
 export const withAuthorization: MiddlewareFactory = (next) => {
   return async (request, event) => {
-    if (DISABLE_AUTH) {
-      return next(request, event);
-    }
-
     const path = request.nextUrl.pathname;
     const isPublicRoute = publicRoutes.includes(path);
 
@@ -30,7 +26,7 @@ export const withAuthorization: MiddlewareFactory = (next) => {
     const sessionCookie = cookieStore.get('session')?.value;
     const session = await decrypt(sessionCookie);
 
-    if (!isPublicRoute && !session?.userId) {
+    if (!DISABLE_AUTH && !isPublicRoute && !session?.userId) {
       return NextResponse.redirect(new URL('/login', request.nextUrl));
     }
 

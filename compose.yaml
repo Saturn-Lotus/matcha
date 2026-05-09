@@ -5,6 +5,8 @@ services:
       target: dev
       dockerfile: Dockerfile
     platform: linux/arm64
+    env_file:
+      - .env
     ports:
       - '3000:3000'
     volumes:
@@ -12,7 +14,8 @@ services:
       - /app/node_modules
 
   postgresDb:
-    image: postgres:latest
+    image: postgis/postgis:latest
+    platform: linux/amd64
     env_file:
       - .env
     ports:

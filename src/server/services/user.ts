@@ -286,8 +286,27 @@ export class UserService {
     await this.userRepository.update(userId, { passwordHash });
   };
 
-  getUsersWithProfiles = async (): Promise<BrowseSuggestion[]> => {
-    const rows = await this.userRepository.getUsersWithProfiles();
+  resolveOrientation = (
+    sexualPreference: UserProfile['sexualPreference'],
+  ): readonly ('male' | 'female')[] => {
+    if (sexualPreference === 'male') return ['male'];
+    if (sexualPreference === 'female') return ['female'];
+    return ['male', 'female'];
+  };
+
+  getUsersWithProfiles = async (
+    viewerId: string,
+  ): Promise<BrowseSuggestion[]> => {
+    const viewer = await this.getProfileByUserId(viewerId);
+    if (!viewer.gender) {
+      throw new NotFoundException('Viewer gender is not set');
+    }
+    const allowedGenders = this.resolveOrientation(viewer.sexualPreference);
+    const rows = await this.userRepository.getUsersWithProfiles(
+      viewerId,
+      viewer.gender,
+      allowedGenders,
+    );
     return rows.map((row) => ({
       id: row.id,
       username: row.username,

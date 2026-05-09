@@ -6,10 +6,11 @@ Subject §IV.3. Users land on a feed of "interesting" profiles that match their 
 ---
 
 ## Scope
-- Respect sexual preferences:
+- Respect sexual preferences (reciprocal — both sides must be compatible):
   - Heterosexual woman → sees only men; heterosexual man → sees only women.
   - Homosexual → same gender only.
   - Bisexual (or unset → treated as bisexual) → both genders.
+  - A candidate is only shown if their own `sexualPreference` includes the viewer's gender (null preference is treated as `'both'`).
 - Intelligent ranking across multiple criteria simultaneously:
   - Proximity to the viewer's location (highest priority).
   - Number of shared tags.
@@ -71,8 +72,9 @@ Response item: `{ id, username, firstName, age, distanceKm, fameRating, sharedTa
 
 ## Tasks
 
-### Repository — `SuggestionRepository`
-- [ ] `list(viewerId, filters, sort, cursor, limit)` — single parameterised SQL query using:
+### Repository — `UserRepository.getUsersWithProfiles` (suggestions live here for now)
+- [x] Filter by viewer's allowed candidate genders (`gender = ANY($2)`) and exclude the viewer themself — implements **BR-1**
+- [ ] Replace with a dedicated `SuggestionRepository.list(viewerId, filters, sort, cursor, limit)` once distance/tags/fame ranking lands. Will use:
   - `ST_Distance` (PostGIS) for distance calculation
   - Left join `likes` to exclude already-liked users (optional; or keep them but mark)
   - Join `user_tags` intersection count for shared tags
@@ -80,12 +82,14 @@ Response item: `{ id, username, firstName, age, distanceKm, fameRating, sharedTa
   - `ORDER BY` based on `sort` param; tie-break on `user_id` for determinism
   - Cursor pagination via `WHERE (distance, user_id) > (cursor_distance, cursor_id)`
 
-### Service — `SuggestionService`
+### Service — `UserService` (will move to `SuggestionService` later)
+- [x] `resolveOrientation(sexualPreference)` — determine allowed candidate genders; null preference is treated as `'both'` (per scope) — implements **BR-1**
+- [x] `getUsersWithProfiles(viewerId)` — fetch viewer profile, resolve allowed genders, call repository, map to `BrowseSuggestion` DTO
 - [ ] `list(viewerId, query)` — validate query params, call repository, map to response DTO, compute `previewPictureUrl` via storage helper
 - [ ] `validateFilters(query)` — age min ≤ max, distance > 0, fame min ≤ max
-- [ ] `resolveOrientation(viewer)` — determine allowed genders based on viewer's gender + preference
 
 ### Route
+- [x] `GET /api/users` — pulls `x-user-id` from middleware-injected header, calls service, returns suggestions (current placeholder until `/api/users/suggestions` is introduced)
 - [ ] `GET /api/users/suggestions` — parse + validate query params, call service, return 200 + paginated response
 - [ ] Protect with auth middleware; return 401 if not logged in
 - [ ] Return 400 for invalid filter values
