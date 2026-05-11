@@ -13,7 +13,6 @@ import type { AuthService } from '@/server/services/auth';
 import { BrowseSuggestion, RegisterUserInput } from '@/server/types';
 import bcrypt from 'bcrypt';
 
-
 export class UserService {
   private readonly userRepository: UserRepository;
   private readonly storage: IStorage;

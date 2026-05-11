@@ -81,9 +81,7 @@ export function SocialGrid({ userId, type }: SocialGridProps) {
   const [loading, setLoading] = useState(true);
 
   const endpoint =
-    type === 'view'
-      ? `/users/${userId}/views`
-      : `/users/${userId}/likes`;
+    type === 'view' ? `/users/${userId}/views` : `/users/${userId}/likes`;
 
   useEffect(() => {
     (async () => {
