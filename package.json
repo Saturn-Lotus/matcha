@@ -12,7 +12,8 @@
     "db:create": "node-pg-migrate create",
     "db:migrate": "node-pg-migrate up ",
     "db:rollback": "node-pg-migrate down",
-    "cy:open": "cypress open"
+    "cy:open": "cypress open",
+    "test": "jest --runInBand"
   },
   "dependencies": {
     "@radix-ui/react-label": "^2.1.7",
@@ -46,7 +47,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.14",
     "@types/bcrypt": "^6.0.0",
-    "@types/jest": "^30.0.0",
+    "@types/jest": "^29.5.0",
     "@types/node": "^20.19.20",
     "@types/node-pg-migrate": "^2.3.1",
     "@types/nodemailer": "^7.0.2",
@@ -61,7 +62,6 @@
     "node-pg-migrate": "^8.0.3",
     "prettier": "3.6.2",
     "tailwindcss": "^4.1.14",
-    "ts-jest": "^29.4.5",
     "tw-animate-css": "^1.3.7",
     "typescript": "^5.9.3"
   }

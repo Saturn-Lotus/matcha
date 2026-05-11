@@ -27,9 +27,7 @@ export function ProgressSegments({
               key={`${activeIdx}-${isActive}`}
               className={cn(
                 'h-full bg-white origin-left',
-                isActive
-                  ? 'animate-seg-fill'
-                  : '[animation-play-state:paused]',
+                isActive ? 'animate-seg-fill' : '[animation-play-state:paused]',
               )}
             />
           )}

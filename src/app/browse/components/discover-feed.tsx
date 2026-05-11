@@ -2,7 +2,14 @@
 
 import { useCallback, useRef, useState, useEffect } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
-import { ChevronDown, ChevronUp, Flame, Heart, Sparkles, User as UserIcon } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronUp,
+  Flame,
+  Heart,
+  Sparkles,
+  User as UserIcon,
+} from 'lucide-react';
 import { apiClient } from '@/lib/api/client';
 import Image from 'next/image';
 import { FeedScroller } from './feed-scroller';

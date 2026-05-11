@@ -130,7 +130,9 @@ export function FeedCard({
             </span>
           ) : (
             <span>
-              {profile.lastSeenAt ? `Active ${relativeTime(profile.lastSeenAt)}` : 'Recently active'}
+              {profile.lastSeenAt
+                ? `Active ${relativeTime(profile.lastSeenAt)}`
+                : 'Recently active'}
             </span>
           )}
           <span className="inline-flex items-center gap-1">
@@ -204,7 +206,9 @@ export function FeedCard({
             />
           </button>
           <span className="text-[11px] font-semibold text-white drop-shadow">
-            {Math.round(profile.fameRating + (isLiked ? 1 : 0)).toLocaleString()}
+            {Math.round(
+              profile.fameRating + (isLiked ? 1 : 0),
+            ).toLocaleString()}
           </span>
         </div>
 

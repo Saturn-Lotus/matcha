@@ -1,5 +1,13 @@
 'use client';
-import { Heart, LogOut, Settings, User, Search, Compass, Flame } from 'lucide-react';
+import {
+  Heart,
+  LogOut,
+  Settings,
+  User,
+  Search,
+  Compass,
+  Flame,
+} from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import {
   DropdownMenu,
