@@ -15,8 +15,6 @@ const publicRoutes = [
   '/api/auth/reset-password',
 ];
 
-const DISABLE_AUTH = process.env.DISABLE_AUTH === 'true';
-
 export const withAuthorization: MiddlewareFactory = (next) => {
   return async (request, event) => {
     const path = request.nextUrl.pathname;
@@ -26,7 +24,7 @@ export const withAuthorization: MiddlewareFactory = (next) => {
     const sessionCookie = cookieStore.get('session')?.value;
     const session = await decrypt(sessionCookie);
 
-    if (!DISABLE_AUTH && !isPublicRoute && !session?.userId) {
+    if (!isPublicRoute && !session?.userId) {
       return NextResponse.redirect(new URL('/login', request.nextUrl));
     }
 
