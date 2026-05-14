@@ -24,10 +24,8 @@ export type BrowseSuggestion = {
   id: string;
   username: string;
   firstName: string;
-  age: number;
-  distanceKm: number;
+  distanceKm: number | null;
   fameRating: number;
-  sharedTagCount: number;
   previewPictureUrl: string | null;
   photos: string[];
   isOnline: boolean;

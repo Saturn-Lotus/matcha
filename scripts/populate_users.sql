@@ -1,7 +1,10 @@
 -- populate_users.sql
 -- Seeds the database with 500 users for browse/feed testing.
 -- Populates: users, user_profiles (with pictures, fameRating, isOnline),
---            and user_locations (with PostGIS geometry) near Paris.
+--            and user_locations (with PostGIS geometry) spread across multiple cities.
+--
+-- City distribution (approximate): Casablanca/Mohammedia 30%, Paris 25%,
+--   Madrid 15%, London 10%, Berlin 10%, Istanbul 10%.
 --
 -- All users share the password "password123".
 -- Run via: bash scripts/populate_users.sh
@@ -96,9 +99,14 @@ DECLARE
   genders  TEXT[] := ARRAY['male','female'];
   prefs    TEXT[] := ARRAY['male','female','both'];
 
-  -- Paris as the seed center (~48.8566°N, 2.3522°E)
-  center_lat  FLOAT := 48.8566;
-  center_lng  FLOAT := 2.3522;
+  -- City centers: (lat, lng, name, lat_spread, lng_spread)
+  -- Spread values give ±radius in degrees (~0.45° ≈ 50 km at these latitudes)
+  city_lats   FLOAT[]  := ARRAY[33.6872,  48.8566, 40.4168, 51.5074, 52.5200, 41.0082];
+  city_lngs   FLOAT[]  := ARRAY[-7.3900,   2.3522, -3.7038, -0.1278, 13.4050, 28.9784];
+  city_names  TEXT[]   := ARRAY['Casablanca','Paris','Madrid','London','Berlin','Istanbul'];
+  city_spreads FLOAT[] := ARRAY[0.45,       0.45,   0.45,    0.35,    0.45,    0.45];
+  -- Cumulative probability thresholds for city selection (Casablanca 30%, Paris 25%, Madrid 15%, London 10%, Berlin 10%, Istanbul 10%)
+  city_thresholds FLOAT[] := ARRAY[0.30, 0.55, 0.70, 0.80, 0.90, 1.00];
 
   i            INT;
   uid          UUID;
@@ -122,6 +130,9 @@ DECLARE
   user_seen    TIMESTAMPTZ;
   ulat         FLOAT;
   ulng         FLOAT;
+  city_idx     INT;
+  city_roll    FLOAT;
+  city_spread  FLOAT;
 
   fn_len  INT := array_length(first_names,  1);
   ln_len  INT := array_length(last_names,   1);
@@ -178,9 +189,20 @@ BEGIN
       user_seen := NOW() - (random() * interval '72 hours');
     END IF;
 
-    -- Location: spread within ~50 km of Paris center
-    ulat := center_lat + (random() - 0.5) * 0.9;   -- ±~50 km latitude
-    ulng := center_lng + (random() - 0.5) * 1.1;   -- ±~50 km longitude at 48°N
+    -- Pick a city based on weighted probability
+    city_roll := random();
+    city_idx  := 6;
+    FOR j IN 1..6 LOOP
+      IF city_roll < city_thresholds[j] THEN
+        city_idx := j;
+        EXIT;
+      END IF;
+    END LOOP;
+
+    -- Location: spread within ~50 km of the chosen city center
+    city_spread := city_spreads[city_idx];
+    ulat := city_lats[city_idx] + (random() - 0.5) * city_spread * 2;
+    ulng := city_lngs[city_idx] + (random() - 0.5) * city_spread * 2;
 
     -- ── users ──────────────────────────────────────────────────────────────
     INSERT INTO users (id, username, email, "pendingEmail", "passwordHash", "isVerified")
@@ -212,13 +234,13 @@ BEGIN
     )
     VALUES (
       uid, ulat, ulng,
-      'Paris', 'gps', TRUE,
+      city_names[city_idx], 'gps', TRUE,
       ST_SetSRID(ST_MakePoint(ulng, ulat), 4326)::geography
     )
     ON CONFLICT DO NOTHING;
 
   END LOOP;
 
-  RAISE NOTICE 'Seed complete: up to 500 users inserted with locations and pictures.';
+  RAISE NOTICE 'Seed complete: up to 500 users inserted across Casablanca, Paris, Madrid, London, Berlin, Istanbul.';
 END;
 $$;

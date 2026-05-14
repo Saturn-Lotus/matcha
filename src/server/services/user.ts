@@ -295,25 +295,27 @@ export class UserService {
 
   getUsersWithProfiles = async (
     viewerId: string,
+    maxDistanceKm?: number,
   ): Promise<BrowseSuggestion[]> => {
     const viewer = await this.getProfileByUserId(viewerId);
     if (!viewer.gender) {
       throw new NotFoundException('Viewer gender is not set');
     }
     const allowedGenders = this.resolveOrientation(viewer.sexualPreference);
+    const maxDistanceMeters = maxDistanceKm !== undefined ? maxDistanceKm * 1000 : undefined;
     const rows = await this.userRepository.getUsersWithProfiles(
       viewerId,
       viewer.gender,
       allowedGenders,
+      maxDistanceMeters,
     );
     return rows.map((row) => ({
       id: row.id,
       username: row.username,
       firstName: row.firstName,
-      age: 0,
-      distanceKm: 0,
+      distanceKm:
+        row.distanceMeters === null ? null : Math.round(row.distanceMeters / 1000),
       fameRating: row.fameRating,
-      sharedTagCount: 0,
       previewPictureUrl: row.avatarUrl,
       photos: row.pictures ?? [],
       isOnline: row.isOnline,

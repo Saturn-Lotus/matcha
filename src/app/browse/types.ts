@@ -2,6 +2,7 @@ export interface BrowseProfile {
   id: string;
   username: string;
   firstName: string;
+  distanceKm: number | null;
   fameRating: number;
   previewPictureUrl: string | null;
   photos: string[];

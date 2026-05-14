@@ -155,6 +155,28 @@ export function LocationTab({ userId, location, onChange }: LocationTabProps) {
     }
   };
 
+  const handleCityBlur = async () => {
+    if (location.locationType !== 'manual' || !location.city.trim()) return;
+    try {
+      const query = [location.city, location.neighborhood].filter(Boolean).join(', ');
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`,
+        { headers: { 'Accept-Language': 'en' } },
+      );
+      const results = await res.json();
+      if (results.length > 0) {
+        set({
+          latitude: parseFloat(results[0].lat),
+          longitude: parseFloat(results[0].lon),
+        });
+      } else {
+        toast.warning(`Could not find coordinates for "${location.city}". Try dragging the map pin.`);
+      }
+    } catch {
+      toast.warning('Geocoding failed. You can drag the map pin to set your location manually.');
+    }
+  };
+
   const mapCenter =
     location.latitude !== null && location.longitude !== null
       ? { lat: location.latitude, lng: location.longitude }
@@ -234,6 +256,7 @@ export function LocationTab({ userId, location, onChange }: LocationTabProps) {
             id="city"
             value={location.city}
             onChange={(e) => set({ city: e.target.value })}
+            onBlur={handleCityBlur}
             placeholder="e.g. Paris"
             disabled={location.locationType === 'gps'}
           />

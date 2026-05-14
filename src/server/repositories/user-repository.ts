@@ -221,9 +221,25 @@ export class UserRepository extends BaseRepositoryClass<User> {
     viewerId: string,
     viewerGender: 'male' | 'female',
     allowedGenders: readonly ('male' | 'female')[],
+    maxDistanceMeters?: number,
   ): Promise<UserWithProfileRow[]> {
+    const params: unknown[] = [viewerId, allowedGenders, viewerGender];
+    let distanceFilter = '';
+    if (maxDistanceMeters !== undefined) {
+      params.push(maxDistanceMeters);
+      distanceFilter = `AND (
+           vl."location" IS NULL
+           OR ul."location" IS NULL
+           OR ST_DWithin(vl."location", ul."location", $${params.length})
+         )`;
+    }
+
     return this.db.query<UserWithProfileRow>(
-      `SELECT
+      `WITH viewer_loc AS (
+         SELECT "userId", "location"
+         FROM user_locations WHERE "userId" = $1
+       )
+       SELECT
          u.id,
          u.username,
          up."firstName",
@@ -233,9 +249,16 @@ export class UserRepository extends BaseRepositoryClass<User> {
          up."avatarUrl",
          up.pictures,
          up.interests,
-         up.bio
+         up.bio,
+         CASE
+           WHEN vl."location" IS NOT NULL AND ul."location" IS NOT NULL
+             THEN ST_Distance(vl."location", ul."location")
+           ELSE NULL
+         END AS "distanceMeters"
        FROM users u
        JOIN user_profiles up ON up."userId" = u.id
+       LEFT JOIN user_locations ul ON ul."userId" = u.id
+       LEFT JOIN viewer_loc vl ON TRUE
        WHERE up."isProfileComplete" = TRUE
          AND u."isVerified" = TRUE
          AND u.id <> $1
@@ -245,8 +268,10 @@ export class UserRepository extends BaseRepositoryClass<User> {
            OR up."sexualPreference" = 'both'
            OR up."sexualPreference" = $3::sexual_preference_t
          )
+         ${distanceFilter}
+       ORDER BY "distanceMeters" ASC NULLS LAST, u.id ASC
        LIMIT 20;`,
-      [viewerId, allowedGenders, viewerGender],
+      params,
     );
   }
 }
@@ -262,6 +287,7 @@ export type UserWithProfileRow = {
   pictures: string[] | null;
   interests: string[] | null;
   bio: string | null;
+  distanceMeters: number | null;
 };
 
 export default UserRepository;

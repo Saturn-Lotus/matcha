@@ -74,6 +74,7 @@ Response item: `{ id, username, firstName, age, distanceKm, fameRating, sharedTa
 
 ### Repository — `UserRepository.getUsersWithProfiles` (suggestions live here for now)
 - [x] Filter by viewer's allowed candidate genders (`gender = ANY($2)`) and exclude the viewer themself — implements **BR-1**
+- [x] Compute `ST_Distance` between viewer and candidate locations and `ORDER BY distance ASC NULLS LAST, user_id ASC` — implements **BR-2**
 - [ ] Replace with a dedicated `SuggestionRepository.list(viewerId, filters, sort, cursor, limit)` once distance/tags/fame ranking lands. Will use:
   - `ST_Distance` (PostGIS) for distance calculation
   - Left join `likes` to exclude already-liked users (optional; or keep them but mark)
@@ -103,7 +104,8 @@ Response item: `{ id, username, firstName, age, distanceKm, fameRating, sharedTa
 - [ ] Empty state component with CTA to widen filters
 
 ### Indexes (migration)
-- [ ] Migration `add-browsing-indexes` — GIST on location, btree on fame_rating, btree on birthdate
+- [x] Migration `add-browsing-distance-index` — GIST on `user_locations.location` — implements **BR-2**
+- [ ] Migration `add-browsing-indexes` — btree on fame_rating, btree on birthdate
 
 ### Tests
 - [ ] Unit: `SuggestionService.resolveOrientation` — all 6 gender/preference combos
