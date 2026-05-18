@@ -7,13 +7,12 @@ import { cn, relativeTime } from '@/lib/utils';
 import { ProgressSegments } from './progress-segments';
 import type { BrowseProfile } from '../types';
 
-
 const getPhotosListFromProfile = (profile: BrowseProfile) => {
   const hasPhotos = profile.photos.length > 0;
   if (hasPhotos) return profile.photos;
   if (profile.previewPictureUrl) return [profile.previewPictureUrl];
   return [];
-}
+};
 
 interface FeedCardProps {
   profile: BrowseProfile;

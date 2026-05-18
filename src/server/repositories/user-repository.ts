@@ -1,7 +1,11 @@
 import { User, UserProfile } from '@/server/schemas';
 import BaseRepositoryClass from './base';
 import { PostgresDB } from '../db/postgres';
-import { CreateUserInput, CreateUserProfile, SuggestionFilters } from '../types';
+import {
+  CreateUserInput,
+  CreateUserProfile,
+  SuggestionFilters,
+} from '../types';
 
 type CreateUserWithProfileInput = {
   user: CreateUserInput;

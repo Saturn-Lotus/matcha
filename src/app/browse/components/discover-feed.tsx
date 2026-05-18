@@ -177,10 +177,14 @@ export function DiscoverFeed({ userId }: DiscoverFeedProps) {
       try {
         const [data, profile] = await Promise.all([
           apiClient.get<BrowseResponse>('/users'),
-          apiClient.get<{ interests: string[] | null }>(`/users/profiles/${userId}`),
+          apiClient.get<{ interests: string[] | null }>(
+            `/users/profiles/${userId}`,
+          ),
         ]);
         setProfiles(Array.isArray(data.items) ? data.items : []);
-        setViewerInterests(Array.isArray(profile.interests) ? profile.interests : []);
+        setViewerInterests(
+          Array.isArray(profile.interests) ? profile.interests : [],
+        );
       } catch {
         setProfiles([]);
       } finally {
