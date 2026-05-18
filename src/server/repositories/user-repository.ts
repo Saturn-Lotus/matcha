@@ -1,7 +1,7 @@
 import { User, UserProfile } from '@/server/schemas';
 import BaseRepositoryClass from './base';
 import { PostgresDB } from '../db/postgres';
-import { CreateUserInput, CreateUserProfile } from '../types';
+import { CreateUserInput, CreateUserProfile, SuggestionFilters } from '../types';
 
 type CreateUserWithProfileInput = {
   user: CreateUserInput;
@@ -221,32 +221,53 @@ export class UserRepository extends BaseRepositoryClass<User> {
     viewerId: string,
     viewerGender: 'male' | 'female',
     allowedGenders: readonly ('male' | 'female')[],
-  ): Promise<UserWithProfileRow[]> {
-    return this.db.query<UserWithProfileRow>(
-      `SELECT
-         u.id,
-         u.username,
-         up."firstName",
-         up."fameRating",
-         up."isOnline",
-         up."lastSeenAt",
-         up."avatarUrl",
-         up.pictures,
-         up.interests,
-         up.bio
-       FROM users u
-       JOIN user_profiles up ON up."userId" = u.id
-       WHERE up."isProfileComplete" = TRUE
-         AND u."isVerified" = TRUE
-         AND u.id <> $1
-         AND up.gender = ANY($2::gender_t[])
-         AND (
-           up."sexualPreference" IS NULL
-           OR up."sexualPreference" = 'both'
-           OR up."sexualPreference" = $3::sexual_preference_t
-         )
-       LIMIT 20;`,
-      [viewerId, allowedGenders, viewerGender],
+    filters: SuggestionFilters = {},
+  ): Promise<SuggestionRow[]> {
+    const limit = filters.limit ?? 20;
+
+    return this.db.query<SuggestionRow>(
+      `WITH viewer AS (
+         SELECT COALESCE(interests, '{}'::TEXT[]) AS interests
+         FROM user_profiles
+         WHERE "userId" = $1
+       ),
+       candidates AS (
+         SELECT
+           u.id,
+           u.username,
+           up."firstName",
+           up."fameRating",
+           up."isOnline",
+           up."lastSeenAt",
+           up."avatarUrl",
+           up.pictures,
+           up.interests,
+           up.bio
+         FROM users u
+         JOIN user_profiles up ON up."userId" = u.id
+         WHERE u.id <> $1
+           AND u."isVerified" = TRUE
+           AND up."isProfileComplete" = TRUE
+           AND up.gender = ANY($2::gender_t[])
+           AND (
+             up."sexualPreference" IS NULL
+             OR up."sexualPreference" = 'both'
+             OR up."sexualPreference" = $3::sexual_preference_t
+           )
+       )
+       SELECT
+         c.*,
+         cardinality(
+           ARRAY(
+             SELECT UNNEST(c.interests)
+             INTERSECT
+             SELECT UNNEST(v.interests)
+           )
+         )::INT AS "sharedTagCount"
+       FROM candidates c CROSS JOIN viewer v
+       ORDER BY "sharedTagCount" DESC, c.id ASC
+       LIMIT $4;`,
+      [viewerId, allowedGenders, viewerGender, limit],
     );
   }
 }
@@ -263,5 +284,7 @@ export type UserWithProfileRow = {
   interests: string[] | null;
   bio: string | null;
 };
+
+export type SuggestionRow = UserWithProfileRow & { sharedTagCount: number };
 
 export default UserRepository;

@@ -9,6 +9,7 @@ interface FeedScrollerProps {
   profiles: BrowseProfile[];
   framed: boolean;
   likedIds: Set<string>;
+  viewerInterests: string[];
   onToggleLike: (id: string) => void;
   onPass: (id: string) => void;
   onActiveChange?: (id: string) => void;
@@ -19,6 +20,7 @@ export function FeedScroller({
   profiles,
   framed,
   likedIds,
+  viewerInterests,
   onToggleLike,
   onPass,
   onActiveChange,
@@ -72,6 +74,7 @@ export function FeedScroller({
                 isActive={activeId === p.id}
                 isLiked={likedIds.has(p.id)}
                 framed
+                viewerInterests={viewerInterests}
                 onLike={onToggleLike}
                 onPass={onPass}
               />
@@ -82,6 +85,7 @@ export function FeedScroller({
               isActive={activeId === p.id}
               isLiked={likedIds.has(p.id)}
               framed={false}
+              viewerInterests={viewerInterests}
               onLike={onToggleLike}
               onPass={onPass}
             />

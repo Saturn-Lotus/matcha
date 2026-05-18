@@ -7,11 +7,20 @@ import { cn, relativeTime } from '@/lib/utils';
 import { ProgressSegments } from './progress-segments';
 import type { BrowseProfile } from '../types';
 
+
+const getPhotosListFromProfile = (profile: BrowseProfile) => {
+  const hasPhotos = profile.photos.length > 0;
+  if (hasPhotos) return profile.photos;
+  if (profile.previewPictureUrl) return [profile.previewPictureUrl];
+  return [];
+}
+
 interface FeedCardProps {
   profile: BrowseProfile;
   isActive: boolean;
   isLiked: boolean;
   framed: boolean;
+  viewerInterests: string[];
   onLike: (id: string) => void;
   onPass: (id: string) => void;
 }
@@ -21,15 +30,11 @@ export function FeedCard({
   isActive,
   isLiked,
   framed,
+  viewerInterests,
   onLike,
   onPass,
 }: FeedCardProps) {
-  const photos =
-    profile.photos.length > 0
-      ? profile.photos
-      : profile.previewPictureUrl
-        ? [profile.previewPictureUrl]
-        : [];
+  const photos = getPhotosListFromProfile(profile);
   const [photoIdx, setPhotoIdx] = useState(0);
   const [burst, setBurst] = useState(0);
 
@@ -153,19 +158,27 @@ export function FeedCard({
 
         {tags.length > 0 && (
           <div className="flex flex-wrap gap-1">
-            {tags.map((tag) => (
-              <span
-                key={tag}
-                className="inline-flex items-center text-[11px] h-[22px] px-2.5 rounded-full bg-white/18 backdrop-blur border border-white/20 text-white font-medium"
-              >
-                #{tag}
-              </span>
-            ))}
+            {tags.map((tag) => {
+              const matched = viewerInterests.includes(tag);
+              return (
+                <span
+                  key={tag}
+                  className={cn(
+                    'inline-flex items-center text-[11px] h-[22px] px-2.5 rounded-full font-medium',
+                    matched
+                      ? 'bg-primary/80 border border-primary text-white'
+                      : 'bg-white/18 backdrop-blur border border-white/20 text-white',
+                  )}
+                >
+                  #{tag}
+                </span>
+              );
+            })}
           </div>
         )}
       </div>
 
-      <div className="absolute right-2 bottom-24 z-[3] flex flex-col items-center gap-4">
+      <div className="absolute right-2 bottom-24 z-20 flex flex-col items-center gap-4">
         <div className="relative w-11 h-11 rounded-full border-2 border-white overflow-visible mb-1">
           <div className="relative w-full h-full rounded-full overflow-hidden">
             {photos[0] ? (
