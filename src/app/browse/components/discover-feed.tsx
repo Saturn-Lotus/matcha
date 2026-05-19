@@ -177,26 +177,23 @@ export function DiscoverFeed({ userId }: DiscoverFeedProps) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const inFlightRef = useRef(false);
 
-  const loadPage = useCallback(
-    async (targetPage: number) => {
-      if (inFlightRef.current) return;
-      inFlightRef.current = true;
-      try {
-        const data = await apiClient.get<BrowseResponse>(
-          `/users?page=${targetPage}&pageSize=${PAGE_SIZE}`,
-        );
-        const items = Array.isArray(data.items) ? data.items : [];
-        setProfiles((prev) => (targetPage === 1 ? items : [...prev, ...items]));
-        setHasMore(Boolean(data.hasMore));
-        setPage(targetPage);
-      } catch {
-        if (targetPage === 1) setProfiles([]);
-      } finally {
-        inFlightRef.current = false;
-      }
-    },
-    [],
-  );
+  const loadPage = useCallback(async (targetPage: number) => {
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
+    try {
+      const data = await apiClient.get<BrowseResponse>(
+        `/users?page=${targetPage}&pageSize=${PAGE_SIZE}`,
+      );
+      const items = Array.isArray(data.items) ? data.items : [];
+      setProfiles((prev) => (targetPage === 1 ? items : [...prev, ...items]));
+      setHasMore(Boolean(data.hasMore));
+      setPage(targetPage);
+    } catch {
+      if (targetPage === 1) setProfiles([]);
+    } finally {
+      inFlightRef.current = false;
+    }
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
