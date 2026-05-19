@@ -65,6 +65,16 @@ A rule of thumb: if you find yourself writing `bcrypt`, `db.transaction`, or raw
 - `withErrorHandler` catches these and returns the appropriate HTTP response automatically.
 - Do not manually catch and re-throw errors in routes.
 
+### Schemas & Types
+- Validation schemas live in `src/server/schemas/` and use the `Su` validator from `src/lib/validator`.
+- The schema is the single source of truth: never hand-write a TypeScript type that mirrors a schema's shape. Always derive it with `SuInfer<typeof XxxSchema>` and export both from the same file.
+- Example (from `src/server/schemas/user.ts`):
+  ```ts
+  export const UserProfileSchema = Su.object({ /* fields */ });
+  export type UserProfile = SuInfer<typeof UserProfileSchema>;
+  ```
+- Consumers import the inferred type from `@/server/schemas` — they don't redeclare it in `src/server/types.ts`. `src/server/types.ts` is reserved for domain types that don't correspond to a validated payload (e.g. response DTOs, internal row shapes).
+
 ## Crypto / Security Rules
 - **Never** use `bcrypt.hash` to look up records in the DB. bcrypt uses a random salt — the output differs every call.
 - Always use `bcrypt.compare(plaintext, storedHash)` to verify bcrypt-hashed values.

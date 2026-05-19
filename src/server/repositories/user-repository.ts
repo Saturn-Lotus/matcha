@@ -4,7 +4,8 @@ import { PostgresDB } from '../db/postgres';
 import {
   CreateUserInput,
   CreateUserProfile,
-  SuggestionFilters,
+  SortBy,
+  SortDirection,
 } from '../types';
 
 type CreateUserWithProfileInput = {
@@ -222,18 +223,33 @@ export class UserRepository extends BaseRepositoryClass<User> {
   }
 
   async getUsersWithProfiles(
-    viewerId: string,
-    viewerGender: 'male' | 'female',
-    allowedGenders: readonly ('male' | 'female')[],
-    filters: SuggestionFilters = {},
-  ): Promise<SuggestionRow[]> {
-    const limit = filters.limit ?? 20;
+    params: GetUsersWithProfilesParams,
+  ): Promise<{ rows: SuggestionRow[]; total: number }> {
+    const {
+      viewerId,
+      viewerGender,
+      allowedGenders,
+      page,
+      pageSize,
+      interests,
+      maxDistanceKm,
+      minFameRating,
+      maxFameRating,
+      sortBy,
+      sortDirection,
+    } = params;
 
-    return this.db.query<SuggestionRow>(
+    const orderSql = ORDER_FRAGMENTS[sortBy][sortDirection];
+    const offset = (page - 1) * pageSize;
+
+    const rawRows = await this.db.query<SuggestionRow & { totalCount: string }>(
       `WITH viewer AS (
-         SELECT COALESCE(interests, '{}'::TEXT[]) AS interests
-         FROM user_profiles
-         WHERE "userId" = $1
+         SELECT
+           COALESCE(up.interests, '{}'::TEXT[]) AS interests,
+           ul.location AS location
+         FROM user_profiles up
+         LEFT JOIN user_locations ul ON ul."userId" = up."userId"
+         WHERE up."userId" = $1
        ),
        candidates AS (
          SELECT
@@ -246,9 +262,11 @@ export class UserRepository extends BaseRepositoryClass<User> {
            up."avatarUrl",
            up.pictures,
            up.interests,
-           up.bio
+           up.bio,
+           ul.location AS location
          FROM users u
          JOIN user_profiles up ON up."userId" = u.id
+         LEFT JOIN user_locations ul ON ul."userId" = u.id
          WHERE u.id <> $1
            AND u."isVerified" = TRUE
            AND up."isProfileComplete" = TRUE
@@ -258,21 +276,75 @@ export class UserRepository extends BaseRepositoryClass<User> {
              OR up."sexualPreference" = 'both'
              OR up."sexualPreference" = $3::sexual_preference_t
            )
+       ),
+       enriched AS (
+         SELECT
+           c.id,
+           c.username,
+           c."firstName",
+           c."fameRating",
+           c."isOnline",
+           c."lastSeenAt",
+           c."avatarUrl",
+           c.pictures,
+           c.interests,
+           c.bio,
+           cardinality(
+             ARRAY(
+               SELECT UNNEST(c.interests)
+               INTERSECT
+               SELECT UNNEST(v.interests)
+             )
+           )::INT AS "sharedTagCount",
+           CASE
+             WHEN v.location IS NULL OR c.location IS NULL THEN NULL
+             ELSE ST_Distance(c.location, v.location) / 1000.0
+           END AS "distanceKm"
+         FROM candidates c CROSS JOIN viewer v
+       ),
+       filtered AS (
+         SELECT * FROM enriched
+         WHERE
+           ($4::TEXT[] IS NULL OR interests && $4::TEXT[])
+           AND ($5::FLOAT IS NULL OR ("distanceKm" IS NOT NULL AND "distanceKm" <= $5))
+           AND ($6::FLOAT IS NULL OR "fameRating" >= $6)
+           AND ($7::FLOAT IS NULL OR "fameRating" <= $7)
        )
        SELECT
-         c.*,
-         cardinality(
-           ARRAY(
-             SELECT UNNEST(c.interests)
-             INTERSECT
-             SELECT UNNEST(v.interests)
-           )
-         )::INT AS "sharedTagCount"
-       FROM candidates c CROSS JOIN viewer v
-       ORDER BY "sharedTagCount" DESC, c.id ASC
-       LIMIT $4;`,
-      [viewerId, allowedGenders, viewerGender, limit],
+         *,
+         (COUNT(*) OVER ())::INT AS "totalCount"
+       FROM filtered
+       ORDER BY ${orderSql}
+       LIMIT $8 OFFSET $9;`,
+      [
+        viewerId,
+        allowedGenders,
+        viewerGender,
+        interests,
+        maxDistanceKm,
+        minFameRating,
+        maxFameRating,
+        pageSize,
+        offset,
+      ],
     );
+
+    const total = rawRows.length > 0 ? Number(rawRows[0].totalCount) : 0;
+    const rows: SuggestionRow[] = rawRows.map((row) => {
+      const { totalCount, ...rest } = row;
+      void totalCount;
+      return rest;
+    });
+    return { rows, total };
+  }
+
+  async userHasLocation(userId: string): Promise<boolean> {
+    const rows = await this.db.query<{ hasLocation: boolean }>(
+      `SELECT (location IS NOT NULL) AS "hasLocation"
+       FROM user_locations WHERE "userId" = $1 LIMIT 1;`,
+      [userId],
+    );
+    return rows[0]?.hasLocation ?? false;
   }
 }
 
@@ -289,6 +361,49 @@ export type UserWithProfileRow = {
   bio: string | null;
 };
 
-export type SuggestionRow = UserWithProfileRow & { sharedTagCount: number };
+export type SuggestionRow = UserWithProfileRow & {
+  sharedTagCount: number;
+  distanceKm: number | null;
+};
+
+export type GetUsersWithProfilesParams = {
+  viewerId: string;
+  viewerGender: 'male' | 'female';
+  allowedGenders: readonly ('male' | 'female')[];
+  page: number;
+  pageSize: number;
+  interests: string[] | null;
+  maxDistanceKm: number | null;
+  minFameRating: number | null;
+  maxFameRating: number | null;
+  sortBy: SortBy;
+  sortDirection: SortDirection;
+};
+
+const RELEVANCE_ORDER =
+  '"distanceKm" ASC NULLS LAST, "sharedTagCount" DESC, id ASC';
+
+const ORDER_FRAGMENTS: Record<SortBy, Record<SortDirection, string>> = {
+  relevance: {
+    asc: RELEVANCE_ORDER,
+    desc: RELEVANCE_ORDER,
+  },
+  sharedTagCount: {
+    desc: '"sharedTagCount" DESC, id ASC',
+    asc: '"sharedTagCount" ASC, id ASC',
+  },
+  distance: {
+    asc: '"distanceKm" ASC NULLS LAST, id ASC',
+    desc: '"distanceKm" DESC NULLS LAST, id ASC',
+  },
+  fameRating: {
+    desc: '"fameRating" DESC, id ASC',
+    asc: '"fameRating" ASC, id ASC',
+  },
+  age: {
+    asc: '"sharedTagCount" DESC, id ASC',
+    desc: '"sharedTagCount" DESC, id ASC',
+  },
+};
 
 export default UserRepository;

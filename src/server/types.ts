@@ -20,12 +20,20 @@ export type RegisterUserInput = {
   password: string;
 };
 
+export type SortBy =
+  | 'relevance'
+  | 'sharedTagCount'
+  | 'distance'
+  | 'fameRating'
+  | 'age';
+export type SortDirection = 'asc' | 'desc';
+
 export type BrowseSuggestion = {
   id: string;
   username: string;
   firstName: string;
-  age: number;
-  distanceKm: number;
+  age: number | null;
+  distanceKm: number | null;
   fameRating: number;
   sharedTagCount: number;
   previewPictureUrl: string | null;
@@ -36,10 +44,10 @@ export type BrowseSuggestion = {
   tags: string[];
 };
 
-export type SuggestionFilters = {
-  limit?: number;
-};
-
 export type SuggestionsResult = {
   items: BrowseSuggestion[];
+  total: number;
+  page: number;
+  pageSize: number;
+  hasMore: boolean;
 };

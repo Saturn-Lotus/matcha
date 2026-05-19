@@ -2,6 +2,8 @@ export interface BrowseProfile {
   id: string;
   username: string;
   firstName: string;
+  age: number | null;
+  distanceKm: number | null;
   fameRating: number;
   sharedTagCount?: number;
   previewPictureUrl: string | null;
@@ -14,4 +16,8 @@ export interface BrowseProfile {
 
 export interface BrowseResponse {
   items: BrowseProfile[];
+  total: number;
+  page: number;
+  pageSize: number;
+  hasMore: boolean;
 }
