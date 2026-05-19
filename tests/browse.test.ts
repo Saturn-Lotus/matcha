@@ -38,6 +38,18 @@ describe('BrowseQuerySchema', () => {
     ).toThrow(ValidationError);
   });
 
+  it('accepts every supported sortBy value', () => {
+    for (const value of [
+      'relevance',
+      'sharedTagCount',
+      'distance',
+      'fameRating',
+      'age',
+    ]) {
+      expect(() => BrowseQuerySchema.parse({ sortBy: value })).not.toThrow();
+    }
+  });
+
   it('rejects negative minFameRating', () => {
     expect(() => BrowseQuerySchema.parse({ minFameRating: -1 })).toThrow(
       ValidationError,

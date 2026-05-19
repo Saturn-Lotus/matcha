@@ -20,7 +20,12 @@ export type RegisterUserInput = {
   password: string;
 };
 
-export type SortBy = 'sharedTagCount' | 'distance' | 'fameRating' | 'age';
+export type SortBy =
+  | 'relevance'
+  | 'sharedTagCount'
+  | 'distance'
+  | 'fameRating'
+  | 'age';
 export type SortDirection = 'asc' | 'desc';
 
 export type BrowseSuggestion = {

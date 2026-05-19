@@ -311,7 +311,7 @@ export class UserService {
 
     const page = filters.page ?? 1;
     const pageSize = filters.pageSize ?? 20;
-    const sortBy: SortBy = filters.sortBy ?? 'sharedTagCount';
+    const sortBy: SortBy = filters.sortBy ?? 'relevance';
     const sortDirection: SortDirection =
       filters.sortDirection ??
       (sortBy === 'sharedTagCount' || sortBy === 'fameRating' ? 'desc' : 'asc');

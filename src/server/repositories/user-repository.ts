@@ -380,7 +380,14 @@ export type GetUsersWithProfilesParams = {
   sortDirection: SortDirection;
 };
 
+const RELEVANCE_ORDER =
+  '"distanceKm" ASC NULLS LAST, "sharedTagCount" DESC, id ASC';
+
 const ORDER_FRAGMENTS: Record<SortBy, Record<SortDirection, string>> = {
+  relevance: {
+    asc: RELEVANCE_ORDER,
+    desc: RELEVANCE_ORDER,
+  },
   sharedTagCount: {
     desc: '"sharedTagCount" DESC, id ASC',
     asc: '"sharedTagCount" ASC, id ASC',

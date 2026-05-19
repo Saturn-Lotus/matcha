@@ -1,6 +1,12 @@
 import { Su, SuInfer } from '@/lib/validator';
 
-const SORT_KEYS = ['sharedTagCount', 'distance', 'fameRating', 'age'] as const;
+const SORT_KEYS = [
+  'relevance',
+  'sharedTagCount',
+  'distance',
+  'fameRating',
+  'age',
+] as const;
 const SORT_DIRECTIONS = ['asc', 'desc'] as const;
 
 export const BrowseQuerySchema = Su.object({
