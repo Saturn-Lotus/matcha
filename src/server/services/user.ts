@@ -1,4 +1,5 @@
 import {
+  BrowseQuery,
   CreateUserProfile,
   UpdateUserProfile,
   UserProfile,
@@ -14,7 +15,8 @@ import {
   BrowseSuggestion,
   SuggestionsResult,
   RegisterUserInput,
-  SuggestionFilters,
+  SortBy,
+  SortDirection,
 } from '@/server/types';
 import bcrypt from 'bcrypt';
 
@@ -300,26 +302,53 @@ export class UserService {
 
   getUsersWithProfiles = async (
     viewerId: string,
-    filters: SuggestionFilters = {},
+    filters: BrowseQuery = {},
   ): Promise<SuggestionsResult> => {
     const viewer = await this.getProfileByUserId(viewerId);
     if (!viewer.gender) {
       throw new NotFoundException('Viewer gender is not set');
     }
+
+    const page = filters.page ?? 1;
+    const pageSize = filters.pageSize ?? 20;
+    const sortBy: SortBy = filters.sortBy ?? 'sharedTagCount';
+    const sortDirection: SortDirection =
+      filters.sortDirection ??
+      (sortBy === 'sharedTagCount' || sortBy === 'fameRating' ? 'desc' : 'asc');
+
+    const needsLocation =
+      filters.maxDistanceKm !== undefined || sortBy === 'distance';
+    if (needsLocation) {
+      const viewerHasLocation =
+        await this.userRepository.userHasLocation(viewerId);
+      if (!viewerHasLocation) {
+        throw new ValidationError(
+          'Set your location before filtering or sorting by distance',
+        );
+      }
+    }
+
     const allowedGenders = this.resolveOrientation(viewer.sexualPreference);
-    const rows = await this.userRepository.getUsersWithProfiles(
+    const { rows, total } = await this.userRepository.getUsersWithProfiles({
       viewerId,
-      viewer.gender,
+      viewerGender: viewer.gender,
       allowedGenders,
-      filters,
-    );
+      page,
+      pageSize,
+      interests: filters.interests ?? null,
+      maxDistanceKm: filters.maxDistanceKm ?? null,
+      minFameRating: filters.minFameRating ?? null,
+      maxFameRating: filters.maxFameRating ?? null,
+      sortBy,
+      sortDirection,
+    });
 
     const items: BrowseSuggestion[] = rows.map((row) => ({
       id: row.id,
       username: row.username,
       firstName: row.firstName,
-      age: 0,
-      distanceKm: 0,
+      age: null,
+      distanceKm: row.distanceKm,
       fameRating: row.fameRating,
       sharedTagCount: row.sharedTagCount,
       previewPictureUrl: row.avatarUrl,
@@ -330,6 +359,12 @@ export class UserService {
       tags: row.interests ?? [],
     }));
 
-    return { items };
+    return {
+      items,
+      total,
+      page,
+      pageSize,
+      hasMore: page * pageSize < total,
+    };
   };
 }

@@ -163,35 +163,83 @@ interface DiscoverFeedProps {
   userId: string;
 }
 
+const PAGE_SIZE = 20;
+
 export function DiscoverFeed({ userId }: DiscoverFeedProps) {
   const [profiles, setProfiles] = useState<BrowseProfile[]>([]);
   const [viewerInterests, setViewerInterests] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
   const [passedIds, setPassedIds] = useState<Set<string>>(new Set());
   const [activeId, setActiveId] = useState('');
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const inFlightRef = useRef(false);
+
+  const loadPage = useCallback(
+    async (targetPage: number) => {
+      if (inFlightRef.current) return;
+      inFlightRef.current = true;
+      try {
+        const data = await apiClient.get<BrowseResponse>(
+          `/users?page=${targetPage}&pageSize=${PAGE_SIZE}`,
+        );
+        const items = Array.isArray(data.items) ? data.items : [];
+        setProfiles((prev) => (targetPage === 1 ? items : [...prev, ...items]));
+        setHasMore(Boolean(data.hasMore));
+        setPage(targetPage);
+      } catch {
+        if (targetPage === 1) setProfiles([]);
+      } finally {
+        inFlightRef.current = false;
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
       try {
         const [data, profile] = await Promise.all([
-          apiClient.get<BrowseResponse>('/users'),
+          apiClient.get<BrowseResponse>(`/users?page=1&pageSize=${PAGE_SIZE}`),
           apiClient.get<{ interests: string[] | null }>(
             `/users/profiles/${userId}`,
           ),
         ]);
+        if (cancelled) return;
         setProfiles(Array.isArray(data.items) ? data.items : []);
+        setHasMore(Boolean(data.hasMore));
+        setPage(1);
         setViewerInterests(
           Array.isArray(profile.interests) ? profile.interests : [],
         );
       } catch {
-        setProfiles([]);
+        if (!cancelled) setProfiles([]);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
+    return () => {
+      cancelled = true;
+    };
   }, [userId]);
+
+  useEffect(() => {
+    const root = scrollerRef.current;
+    if (!root) return;
+    const onScroll = () => {
+      if (!hasMore || inFlightRef.current) return;
+      const remaining =
+        root.scrollHeight - (root.scrollTop + root.clientHeight);
+      if (remaining < root.clientHeight) {
+        loadPage(page + 1);
+      }
+    };
+    root.addEventListener('scroll', onScroll, { passive: true });
+    return () => root.removeEventListener('scroll', onScroll);
+  }, [hasMore, page, loadPage]);
 
   const toggleLike = useCallback(
     async (profileId: string) => {
