@@ -13,7 +13,7 @@ import {
 import { apiClient } from '@/lib/api/client';
 import Image from 'next/image';
 import { FeedScroller } from './feed-scroller';
-import type { BrowseProfile } from '../types';
+import type { BrowseProfile, BrowseResponse } from '../types';
 
 function DesktopLeftPanel() {
   return (
@@ -163,8 +163,9 @@ interface DiscoverFeedProps {
   userId: string;
 }
 
-export function DiscoverFeed({ userId: _userId }: DiscoverFeedProps) {
+export function DiscoverFeed({ userId }: DiscoverFeedProps) {
   const [profiles, setProfiles] = useState<BrowseProfile[]>([]);
+  const [viewerInterests, setViewerInterests] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
   const [passedIds, setPassedIds] = useState<Set<string>>(new Set());
@@ -174,15 +175,23 @@ export function DiscoverFeed({ userId: _userId }: DiscoverFeedProps) {
   useEffect(() => {
     (async () => {
       try {
-        const data = await apiClient.get<BrowseProfile[]>('/users');
-        setProfiles(Array.isArray(data) ? data : []);
+        const [data, profile] = await Promise.all([
+          apiClient.get<BrowseResponse>('/users'),
+          apiClient.get<{ interests: string[] | null }>(
+            `/users/profiles/${userId}`,
+          ),
+        ]);
+        setProfiles(Array.isArray(data.items) ? data.items : []);
+        setViewerInterests(
+          Array.isArray(profile.interests) ? profile.interests : [],
+        );
       } catch {
         setProfiles([]);
       } finally {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [userId]);
 
   const toggleLike = useCallback(
     async (profileId: string) => {
@@ -255,6 +264,7 @@ export function DiscoverFeed({ userId: _userId }: DiscoverFeedProps) {
           profiles={visible}
           framed={false}
           likedIds={likedIds}
+          viewerInterests={viewerInterests}
           onToggleLike={toggleLike}
           onPass={handlePass}
           onActiveChange={setActiveId}

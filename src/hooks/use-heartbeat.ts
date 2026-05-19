@@ -3,23 +3,15 @@
 import { useEffect } from 'react';
 import { apiClient } from '@/lib/api';
 
-const HEARTBEAT_URL = '/api/users/heartbeat';
 const HEARTBEAT_INTERVAL_MS = 60_000;
+const OFFLINE_URL = '/api/users/heartbeat?online=false';
 
 function sendOnline() {
-  try {
-    const purePath = HEARTBEAT_URL.replace(/^\/api/, '');
-    apiClient.post(purePath, { online: true });
-  } catch {
-    // Silently ignore errors — heartbeat is best-effort and should not disrupt user experience
-  }
+  apiClient.post('/users/heartbeat?online=true').catch(() => {});
 }
 
 function sendOffline() {
-  const blob = new Blob([JSON.stringify({ online: false })], {
-    type: 'application/json',
-  });
-  navigator.sendBeacon(HEARTBEAT_URL, blob);
+  navigator.sendBeacon(OFFLINE_URL);
 }
 
 export function useHeartbeat() {

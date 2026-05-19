@@ -10,7 +10,12 @@ import { IStorage } from '@/server/storage';
 import { getUserProfilePicturesPath } from '@/server/storage/utils/path';
 import { ValidationError } from '@/lib/validator';
 import type { AuthService } from '@/server/services/auth';
-import { BrowseSuggestion, RegisterUserInput } from '@/server/types';
+import {
+  BrowseSuggestion,
+  SuggestionsResult,
+  RegisterUserInput,
+  SuggestionFilters,
+} from '@/server/types';
 import bcrypt from 'bcrypt';
 
 export class UserService {
@@ -295,7 +300,8 @@ export class UserService {
 
   getUsersWithProfiles = async (
     viewerId: string,
-  ): Promise<BrowseSuggestion[]> => {
+    filters: SuggestionFilters = {},
+  ): Promise<SuggestionsResult> => {
     const viewer = await this.getProfileByUserId(viewerId);
     if (!viewer.gender) {
       throw new NotFoundException('Viewer gender is not set');
@@ -305,15 +311,17 @@ export class UserService {
       viewerId,
       viewer.gender,
       allowedGenders,
+      filters,
     );
-    return rows.map((row) => ({
+
+    const items: BrowseSuggestion[] = rows.map((row) => ({
       id: row.id,
       username: row.username,
       firstName: row.firstName,
       age: 0,
       distanceKm: 0,
       fameRating: row.fameRating,
-      sharedTagCount: 0,
+      sharedTagCount: row.sharedTagCount,
       previewPictureUrl: row.avatarUrl,
       photos: row.pictures ?? [],
       isOnline: row.isOnline,
@@ -321,5 +329,7 @@ export class UserService {
       bio: row.bio,
       tags: row.interests ?? [],
     }));
+
+    return { items };
   };
 }

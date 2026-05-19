@@ -35,3 +35,11 @@ export type BrowseSuggestion = {
   bio: string | null;
   tags: string[];
 };
+
+export type SuggestionFilters = {
+  limit?: number;
+};
+
+export type SuggestionsResult = {
+  items: BrowseSuggestion[];
+};
