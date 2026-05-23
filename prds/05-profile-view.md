@@ -155,6 +155,7 @@ Stage 8 (feed card adoption of all the above) is a UI assembly step — no new u
 - [x] `FeedCard` — emit a `view` event when the viewer advances past the first photo (idempotent per session via `recordedViewsRef` in `discover-feed.tsx`; server enforces idempotency per pair via `ON CONFLICT` in `social-repository.ts`)
 - [ ] `/users/[id]` page — minimal Messenger-style layout (avatar, name, age, online, fame, relational badge, action row + expandable details)
 - [x] `/users/[id]` — fire `POST /api/users/[id]/views` once on mount ([profile-view.tsx](src/app/users/[id]/profile-view.tsx))
+- [x] `/users/[id]` — Like / Unlike button with optimistic toggle and burst animation; initial state from `viewerLiked` returned by `GET /api/users/[id]` ([profile-view.tsx](src/app/users/[id]/profile-view.tsx))
 - [ ] `/users/[id]` — server-side redirect to `/settings` if `id === viewer.id`
 - [ ] `/users/[id]` — return 404 when blocked either direction
 - [ ] `LikeButton` component — disabled + tooltip when no profile picture; shared between feed card and permalink

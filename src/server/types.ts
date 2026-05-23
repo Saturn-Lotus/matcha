@@ -74,4 +74,5 @@ export type PublicProfile = {
   fameRating: number;
   isOnline: boolean;
   lastSeenAt: string | null;
+  viewerLiked: boolean;
 };
