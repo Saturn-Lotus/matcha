@@ -201,7 +201,7 @@ export function SettingsForm({
         </aside>
 
         <div className="flex-1 space-y-8">
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} className="space-y-8">
             <section id="profile" className={sectionCls}>
               <h2 className="text-2xl font-bold text-rose-500 mb-1">
                 Profile Details

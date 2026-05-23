@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Heart, Plus, User as UserIcon, X } from 'lucide-react';
+import { Heart, User as UserIcon, X } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { cn, relativeTime } from '@/lib/utils';
 import { ProgressSegments } from './progress-segments';
 import type { BrowseProfile } from '../types';
@@ -178,26 +179,25 @@ export function FeedCard({
       </div>
 
       <div className="absolute right-2 bottom-24 z-20 flex flex-col items-center gap-4">
-        <div className="relative w-11 h-11 rounded-full border-2 border-white overflow-visible mb-1">
-          <div className="relative w-full h-full rounded-full overflow-hidden">
-            {photos[0] ? (
-              <Image
-                src={photos[0]}
-                alt=""
-                fill
-                unoptimized
-                className="object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-zinc-700 flex items-center justify-center">
-                <UserIcon className="w-5 h-5 text-white/60" />
-              </div>
-            )}
-          </div>
-          <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-[18px] h-[18px] rounded-full bg-gradient-to-br from-pink-500 to-pink-400 border-2 border-zinc-900 flex items-center justify-center">
-            <Plus className="w-2.5 h-2.5 text-white" />
-          </span>
-        </div>
+        <Link
+          href={`/users/${profile.id}`}
+          aria-label={`View ${profile.firstName}'s profile`}
+          className="relative w-11 h-11 rounded-full border-2 border-white overflow-hidden mb-1 block"
+        >
+          {photos[0] ? (
+            <Image
+              src={photos[0]}
+              alt=""
+              fill
+              unoptimized
+              className="object-cover"
+            />
+          ) : (
+            <div className="w-full h-full bg-zinc-700 flex items-center justify-center">
+              <UserIcon className="w-5 h-5 text-white/60" />
+            </div>
+          )}
+        </Link>
 
         <div className="flex flex-col items-center gap-1">
           <button
