@@ -25,15 +25,35 @@ export function ProfileView({ id }: ProfileViewProps) {
   const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [photoIdx, setPhotoIdx] = useState(0);
+  const [isLiked, setIsLiked] = useState(false);
+  const [burst, setBurst] = useState(0);
 
   useEffect(() => {
     apiClient
       .get<PublicProfile>(`/users/${id}`)
-      .then(setProfile)
+      .then((p) => {
+        setProfile(p);
+        setIsLiked(p.viewerLiked);
+      })
       .catch(() => setNotFound(true));
 
     apiClient.post(`/users/${id}/views`);
   }, [id]);
+
+  const toggleLike = async () => {
+    const wasLiked = isLiked;
+    setIsLiked(!wasLiked);
+    if (!wasLiked) setBurst((n) => n + 1);
+    try {
+      if (wasLiked) {
+        await apiClient.delete(`/users/${id}/likes`);
+      } else {
+        await apiClient.post(`/users/${id}/likes`);
+      }
+    } catch {
+      setIsLiked(wasLiked);
+    }
+  };
 
   if (notFound) {
     return (
@@ -93,7 +113,7 @@ export function ProfileView({ id }: ProfileViewProps) {
         </span>
       </div>
 
-      <div className="flex flex-col items-center gap-3 pt-8 pb-6 px-6">
+      <div className="relative flex flex-col items-center gap-3 pt-8 pb-6 px-6">
         <div className="relative w-24 h-24 rounded-full overflow-hidden bg-muted border-2 border-border">
           {avatarSrc ? (
             <Image
@@ -137,25 +157,42 @@ export function ProfileView({ id }: ProfileViewProps) {
         </div>
 
         <div className="flex items-center gap-6 mt-2">
+          <div className="flex flex-col items-center gap-1">
+            <button
+              onClick={toggleLike}
+              aria-label={isLiked ? 'Unlike' : 'Like'}
+              className={cn(
+                'w-12 h-12 rounded-full flex items-center justify-center transition-all duration-150 cursor-pointer border-0',
+                isLiked
+                  ? 'bg-gradient-to-br from-pink-600 to-pink-400'
+                  : 'bg-white/[0.13] border border-border hover:bg-accent',
+              )}
+            >
+              <Heart
+                className={cn(
+                  'w-6 h-6 transition-transform',
+                  isLiked ? 'fill-white text-white scale-110' : 'text-primary',
+                )}
+              />
+            </button>
+            <span className="text-[11px] font-semibold text-muted-foreground drop-shadow">
+              {isLiked ? 'Liked' : 'Like'}
+            </span>
+          </div>
+
           {(
             [
-              { icon: Heart, label: 'Like', fill: true },
-              { icon: MessageCircle, label: 'Message', fill: false },
-              { icon: MoreVertical, label: 'More', fill: false },
+              { icon: MessageCircle, label: 'Message' },
+              { icon: MoreVertical, label: 'More' },
             ] as const
-          ).map(({ icon: Icon, label, fill }) => (
+          ).map(({ icon: Icon, label }) => (
             <div key={label} className="flex flex-col items-center gap-1">
               <button
                 disabled
                 aria-label={label}
                 className="w-12 h-12 rounded-full flex items-center justify-center bg-white/[0.13] border border-border opacity-50 cursor-not-allowed transition-all"
               >
-                <Icon
-                  className={cn(
-                    'w-6 h-6',
-                    fill ? 'text-primary' : 'text-muted-foreground',
-                  )}
-                />
+                <Icon className="w-6 h-6 text-muted-foreground" />
               </button>
               <span className="text-[11px] font-semibold text-muted-foreground drop-shadow">
                 {label}
@@ -163,6 +200,15 @@ export function ProfileView({ id }: ProfileViewProps) {
             </div>
           ))}
         </div>
+
+        {burst > 0 && (
+          <div
+            key={burst}
+            className="absolute left-1/2 top-1/2 z-[6] pointer-events-none animate-like-burst text-pink-400"
+          >
+            <Heart className="w-[120px] h-[120px] fill-current drop-shadow-[0_6px_16px_rgba(244,114,182,0.6)]" />
+          </div>
+        )}
       </div>
 
       <div className="border-t border-border" />

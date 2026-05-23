@@ -64,10 +64,16 @@ export class SocialService {
     await this.fameService.recompute(viewedUserId);
   };
 
-  getPublicProfile = async (targetId: string): Promise<PublicProfile> => {
-    const [user, profile] = await Promise.all([
+  getPublicProfile = async (
+    targetId: string,
+    viewerId: string,
+  ): Promise<PublicProfile> => {
+    const [user, profile, viewerLiked] = await Promise.all([
       this.userRepository.findById(targetId),
       this.userRepository.findProfileByUserId(targetId),
+      viewerId === targetId
+        ? Promise.resolve(false)
+        : this.socialRepository.hasLiked(viewerId, targetId),
     ]);
     if (!user || !profile) throw new UserNotFoundError();
     return {
@@ -84,6 +90,7 @@ export class SocialService {
       fameRating: profile.fameRating,
       isOnline: profile.isOnline,
       lastSeenAt: profile.lastSeenAt?.toISOString() ?? null,
+      viewerLiked,
     };
   };
 }
