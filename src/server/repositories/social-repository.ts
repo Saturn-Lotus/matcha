@@ -106,4 +106,50 @@ export class SocialRepository {
     );
     return rows[0]?.exists ?? false;
   }
+
+  /** Check if a user has viewed another user's profile */
+  async hasViewed(viewerId: string, viewedUserId: string): Promise<boolean> {
+    const rows = await this.db.query<{ exists: boolean }>(
+      `SELECT EXISTS(
+         SELECT 1 FROM profile_views
+         WHERE "viewerId" = $1 AND "viewedUserId" = $2
+       ) AS exists;`,
+      [viewerId, viewedUserId],
+    );
+    return rows[0]?.exists ?? false;
+  }
+
+  /** Get the relational state between viewer and target in a single query */
+  async getRelationState(
+    viewerId: string,
+    targetId: string,
+  ): Promise<{
+    viewerLiked: boolean;
+    targetLiked: boolean;
+    targetViewedViewer: boolean;
+    connected: boolean;
+  }> {
+    const rows = await this.db.query<{
+      viewerLiked: boolean;
+      targetLiked: boolean;
+      targetViewedViewer: boolean;
+    }>(
+      `SELECT
+         EXISTS(SELECT 1 FROM user_likes WHERE "likerUserId" = $1 AND "likedUserId" = $2) AS "viewerLiked",
+         EXISTS(SELECT 1 FROM user_likes WHERE "likerUserId" = $2 AND "likedUserId" = $1) AS "targetLiked",
+         EXISTS(SELECT 1 FROM profile_views WHERE "viewerId" = $2 AND "viewedUserId" = $1) AS "targetViewedViewer";`,
+      [viewerId, targetId],
+    );
+    const row = rows[0] ?? {
+      viewerLiked: false,
+      targetLiked: false,
+      targetViewedViewer: false,
+    };
+    return {
+      viewerLiked: row.viewerLiked,
+      targetLiked: row.targetLiked,
+      targetViewedViewer: row.targetViewedViewer,
+      connected: row.viewerLiked && row.targetLiked,
+    };
+  }
 }

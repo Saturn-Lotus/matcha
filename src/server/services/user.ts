@@ -381,6 +381,10 @@ export class UserService {
       lastSeenAt: row.lastSeenAt?.toISOString() ?? null,
       bio: row.bio,
       tags: row.interests ?? [],
+      viewerLiked: row.viewerLiked,
+      targetLiked: row.targetLiked,
+      targetViewedViewer: row.targetViewedViewer,
+      connected: row.viewerLiked && row.targetLiked,
     }));
 
     return {

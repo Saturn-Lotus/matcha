@@ -10,17 +10,28 @@ import {
   User as UserIcon,
   ChevronLeft,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { cn, relativeTime } from '@/lib/utils';
 import { Button } from '@/app/components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/app/components/ui/tooltip';
+import {
+  RelationBadge,
+  pickRelationVariant,
+} from '@/app/components/ui/relation-badge';
 import { ProgressSegments } from '@/app/browse/components/progress-segments';
 import { apiClient } from '@/lib/api';
 import type { PublicProfile } from '@/server/types';
 
 interface ProfileViewProps {
   id: string;
+  viewerHasAvatar: boolean;
 }
 
-export function ProfileView({ id }: ProfileViewProps) {
+export function ProfileView({ id, viewerHasAvatar }: ProfileViewProps) {
   const router = useRouter();
   const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [notFound, setNotFound] = useState(false);
@@ -40,7 +51,15 @@ export function ProfileView({ id }: ProfileViewProps) {
     apiClient.post(`/users/${id}/views`);
   }, [id]);
 
+  const likeDisabled = !viewerHasAvatar && !isLiked;
+
   const toggleLike = async () => {
+    if (likeDisabled) {
+      toast.info('Add a profile picture to like other profiles', {
+        description: 'Head to your profile to upload one.',
+      });
+      return;
+    }
     const wasLiked = isLiked;
     setIsLiked(!wasLiked);
     if (!wasLiked) setBurst((n) => n + 1);
@@ -93,6 +112,11 @@ export function ProfileView({ id }: ProfileViewProps) {
 
   const photos = profile.pictures ?? [];
   const avatarSrc = profile.avatarUrl ?? photos[0] ?? null;
+  const relationVariant = pickRelationVariant({
+    connected: profile.connected,
+    targetLiked: profile.targetLiked,
+    targetViewedViewer: profile.targetViewedViewer,
+  });
 
   const tapLeft = () =>
     setPhotoIdx((i) => (i - 1 + photos.length) % photos.length);
@@ -135,6 +159,11 @@ export function ProfileView({ id }: ProfileViewProps) {
             {profile.firstName} {profile.lastName}
           </h1>
           <p className="text-sm text-muted-foreground">@{profile.username}</p>
+          {relationVariant && (
+            <div className="mt-1.5">
+              <RelationBadge variant={relationVariant} withLabel size="md" />
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-3 text-sm">
@@ -158,23 +187,37 @@ export function ProfileView({ id }: ProfileViewProps) {
 
         <div className="flex items-center gap-6 mt-2">
           <div className="flex flex-col items-center gap-1">
-            <button
-              onClick={toggleLike}
-              aria-label={isLiked ? 'Unlike' : 'Like'}
-              className={cn(
-                'w-12 h-12 rounded-full flex items-center justify-center transition-all duration-150 cursor-pointer border-0',
-                isLiked
-                  ? 'bg-gradient-to-br from-pink-600 to-pink-400'
-                  : 'bg-white/[0.13] border border-border hover:bg-accent',
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={toggleLike}
+                  aria-label={isLiked ? 'Unlike' : 'Like'}
+                  aria-disabled={likeDisabled || undefined}
+                  className={cn(
+                    'w-12 h-12 rounded-full flex items-center justify-center transition-all duration-150 border-0',
+                    isLiked
+                      ? 'bg-gradient-to-br from-pink-600 to-pink-400 cursor-pointer'
+                      : likeDisabled
+                        ? 'bg-white/[0.13] border border-border opacity-60 cursor-not-allowed'
+                        : 'bg-white/[0.13] border border-border hover:bg-accent cursor-pointer',
+                  )}
+                >
+                  <Heart
+                    className={cn(
+                      'w-6 h-6 transition-transform',
+                      isLiked
+                        ? 'fill-white text-white scale-110'
+                        : 'text-primary',
+                    )}
+                  />
+                </button>
+              </TooltipTrigger>
+              {likeDisabled && (
+                <TooltipContent side="bottom">
+                  Add a profile picture to like
+                </TooltipContent>
               )}
-            >
-              <Heart
-                className={cn(
-                  'w-6 h-6 transition-transform',
-                  isLiked ? 'fill-white text-white scale-110' : 'text-primary',
-                )}
-              />
-            </button>
+            </Tooltip>
             <span className="text-[11px] font-semibold text-muted-foreground drop-shadow">
               {isLiked ? 'Liked' : 'Like'}
             </span>

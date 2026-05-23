@@ -10,6 +10,7 @@ interface FeedScrollerProps {
   framed: boolean;
   likedIds: Set<string>;
   viewerInterests: string[];
+  viewerHasAvatar: boolean;
   onToggleLike: (id: string) => void;
   onPass: (id: string) => void;
   onActiveChange?: (id: string) => void;
@@ -22,6 +23,7 @@ export function FeedScroller({
   framed,
   likedIds,
   viewerInterests,
+  viewerHasAvatar,
   onToggleLike,
   onPass,
   onActiveChange,
@@ -77,6 +79,7 @@ export function FeedScroller({
                 isLiked={likedIds.has(p.id)}
                 framed
                 viewerInterests={viewerInterests}
+                viewerHasAvatar={viewerHasAvatar}
                 onLike={onToggleLike}
                 onPass={onPass}
                 onPhotoView={onPhotoView}
@@ -89,6 +92,7 @@ export function FeedScroller({
               isLiked={likedIds.has(p.id)}
               framed={false}
               viewerInterests={viewerInterests}
+              viewerHasAvatar={viewerHasAvatar}
               onLike={onToggleLike}
               onPass={onPass}
               onPhotoView={onPhotoView}

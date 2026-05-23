@@ -10,6 +10,7 @@ import {
   Sparkles,
   User as UserIcon,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { apiClient } from '@/lib/api/client';
 import Image from 'next/image';
 import { FeedScroller } from './feed-scroller';
@@ -161,11 +162,12 @@ function DiscoverLoading() {
 
 interface DiscoverFeedProps {
   userId: string;
+  viewerHasAvatar: boolean;
 }
 
 const PAGE_SIZE = 20;
 
-export function DiscoverFeed({ userId }: DiscoverFeedProps) {
+export function DiscoverFeed({ userId, viewerHasAvatar }: DiscoverFeedProps) {
   const [profiles, setProfiles] = useState<BrowseProfile[]>([]);
   const [viewerInterests, setViewerInterests] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -177,23 +179,37 @@ export function DiscoverFeed({ userId }: DiscoverFeedProps) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const inFlightRef = useRef(false);
 
-  const loadPage = useCallback(async (targetPage: number) => {
-    if (inFlightRef.current) return;
-    inFlightRef.current = true;
-    try {
-      const data = await apiClient.get<BrowseResponse>(
-        `/users?page=${targetPage}&pageSize=${PAGE_SIZE}`,
-      );
-      const items = Array.isArray(data.items) ? data.items : [];
-      setProfiles((prev) => (targetPage === 1 ? items : [...prev, ...items]));
-      setHasMore(Boolean(data.hasMore));
-      setPage(targetPage);
-    } catch {
-      if (targetPage === 1) setProfiles([]);
-    } finally {
-      inFlightRef.current = false;
-    }
+  const seedLikedFromItems = useCallback((items: BrowseProfile[]) => {
+    setLikedIds((prev) => {
+      const next = new Set(prev);
+      for (const p of items) {
+        if (p.viewerLiked) next.add(p.id);
+      }
+      return next;
+    });
   }, []);
+
+  const loadPage = useCallback(
+    async (targetPage: number) => {
+      if (inFlightRef.current) return;
+      inFlightRef.current = true;
+      try {
+        const data = await apiClient.get<BrowseResponse>(
+          `/users?page=${targetPage}&pageSize=${PAGE_SIZE}`,
+        );
+        const items = Array.isArray(data.items) ? data.items : [];
+        setProfiles((prev) => (targetPage === 1 ? items : [...prev, ...items]));
+        seedLikedFromItems(items);
+        setHasMore(Boolean(data.hasMore));
+        setPage(targetPage);
+      } catch {
+        if (targetPage === 1) setProfiles([]);
+      } finally {
+        inFlightRef.current = false;
+      }
+    },
+    [seedLikedFromItems],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -206,7 +222,9 @@ export function DiscoverFeed({ userId }: DiscoverFeedProps) {
           ),
         ]);
         if (cancelled) return;
-        setProfiles(Array.isArray(data.items) ? data.items : []);
+        const items = Array.isArray(data.items) ? data.items : [];
+        setProfiles(items);
+        seedLikedFromItems(items);
         setHasMore(Boolean(data.hasMore));
         setPage(1);
         setViewerInterests(
@@ -221,7 +239,7 @@ export function DiscoverFeed({ userId }: DiscoverFeedProps) {
     return () => {
       cancelled = true;
     };
-  }, [userId]);
+  }, [userId, seedLikedFromItems]);
 
   useEffect(() => {
     const root = scrollerRef.current;
@@ -241,6 +259,12 @@ export function DiscoverFeed({ userId }: DiscoverFeedProps) {
   const toggleLike = useCallback(
     async (profileId: string) => {
       const isLiked = likedIds.has(profileId);
+      if (!isLiked && !viewerHasAvatar) {
+        toast.info('Add a profile picture to like other profiles', {
+          description: 'Head to your profile to upload one.',
+        });
+        return;
+      }
       setLikedIds((s) => {
         const next = new Set(s);
         isLiked ? next.delete(profileId) : next.add(profileId);
@@ -260,7 +284,7 @@ export function DiscoverFeed({ userId }: DiscoverFeedProps) {
         });
       }
     },
-    [likedIds],
+    [likedIds, viewerHasAvatar],
   );
 
   const handlePass = useCallback((profileId: string) => {
@@ -319,6 +343,7 @@ export function DiscoverFeed({ userId }: DiscoverFeedProps) {
           framed={false}
           likedIds={likedIds}
           viewerInterests={viewerInterests}
+          viewerHasAvatar={viewerHasAvatar}
           onToggleLike={toggleLike}
           onPass={handlePass}
           onActiveChange={setActiveId}

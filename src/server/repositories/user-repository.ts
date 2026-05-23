@@ -300,7 +300,19 @@ export class UserRepository extends BaseRepositoryClass<User> {
            CASE
              WHEN v.location IS NULL OR c.location IS NULL THEN NULL
              ELSE ST_Distance(c.location, v.location) / 1000.0
-           END AS "distanceKm"
+           END AS "distanceKm",
+           EXISTS(
+             SELECT 1 FROM user_likes
+             WHERE "likerUserId" = $1 AND "likedUserId" = c.id
+           ) AS "viewerLiked",
+           EXISTS(
+             SELECT 1 FROM user_likes
+             WHERE "likerUserId" = c.id AND "likedUserId" = $1
+           ) AS "targetLiked",
+           EXISTS(
+             SELECT 1 FROM profile_views
+             WHERE "viewerId" = c.id AND "viewedUserId" = $1
+           ) AS "targetViewedViewer"
          FROM candidates c CROSS JOIN viewer v
        ),
        filtered AS (
@@ -392,6 +404,9 @@ export type UserWithProfileRow = {
 export type SuggestionRow = UserWithProfileRow & {
   sharedTagCount: number;
   distanceKm: number | null;
+  viewerLiked: boolean;
+  targetLiked: boolean;
+  targetViewedViewer: boolean;
 };
 
 export type GetUsersWithProfilesParams = {

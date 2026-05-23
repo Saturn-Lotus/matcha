@@ -42,6 +42,10 @@ export type BrowseSuggestion = {
   lastSeenAt: string | null;
   bio: string | null;
   tags: string[];
+  viewerLiked: boolean;
+  targetLiked: boolean;
+  targetViewedViewer: boolean;
+  connected: boolean;
 };
 
 export type SuggestionsResult = {
@@ -75,4 +79,7 @@ export type PublicProfile = {
   isOnline: boolean;
   lastSeenAt: string | null;
   viewerLiked: boolean;
+  targetLiked: boolean;
+  targetViewedViewer: boolean;
+  connected: boolean;
 };

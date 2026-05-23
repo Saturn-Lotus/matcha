@@ -128,13 +128,14 @@ Stage 8 (feed card adoption of all the above) is a UI assembly step — no new u
 
 ### Service — `SocialService`
 - [ ] `viewProfile(viewerId, targetId)` — check blocks, record view, emit `profile_viewed` notification
-- [ ] `like(viewerId, targetId)` — check viewer has profile picture, check blocks, insert like, emit `liked` notification; if mutual emit `connected` notification
+- [x] `likeUser(likerUserId, likedUserId)` — checks viewer has at least one profile picture (throws `CannotLikeWithoutPictureError`), inserts like, recomputes fame; mutual-like notification still pending
 - [ ] `unlike(viewerId, targetId)` — delete like, emit `unliked` notification if was connected
 - [ ] `block(viewerId, targetId)` — insert block, delete any existing likes both ways, emit no notification
 - [ ] `unblock(viewerId, targetId)`
 - [ ] `report(viewerId, targetId, reason)`
-- [ ] `getPublicProfile(viewerId, targetId)` — 404 if blocked, return profile minus email/password
-- [ ] Define domain errors: `CannotLikeWithoutPicture`, `AlreadyLiked`, `NotLiked`, `CannotSelfAct`, `AlreadyBlocked`
+- [x] `getPublicProfile(viewerId, targetId)` — returns profile minus email/password plus `viewerLiked` / `targetLiked` / `targetViewedViewer` / `connected` via `SocialRepository.getRelationState` (404 on missing user; block check pending)
+- [x] Domain error: `CannotLikeWithoutPictureError` (HTTP 422)
+- [ ] Remaining domain errors: `AlreadyLiked`, `NotLiked`, `CannotSelfAct`, `AlreadyBlocked`
 
 ### Routes
 - [ ] `GET /api/users/[id]` — call `SocialService.getPublicProfile`, return 200 or 404
@@ -151,15 +152,15 @@ Stage 8 (feed card adoption of all the above) is a UI assembly step — no new u
 
 ### UI
 - [ ] `FeedCard` — extend with "More" button next to like/pass, opening a sheet with full profile details + block/report/unlike
-- [ ] `FeedCard` — render relational state as a primary-colored icon/badge on the card (visible without opening More)
+- [x] `FeedCard` — render relational state as an icon badge on the card (top-left), driven by `BrowseProfile.connected`/`targetLiked`/`targetViewedViewer`; uses shared `RelationBadge`
 - [x] `FeedCard` — emit a `view` event when the viewer advances past the first photo (idempotent per session via `recordedViewsRef` in `discover-feed.tsx`; server enforces idempotency per pair via `ON CONFLICT` in `social-repository.ts`)
 - [ ] `/users/[id]` page — minimal Messenger-style layout (avatar, name, age, online, fame, relational badge, action row + expandable details)
 - [x] `/users/[id]` — fire `POST /api/users/[id]/views` once on mount ([profile-view.tsx](src/app/users/[id]/profile-view.tsx))
 - [x] `/users/[id]` — Like / Unlike button with optimistic toggle and burst animation; initial state from `viewerLiked` returned by `GET /api/users/[id]` ([profile-view.tsx](src/app/users/[id]/profile-view.tsx))
-- [ ] `/users/[id]` — server-side redirect to `/settings` if `id === viewer.id`
+- [x] `/users/[id]` — server-side redirect to `/settings` if `id === viewer.id` ([users/[id]/page.tsx](src/app/users/[id]/page.tsx))
 - [ ] `/users/[id]` — return 404 when blocked either direction
-- [ ] `LikeButton` component — disabled + tooltip when no profile picture; shared between feed card and permalink
-- [ ] `RelationBadge` component — shows "Liked you", "Connected", "You liked them"; shared between feed card and permalink
+- [x] Like button gated when viewer has no profile picture — server-side via `CannotLikeWithoutPictureError` in `SocialService.likeUser`, client-side via `viewerHasAvatar` prop drilled from `browse/page.tsx` and `users/[id]/page.tsx` with `Tooltip` + Sonner toast
+- [x] `RelationBadge` component — `connected` / `liked-you` / `viewed-you` variants ([src/app/components/ui/relation-badge.tsx](src/app/components/ui/relation-badge.tsx)); shared between feed card and permalink
 - [ ] `OnlineIndicator` component — green dot or "Last seen X ago"
 - [ ] Overflow menu with "Block" + "Report" items + confirm dialogs (used inside the More sheet and on the permalink action row)
 - [ ] Notifications and chat headers link to `/users/[id]` (deep-link target)

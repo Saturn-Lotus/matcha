@@ -19,6 +19,16 @@ export class UserNotFoundError extends Error {
   }
 }
 
+@HTTPError(422)
+export class CannotLikeWithoutPictureError extends Error {
+  constructor(
+    message = 'You need a profile picture before you can like other profiles',
+  ) {
+    super(message);
+    this.name = 'CannotLikeWithoutPictureError';
+  }
+}
+
 export class SocialService {
   private readonly socialRepository: SocialRepository;
   private readonly fameService: FameService;
@@ -41,6 +51,12 @@ export class SocialService {
   likeUser = async (likerUserId: string, likedUserId: string) => {
     if (likerUserId === likedUserId) {
       throw new InvalidLikeError('Cannot like yourself');
+    }
+    const likerProfile =
+      await this.userRepository.findProfileByUserId(likerUserId);
+    const hasPicture = (likerProfile?.pictures?.length ?? 0) > 0;
+    if (!hasPicture) {
+      throw new CannotLikeWithoutPictureError();
     }
     await this.socialRepository.likeUser(likerUserId, likedUserId);
     await this.fameService.recompute(likedUserId);
@@ -68,12 +84,18 @@ export class SocialService {
     targetId: string,
     viewerId: string,
   ): Promise<PublicProfile> => {
-    const [user, profile, viewerLiked] = await Promise.all([
+    const isSelf = viewerId === targetId;
+    const [user, profile, relation] = await Promise.all([
       this.userRepository.findById(targetId),
       this.userRepository.findProfileByUserId(targetId),
-      viewerId === targetId
-        ? Promise.resolve(false)
-        : this.socialRepository.hasLiked(viewerId, targetId),
+      isSelf
+        ? Promise.resolve({
+            viewerLiked: false,
+            targetLiked: false,
+            targetViewedViewer: false,
+            connected: false,
+          })
+        : this.socialRepository.getRelationState(viewerId, targetId),
     ]);
     if (!user || !profile) throw new UserNotFoundError();
     return {
@@ -90,7 +112,10 @@ export class SocialService {
       fameRating: profile.fameRating,
       isOnline: profile.isOnline,
       lastSeenAt: profile.lastSeenAt?.toISOString() ?? null,
-      viewerLiked,
+      viewerLiked: relation.viewerLiked,
+      targetLiked: relation.targetLiked,
+      targetViewedViewer: relation.targetViewedViewer,
+      connected: relation.connected,
     };
   };
 }

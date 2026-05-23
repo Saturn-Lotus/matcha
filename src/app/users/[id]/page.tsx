@@ -1,6 +1,7 @@
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { ProfileView } from './profile-view';
+import { getUserRepository } from '@/server/factories';
 
 export default async function UserProfilePage({
   params,
@@ -15,5 +16,11 @@ export default async function UserProfilePage({
     redirect('/settings');
   }
 
-  return <ProfileView id={id} />;
+  let viewerHasAvatar = false;
+  if (viewerId) {
+    const profile = await getUserRepository().findProfileByUserId(viewerId);
+    viewerHasAvatar = (profile?.pictures?.length ?? 0) > 0;
+  }
+
+  return <ProfileView id={id} viewerHasAvatar={viewerHasAvatar} />;
 }
