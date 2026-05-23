@@ -17,6 +17,7 @@ import {
   RegisterUserInput,
   SortBy,
   SortDirection,
+  UserSearchResult,
 } from '@/server/types';
 import bcrypt from 'bcrypt';
 
@@ -276,6 +277,14 @@ export class UserService {
       );
       throw error;
     }
+  };
+
+  searchUsers = async (
+    viewerId: string,
+    query: string,
+    limit: number,
+  ): Promise<UserSearchResult[]> => {
+    return this.userRepository.search(query, limit, viewerId);
   };
 
   changePassword = async (

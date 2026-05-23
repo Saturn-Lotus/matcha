@@ -8,7 +8,14 @@ Subject §IV.5. Public-facing view of another user's profile and all relational 
 ## Scope
 Show everything about a user **except email and password hash**. Record every view in visit history.
 
-Actions available from a profile page:
+Profile data is surfaced through **two complementary surfaces**, both of which must expose the full §IV.5 action set and relational state:
+
+1. **Feed card** (`/browse` Discover tab) — immersive, swipeable TikTok-style discovery surface. Primary information visible inline; full details revealed via a "More" sheet.
+2. **Permalink page** (`/users/[id]`) — minimal Messenger-style profile reached from notifications, chat headers, and any future share/link entry point. Visually quiet, but information-complete.
+
+The two surfaces share the same underlying component (`FeedCard`) where it makes sense, but the permalink renders a leaner layout optimized for referenced (not discovery) context.
+
+Actions available from both surfaces:
 - **Like** a profile (mutual like = connection). Requires viewer to have a profile picture.
 - **Unlike** (breaks connection, disables chat, suppresses further notifications from that user).
 - **Check fame rating**.
@@ -16,8 +23,8 @@ Actions available from a profile page:
 - **Report** as a fake account.
 - **Block** (removes from search/suggestions/notifications, disables chat).
 
-Status indicators visible to the viewer:
-- "Liked you" badge if the viewed user has liked the viewer.
+Status indicators visible to the viewer (both surfaces):
+- "Liked you" badge / primary-colored icon if the viewed user has liked the viewer.
 - "Connected" badge if both have liked each other.
 - "You liked them" state.
 - Options to unlike or disconnect.
@@ -50,29 +57,52 @@ Connection state is derived: mutual likes with no block between them.
 ---
 
 ## UI
-- `/users/[id]` — hero section (pictures carousel, name, age, distance, fame badge, online indicator), bio, tag list, action bar.
-- Relational badges: "Liked you ♥", "Connected ✓", "You liked them →".
+
+### Surface 1 — Feed card (`/browse` Discover tab)
+- Existing `FeedCard` component: photo carousel, name, age (in More), online/last-seen, fame, bio, top tags, like/pass buttons.
+- **Relational state** rendered as a primary-colored icon/badge directly on the card (e.g. heart-back-glyph for "Liked you", linked-rings for "Connected"). Visible without opening the More sheet so the viewer can decide before acting.
+- **"More" sheet** (opened via a `⋮` or "More" button next to like/pass) reveals:
+  - Full photo gallery
+  - Gender, sexual preferences, distance / location
+  - All interest tags
+  - Full bio
+  - Block and Report actions (with confirm dialogs)
+  - Unlike (if currently liked)
 - Like button disabled if viewer has no profile picture; tooltip explains why.
-- Block/report in a `⋮` overflow menu; both require a confirmation dialog.
-- Visit history and likes accessible from `/settings` or dedicated pages.
+- **View recording trigger**: when the viewer advances past the first photo (taps to photo #2) of a card. This converts the "card flashed past me" noise into an intentional engagement signal. Idempotent per viewer/viewed pair per day.
+
+### Surface 2 — Permalink page (`/users/[id]`)
+- Minimal Messenger-style layout. Entry point for notifications, chat headers, and direct links.
+- **Above the fold (always visible)**: avatar, full name, age, online/last-seen, fame rating, relational badge, action row (Like/Unlike, Message if connected, `⋮` overflow with Block + Report).
+- **Expandable / below the fold**: photo gallery (up to 5), bio, all interest tags, gender, sexual preferences, location/distance.
+- **View recording trigger**: fired once on mount (idempotent per day).
+- Self-view → server-side redirect to `/settings`.
+- Blocked either direction → 404 (PV-11).
+
+### Visitors & likers history
+- Already surfaced as tabs in `/browse` (`Views` and `Likes` tabs in [browse-content.tsx](src/app/browse/browse-content.tsx)). No separate `/settings/visitors` or `/settings/likes` pages required.
 
 ---
 
 ## User Stories
 
-| # | As a… | I want… | So that… |
-|---|-------|---------|----------|
-| PV-1 | logged-in user | to view another user's full profile | I can decide if I'm interested |
-| PV-2 | viewed user | every visit to be recorded in my history | I know who has seen my profile |
-| PV-3 | logged-in user | to like a profile | I express interest; if mutual, we connect |
-| PV-4 | logged-in user | to unlike a profile | I withdraw interest and disable our connection |
-| PV-5 | logged-in user | to see if someone liked me before I act | I can decide whether to reciprocate |
-| PV-6 | logged-in user | to see a "Connected" badge when we've both liked each other | I clearly know we can chat |
-| PV-7 | logged-in user | to see if a user is online or their last-seen time | I know if they're active |
-| PV-8 | logged-in user | to block a user | they disappear from my experience entirely |
-| PV-9 | logged-in user | to report a fake account | I help keep the platform safe |
-| PV-10 | logged-in user | the like button to be disabled if I have no profile picture | I understand why I can't like yet |
-| PV-11 | logged-in user | blocked users to return 404, not a "blocked" page | my blocks are not discoverable |
+Listed in execution order. Stage groupings reflect shippable, dependency-aware increments (Stage 1 = data-layer foundation, no user-visible story).
+
+| Stage | # | As a… | I want… | So that… |
+|-------|---|-------|---------|----------|
+| 2 | PV-1 | logged-in user | to view another user's full profile | I can decide if I'm interested |
+| 2 | PV-2 | viewed user | every visit to be recorded in my history | I know who has seen my profile |
+| 3 | PV-3 | logged-in user | to like a profile | I express interest; if mutual, we connect |
+| 3 | PV-10 | logged-in user | the like button to be disabled if I have no profile picture | I understand why I can't like yet |
+| 3 | PV-5 | logged-in user | to see if someone liked me before I act | I can decide whether to reciprocate |
+| 3 | PV-6 | logged-in user | to see a "Connected" badge when we've both liked each other | I clearly know we can chat |
+| 4 | PV-4 | logged-in user | to unlike a profile | I withdraw interest and disable our connection |
+| 5 | PV-8 | logged-in user | to block a user | they disappear from my experience entirely |
+| 5 | PV-11 | logged-in user | blocked users to return 404, not a "blocked" page | my blocks are not discoverable |
+| 6 | PV-9 | logged-in user | to report a fake account | I help keep the platform safe |
+| 7 | PV-7 | logged-in user | to see if a user is online or their last-seen time | I know if they're active |
+
+Stage 8 (feed card adoption of all the above) is a UI assembly step — no new user story, it just brings the existing surface in line.
 
 ---
 
@@ -120,13 +150,18 @@ Connection state is derived: mutual likes with no block between them.
 - [ ] Scheduled job or TTL: set `is_online = false` after 5 min of inactivity (or on WebSocket disconnect)
 
 ### UI
-- [ ] `/users/[id]` page — hero, bio, tags, action bar
-- [ ] `LikeButton` component — disabled + tooltip when no profile picture
-- [ ] `RelationBadge` component — shows "Liked you", "Connected", "You liked them"
+- [ ] `FeedCard` — extend with "More" button next to like/pass, opening a sheet with full profile details + block/report/unlike
+- [ ] `FeedCard` — render relational state as a primary-colored icon/badge on the card (visible without opening More)
+- [ ] `FeedCard` — emit a `view` event when the viewer advances past the first photo (debounced/idempotent per day)
+- [ ] `/users/[id]` page — minimal Messenger-style layout (avatar, name, age, online, fame, relational badge, action row + expandable details)
+- [ ] `/users/[id]` — fire `POST /api/users/[id]/view` once on mount
+- [ ] `/users/[id]` — server-side redirect to `/settings` if `id === viewer.id`
+- [ ] `/users/[id]` — return 404 when blocked either direction
+- [ ] `LikeButton` component — disabled + tooltip when no profile picture; shared between feed card and permalink
+- [ ] `RelationBadge` component — shows "Liked you", "Connected", "You liked them"; shared between feed card and permalink
 - [ ] `OnlineIndicator` component — green dot or "Last seen X ago"
-- [ ] Overflow menu with "Block" + "Report" items + confirm dialogs
-- [ ] `/settings/visitors` page showing `profile_views` list
-- [ ] `/settings/likes` page showing likers list
+- [ ] Overflow menu with "Block" + "Report" items + confirm dialogs (used inside the More sheet and on the permalink action row)
+- [ ] Notifications and chat headers link to `/users/[id]` (deep-link target)
 
 ### Tests
 - [ ] Unit: `SocialService.like` — mutual like triggers connected notification
@@ -138,9 +173,12 @@ Connection state is derived: mutual likes with no block between them.
 ---
 
 ## Acceptance criteria
-- Visiting a profile inserts a row visible in `/api/users/me/visits`.
+- Profile data (everything except email and password hash) is reachable from both the feed card "More" sheet and the `/users/[id]` permalink.
+- Advancing past the first photo of a feed card OR opening `/users/[id]` inserts a row visible in `/api/users/me/visits` (idempotent per viewer/viewed pair per day).
+- Relational state ("Liked you" / "Connected" / "You liked them") is visible on the feed card itself (no need to open "More") and on the permalink above the fold.
+- Notifications and chat headers navigate to `/users/[id]` for a specific user.
 - Mutual likes create a connection and enable chat (PRD 06).
 - Unliking disconnects and disables chat immediately.
-- Blocked users never appear in browse/search/notifications.
-- Self-view is prevented.
-- Viewer must have a profile picture to like (enforced server-side).
+- Blocked users never appear in browse/search/notifications; `/users/[id]` returns 404 if blocked either direction.
+- Self-view is prevented: `/users/[id]` with the viewer's own id redirects to `/settings`.
+- Viewer must have a profile picture to like (enforced server-side; UI disables the button with a tooltip).

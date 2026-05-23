@@ -1,13 +1,5 @@
 'use client';
-import {
-  Heart,
-  LogOut,
-  Settings,
-  User,
-  Search,
-  Compass,
-  Flame,
-} from 'lucide-react';
+import { Heart, LogOut, Settings, User, Compass, Flame } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import {
   DropdownMenu,
@@ -18,6 +10,7 @@ import {
 } from '@/app/components/ui/dropdown-menu';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { UserSearch } from '@/app/components/user-search';
 import { useState } from 'react';
 import Image from 'next/image';
 import { apiClient } from '@/lib/api';
@@ -136,12 +129,7 @@ export const NavigationBar = ({
             </nav>
 
             <div className="flex items-center gap-1.5">
-              <button
-                className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-all duration-150"
-                aria-label="Search"
-              >
-                <Search className="w-4 h-4" />
-              </button>
+              <UserSearch />
 
               <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>

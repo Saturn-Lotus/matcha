@@ -51,3 +51,27 @@ export type SuggestionsResult = {
   pageSize: number;
   hasMore: boolean;
 };
+
+export type UserSearchResult = {
+  id: string;
+  username: string;
+  firstName: string;
+  lastName: string;
+  avatarUrl: string | null;
+};
+
+export type PublicProfile = {
+  id: string;
+  username: string;
+  firstName: string;
+  lastName: string;
+  bio: string | null;
+  gender: 'male' | 'female' | null;
+  sexualPreference: 'male' | 'female' | 'both' | null;
+  avatarUrl: string | null;
+  interests: string[] | null;
+  pictures: string[] | null;
+  fameRating: number;
+  isOnline: boolean;
+  lastSeenAt: string | null;
+};

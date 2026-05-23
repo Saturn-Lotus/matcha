@@ -6,6 +6,7 @@ import {
   CreateUserProfile,
   SortBy,
   SortDirection,
+  UserSearchResult,
 } from '../types';
 
 type CreateUserWithProfileInput = {
@@ -336,6 +337,33 @@ export class UserRepository extends BaseRepositoryClass<User> {
       return rest;
     });
     return { rows, total };
+  }
+
+  async search(
+    query: string,
+    limit: number,
+    excludeId: string,
+  ): Promise<UserSearchResult[]> {
+    const pattern = `%${query}%`;
+    return this.db.query<UserSearchResult>(
+      `SELECT u.id, u.username, up."firstName", up."lastName", up."avatarUrl"
+       FROM users u
+       JOIN user_profiles up ON up."userId" = u.id
+       WHERE u."isVerified" = TRUE
+         AND up."isProfileComplete" = TRUE
+         AND u.id <> $3
+         AND (
+           u.username ILIKE $1
+           OR up."firstName" ILIKE $1
+           OR up."lastName" ILIKE $1
+           OR CONCAT(up."firstName", ' ', up."lastName") ILIKE $1
+         )
+       ORDER BY
+         CASE WHEN u.username ILIKE $4 OR up."firstName" ILIKE $4 THEN 0 ELSE 1 END,
+         up."firstName"
+       LIMIT $2;`,
+      [pattern, limit, excludeId, `${query}%`],
+    );
   }
 
   async userHasLocation(userId: string): Promise<boolean> {
