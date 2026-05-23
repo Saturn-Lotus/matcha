@@ -11,8 +11,7 @@ export class VercelBlobStorage implements IStorage {
 
   private buildObjectKey(destination: string): string {
     const fileName = crypto.randomUUID();
-    const fullPath = path.posix.join(destination, fileName);
-    return fullPath;
+    return path.posix.join(destination, fileName);
   }
 
   async uploadFile(file: File, destination: string): Promise<string> {
@@ -22,7 +21,7 @@ export class VercelBlobStorage implements IStorage {
       access: 'public',
     });
 
-    return blob.pathname;
+    return blob.url;
   }
 
   async bulkUploadFiles(files: File[], destination: string): Promise<string[]> {
@@ -31,22 +30,24 @@ export class VercelBlobStorage implements IStorage {
     );
     return Promise.all(uploadPromises);
   }
-  async deleteFile(filePath: string): Promise<void> {
-    await del(filePath);
+
+  async deleteFile(urlOrPathname: string): Promise<void> {
+    await del(urlOrPathname);
   }
 
-  async getFileUrl(filePath: string): Promise<string> {
-    const blobMetadata = await head(filePath);
+  async getFileUrl(urlOrPathname: string): Promise<string> {
+    if (/^https?:\/\//i.test(urlOrPathname)) return urlOrPathname;
+    const blobMetadata = await head(urlOrPathname);
     return blobMetadata.url;
   }
 
   async getFile(
-    filePath: string,
+    urlOrPathname: string,
   ): Promise<{ buffer: Buffer; contentType: string }> {
-    const blobMetadata = await head(filePath);
+    const blobMetadata = await head(urlOrPathname);
     const res = await fetch(blobMetadata.downloadUrl);
     if (!res.ok) {
-      throw Error(`failed to download blob ${filePath}`);
+      throw Error(`failed to download blob ${urlOrPathname}`);
     }
     return {
       buffer: Buffer.from(await res.arrayBuffer()),

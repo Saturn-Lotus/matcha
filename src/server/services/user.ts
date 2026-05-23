@@ -84,12 +84,27 @@ export class UserService {
 
   getAvatarFile = async (
     userId: string,
-  ): Promise<{ buffer: Buffer; contentType: string }> => {
+  ): Promise<
+    | { kind: 'file'; buffer: Buffer; contentType: string }
+    | { kind: 'redirect'; url: string }
+  > => {
     const profile = await this.getProfileByUserId(userId);
     if (!profile.avatarUrl) {
       throw new NotFoundException('Avatar not found');
     }
-    return this.storage.getFile(profile.avatarUrl);
+    if (/^https?:\/\//i.test(profile.avatarUrl)) {
+      return { kind: 'redirect', url: profile.avatarUrl };
+    }
+    try {
+      const { buffer, contentType } = await this.storage.getFile(
+        profile.avatarUrl,
+      );
+      return { kind: 'file', buffer, contentType };
+    } catch {
+      // Legacy stored pathname/key but blob is missing — treat as not-found
+      // so the UI fallback (seeded avatar) kicks in instead of a 500.
+      throw new NotFoundException('Avatar not found');
+    }
   };
 
   userExists = async (
