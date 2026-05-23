@@ -22,3 +22,10 @@ export const BrowseQuerySchema = Su.object({
 });
 
 export type BrowseQuery = SuInfer<typeof BrowseQuerySchema>;
+
+export const SearchQuerySchema = Su.object({
+  q: Su.string().length({ min: 1, max: 100 }),
+  limit: Su.optional(Su.number().min(1).max(10)),
+});
+
+export type SearchQuery = SuInfer<typeof SearchQuerySchema>;

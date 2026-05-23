@@ -75,6 +75,12 @@ A rule of thumb: if you find yourself writing `bcrypt`, `db.transaction`, or raw
   ```
 - Consumers import the inferred type from `@/server/schemas` — they don't redeclare it in `src/server/types.ts`. `src/server/types.ts` is reserved for domain types that don't correspond to a validated payload (e.g. response DTOs, internal row shapes).
 
+### Validation — always use `Su` from `src/lib/validator`
+- **All** input validation across the app must go through `Su` (`src/lib/validator`). Never write one-off `typeof`, `instanceof`, or manual range checks at the route or service level.
+- URL query params arrive as strings: coerce to the target JS type first (e.g. `Number(raw)`), throw `CheckValidationError` on `NaN`, then pass the coerced value to the schema. See `coerceBrowseQuery` in `src/app/api/users/route.ts` as the canonical pattern.
+- If a new type constraint is needed (e.g. a regex, a custom range), add a method to the appropriate parser class in `src/lib/validator/parsers.ts` rather than inlining the check at the callsite.
+- `withErrorHandler` automatically maps `CheckValidationError` and `TypeValidationError` to HTTP 400 — no manual try/catch required.
+
 ## Crypto / Security Rules
 - **Never** use `bcrypt.hash` to look up records in the DB. bcrypt uses a random salt — the output differs every call.
 - Always use `bcrypt.compare(plaintext, storedHash)` to verify bcrypt-hashed values.
