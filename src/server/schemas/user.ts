@@ -67,6 +67,7 @@ export const CreateUserProfileSchema = Su.object({
 export const UpdateUserProfileSchema = Su.object({
   firstName: Su.optional(Su.string()),
   lastName: Su.optional(Su.string()),
+  birthDate: Su.optional(Su.string()),
   email: Su.optional(Su.string().email()),
   gender: Su.optional(Su.literal(GENDERS)),
   sexualPreference: Su.optional(Su.literal(SEXUAL_PREFERENCES)),

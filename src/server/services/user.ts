@@ -276,6 +276,18 @@ export class UserService {
       updateData.firstName = profileData.firstName;
     if (profileData.lastName !== undefined)
       updateData.lastName = profileData.lastName;
+    if (profileData.birthDate !== undefined) {
+      const birthDate = new Date(profileData.birthDate);
+      if (isNaN(birthDate.getTime())) {
+        throw new ValidationError('Invalid birth date');
+      }
+      if (yearsBetween(birthDate, new Date()) < MIN_REGISTRATION_AGE) {
+        throw new ValidationError(
+          `You must be at least ${MIN_REGISTRATION_AGE} years old`,
+        );
+      }
+      updateData.birthDate = birthDate;
+    }
     if (profileData.gender !== undefined)
       updateData.gender = profileData.gender;
     if (profileData.sexualPreference !== undefined)

@@ -8,10 +8,7 @@ export function cn(...inputs: ClassValue[]) {
 export function yearsBetween(from: Date, to: Date): number {
   let years = to.getFullYear() - from.getFullYear();
   const monthDiff = to.getMonth() - from.getMonth();
-  if (
-    monthDiff < 0 ||
-    (monthDiff === 0 && to.getDate() < from.getDate())
-  ) {
+  if (monthDiff < 0 || (monthDiff === 0 && to.getDate() < from.getDate())) {
     years--;
   }
   return years;
