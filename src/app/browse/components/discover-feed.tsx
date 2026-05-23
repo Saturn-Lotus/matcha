@@ -267,6 +267,15 @@ export function DiscoverFeed({ userId }: DiscoverFeedProps) {
     setPassedIds((s) => new Set([...s, profileId]));
   }, []);
 
+  const recordedViewsRef = useRef<Set<string>>(new Set());
+  const handlePhotoView = useCallback((profileId: string) => {
+    if (recordedViewsRef.current.has(profileId)) return;
+    recordedViewsRef.current.add(profileId);
+    apiClient.post(`/users/${profileId}/views`).catch(() => {
+      recordedViewsRef.current.delete(profileId);
+    });
+  }, []);
+
   useHotkeys(
     'down',
     () => {
@@ -313,6 +322,7 @@ export function DiscoverFeed({ userId }: DiscoverFeedProps) {
           onToggleLike={toggleLike}
           onPass={handlePass}
           onActiveChange={setActiveId}
+          onPhotoView={handlePhotoView}
           scrollRef={scrollerRef}
         />
       </div>

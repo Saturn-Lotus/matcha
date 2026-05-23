@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Heart, User as UserIcon, X } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -23,6 +23,7 @@ interface FeedCardProps {
   viewerInterests: string[];
   onLike: (id: string) => void;
   onPass: (id: string) => void;
+  onPhotoView?: (id: string) => void;
 }
 
 export function FeedCard({
@@ -33,10 +34,12 @@ export function FeedCard({
   viewerInterests,
   onLike,
   onPass,
+  onPhotoView,
 }: FeedCardProps) {
   const photos = getPhotosListFromProfile(profile);
   const [photoIdx, setPhotoIdx] = useState(0);
   const [burst, setBurst] = useState(0);
+  const viewFiredRef = useRef(false);
 
   useEffect(() => {
     if (isActive) return;
@@ -52,6 +55,14 @@ export function FeedCard({
     );
     return () => clearTimeout(t);
   }, [isActive, photoIdx, photos.length]);
+
+  useEffect(() => {
+    if (!isActive || viewFiredRef.current) return;
+    if (photoIdx >= 1) {
+      viewFiredRef.current = true;
+      onPhotoView?.(profile.id);
+    }
+  }, [isActive, photoIdx, onPhotoView, profile.id]);
 
   const tapLeft = () =>
     setPhotoIdx((i) => (i - 1 + photos.length) % photos.length);
