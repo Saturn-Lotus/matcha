@@ -19,7 +19,10 @@ import {
   SortDirection,
   UserSearchResult,
 } from '@/server/types';
+import { yearsBetween } from '@/lib/utils';
 import bcrypt from 'bcrypt';
+
+const MIN_REGISTRATION_AGE = 18;
 
 export class UserService {
   private readonly userRepository: UserRepository;
@@ -37,6 +40,16 @@ export class UserService {
   }
 
   registerUser = async (data: RegisterUserInput) => {
+    const birthDate = new Date(data.birthDate);
+    if (isNaN(birthDate.getTime())) {
+      throw new ValidationError('Invalid birth date');
+    }
+    if (yearsBetween(birthDate, new Date()) < MIN_REGISTRATION_AGE) {
+      throw new ValidationError(
+        `You must be at least ${MIN_REGISTRATION_AGE} years old to register`,
+      );
+    }
+
     const passwordHash = await bcrypt.hash(data.password, 10);
     return this.userRepository.createWithProfile({
       user: {
@@ -49,6 +62,7 @@ export class UserService {
       profile: {
         firstName: data.firstName,
         lastName: data.lastName,
+        birthDate,
         bio: null,
         gender: null,
         sexualPreference: null,
@@ -363,6 +377,7 @@ export class UserService {
       maxDistanceKm: filters.maxDistanceKm ?? null,
       minFameRating: filters.minFameRating ?? null,
       maxFameRating: filters.maxFameRating ?? null,
+      age: filters.age ?? null,
       sortBy,
       sortDirection,
     });
@@ -371,7 +386,7 @@ export class UserService {
       id: row.id,
       username: row.username,
       firstName: row.firstName,
-      age: null,
+      age: row.age,
       distanceKm: row.distanceKm,
       fameRating: row.fameRating,
       sharedTagCount: row.sharedTagCount,

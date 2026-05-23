@@ -5,6 +5,18 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export function yearsBetween(from: Date, to: Date): number {
+  let years = to.getFullYear() - from.getFullYear();
+  const monthDiff = to.getMonth() - from.getMonth();
+  if (
+    monthDiff < 0 ||
+    (monthDiff === 0 && to.getDate() < from.getDate())
+  ) {
+    years--;
+  }
+  return years;
+}
+
 export function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const m = Math.floor(diff / 60_000);

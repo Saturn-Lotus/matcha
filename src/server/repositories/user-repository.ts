@@ -55,6 +55,7 @@ export class UserRepository extends BaseRepositoryClass<User> {
       "userId",
       "firstName",
       "lastName",
+      "birthDate",
       "gender",
       "sexualPreference",
       "bio",
@@ -62,12 +63,13 @@ export class UserRepository extends BaseRepositoryClass<User> {
       "pictures",
       "avatarUrl"
     )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *;
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *;
       `,
       [
         item.userId,
         item.firstName,
         item.lastName,
+        item.birthDate,
         item.gender,
         item.sexualPreference,
         item.bio,
@@ -236,6 +238,7 @@ export class UserRepository extends BaseRepositoryClass<User> {
       maxDistanceKm,
       minFameRating,
       maxFameRating,
+      age,
       sortBy,
       sortDirection,
     } = params;
@@ -257,6 +260,7 @@ export class UserRepository extends BaseRepositoryClass<User> {
            u.id,
            u.username,
            up."firstName",
+           up."birthDate",
            up."fameRating",
            up."isOnline",
            up."lastSeenAt",
@@ -283,6 +287,7 @@ export class UserRepository extends BaseRepositoryClass<User> {
            c.id,
            c.username,
            c."firstName",
+           c."birthDate",
            c."fameRating",
            c."isOnline",
            c."lastSeenAt",
@@ -290,6 +295,7 @@ export class UserRepository extends BaseRepositoryClass<User> {
            c.pictures,
            c.interests,
            c.bio,
+           EXTRACT(YEAR FROM AGE(c."birthDate"))::INT AS "age",
            cardinality(
              ARRAY(
                SELECT UNNEST(c.interests)
@@ -322,13 +328,14 @@ export class UserRepository extends BaseRepositoryClass<User> {
            AND ($5::FLOAT IS NULL OR ("distanceKm" IS NOT NULL AND "distanceKm" <= $5))
            AND ($6::FLOAT IS NULL OR "fameRating" >= $6)
            AND ($7::FLOAT IS NULL OR "fameRating" <= $7)
+           AND ($8::INT IS NULL OR "age" <= $8)
        )
        SELECT
          *,
          (COUNT(*) OVER ())::INT AS "totalCount"
        FROM filtered
        ORDER BY ${orderSql}
-       LIMIT $8 OFFSET $9;`,
+       LIMIT $9 OFFSET $10;`,
       [
         viewerId,
         allowedGenders,
@@ -337,6 +344,7 @@ export class UserRepository extends BaseRepositoryClass<User> {
         maxDistanceKm,
         minFameRating,
         maxFameRating,
+        age,
         pageSize,
         offset,
       ],
@@ -407,6 +415,7 @@ export type SuggestionRow = UserWithProfileRow & {
   viewerLiked: boolean;
   targetLiked: boolean;
   targetViewedViewer: boolean;
+  age: number;
 };
 
 export type GetUsersWithProfilesParams = {
@@ -419,6 +428,7 @@ export type GetUsersWithProfilesParams = {
   maxDistanceKm: number | null;
   minFameRating: number | null;
   maxFameRating: number | null;
+  age: number | null;
   sortBy: SortBy;
   sortDirection: SortDirection;
 };
@@ -444,8 +454,8 @@ const ORDER_FRAGMENTS: Record<SortBy, Record<SortDirection, string>> = {
     asc: '"fameRating" ASC, id ASC',
   },
   age: {
-    asc: '"sharedTagCount" DESC, id ASC',
-    desc: '"sharedTagCount" DESC, id ASC',
+    asc: '"birthDate" DESC, id ASC',
+    desc: '"birthDate" ASC, id ASC',
   },
 };
 

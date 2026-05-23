@@ -11,6 +11,7 @@ import {
   User,
   Lock,
   Mail,
+  Calendar,
   Loader2,
   AlertCircle,
   CheckCircle2,
@@ -19,7 +20,16 @@ import Link from 'next/link';
 import FormInputRow from './ui/form-input-row';
 import { useRef, useState } from 'react';
 import { Parser, Su } from '@/lib/validator';
-import { cn } from '@/lib/utils';
+import { cn, yearsBetween } from '@/lib/utils';
+
+const MIN_REGISTRATION_AGE = 18;
+
+const isValidBirthDate = (value: unknown): boolean => {
+  if (typeof value !== 'string' || value.length === 0) return false;
+  const date = new Date(value);
+  if (isNaN(date.getTime())) return false;
+  return yearsBetween(date, new Date()) >= MIN_REGISTRATION_AGE;
+};
 import { apiClient } from '@/lib/api/client';
 import { registerResponseSchema } from '@/lib/api/schemas';
 
@@ -63,7 +73,11 @@ export const RegisterForm = () => {
         confirmedPassword: Su.string()
           .password()
           .match(obj.password as string),
+        birthDate: Su.string(),
       }).parse(obj);
+      if (!isValidBirthDate(obj.birthDate)) {
+        throw new Error('birthDate');
+      }
     } catch {
       setError('Please check your information and try again');
       setIsLoading(false);
@@ -178,6 +192,15 @@ export const RegisterForm = () => {
                 handleValidate={(value) =>
                   validateField(value, Su.string().length({ min: 2, max: 50 }))
                 }
+              />
+              <FormInputRow
+                id="birthdate"
+                type="date"
+                name="birthDate"
+                placeholder="Date of birth"
+                errorMessage={`You must be at least ${MIN_REGISTRATION_AGE} years old`}
+                icon={<Calendar className="h-5 w-5 text-icon-muted" />}
+                handleValidate={isValidBirthDate}
               />
               <FormInputRow
                 id="username"

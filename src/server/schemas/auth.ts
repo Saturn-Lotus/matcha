@@ -6,6 +6,7 @@ export const RegisterUserSchema = Su.object({
   lastName: Su.string().length({ min: 2, max: 50 }),
   firstName: Su.string().length({ min: 2, max: 50 }),
   password: Su.string().password(),
+  birthDate: Su.string(),
 });
 
 export const ResetPasswordSchema = Su.object({

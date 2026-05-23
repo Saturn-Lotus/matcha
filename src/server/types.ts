@@ -18,6 +18,7 @@ export type RegisterUserInput = {
   firstName: string;
   lastName: string;
   password: string;
+  birthDate: string;
 };
 
 export type SortBy =
@@ -32,7 +33,7 @@ export type BrowseSuggestion = {
   id: string;
   username: string;
   firstName: string;
-  age: number | null;
+  age: number;
   distanceKm: number | null;
   fameRating: number;
   sharedTagCount: number;

@@ -31,6 +31,7 @@ export const UserProfileSchema = Su.object({
   userId: Su.string(),
   firstName: Su.string(),
   lastName: Su.string(),
+  birthDate: Su.date(),
   bio: Su.null(Su.string()),
   gender: Su.null(Su.literal(GENDERS)),
   sexualPreference: Su.null(Su.literal(SEXUAL_PREFERENCES)),

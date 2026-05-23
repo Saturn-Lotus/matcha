@@ -1,5 +1,26 @@
-import { BrowseQuerySchema } from '@/server/schemas';
+import { BrowseQuerySchema, RegisterUserSchema } from '@/server/schemas';
 import { ValidationError } from '@/lib/validator';
+
+describe('RegisterUserSchema', () => {
+  const validPayload = {
+    username: 'alice42',
+    email: 'alice@example.com',
+    firstName: 'Alice',
+    lastName: 'Liddell',
+    password: 'StrongPass1!',
+    birthDate: '1995-06-15',
+  };
+
+  it('accepts a valid payload that includes birthDate', () => {
+    expect(() => RegisterUserSchema.parse(validPayload)).not.toThrow();
+  });
+
+  it('rejects a payload missing birthDate', () => {
+    const { birthDate: _b, ...rest } = validPayload;
+    void _b;
+    expect(() => RegisterUserSchema.parse(rest)).toThrow(ValidationError);
+  });
+});
 
 describe('BrowseQuerySchema', () => {
   it('accepts an empty object (all fields optional)', () => {
