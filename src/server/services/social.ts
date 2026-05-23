@@ -1,7 +1,13 @@
 import { HTTPError } from '@/lib/exception-http-mapper';
 import { SocialRepository, UserRepository } from '../repositories';
 import { FameService } from './fame';
-import { PublicProfile } from '../types';
+import {
+  LikerEntry,
+  PaginatedResult,
+  PublicProfile,
+  ViewerEntry,
+} from '../types';
+import { SocialListQuery } from '../schemas';
 
 @HTTPError(400)
 export class InvalidLikeError extends Error {
@@ -44,8 +50,31 @@ export class SocialService {
     this.userRepository = userRepository;
   }
 
-  listLikers = async (userId: string) => {
-    return this.socialRepository.getLikers(userId);
+  listLikers = async (
+    userId: string,
+    query: SocialListQuery = {},
+  ): Promise<PaginatedResult<LikerEntry>> => {
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 20;
+    const offset = (page - 1) * pageSize;
+    const [rows, total] = await Promise.all([
+      this.socialRepository.getLikers(userId, { limit: pageSize, offset }),
+      this.socialRepository.getLikesCount(userId),
+    ]);
+    const items: LikerEntry[] = rows.map((row) => ({
+      userId: row.likerUserId,
+      firstName: row.firstName ?? '',
+      lastName: row.lastName ?? '',
+      avatarUrl: row.avatarUrl ?? null,
+      likedAt: row.likedAt.toISOString(),
+    }));
+    return {
+      items,
+      total,
+      page,
+      pageSize,
+      hasMore: page * pageSize < total,
+    };
   };
 
   likeUser = async (likerUserId: string, likedUserId: string) => {
@@ -67,8 +96,31 @@ export class SocialService {
     await this.fameService.recompute(likedUserId);
   };
 
-  getViewers = async (userId: string) => {
-    return this.socialRepository.getViewers(userId);
+  listViewers = async (
+    userId: string,
+    query: SocialListQuery = {},
+  ): Promise<PaginatedResult<ViewerEntry>> => {
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 20;
+    const offset = (page - 1) * pageSize;
+    const [rows, total] = await Promise.all([
+      this.socialRepository.getViewers(userId, { limit: pageSize, offset }),
+      this.socialRepository.getViewsCount(userId),
+    ]);
+    const items: ViewerEntry[] = rows.map((row) => ({
+      userId: row.viewerId,
+      firstName: row.firstName ?? '',
+      lastName: row.lastName ?? '',
+      avatarUrl: row.avatarUrl ?? null,
+      viewedAt: row.viewedAt.toISOString(),
+    }));
+    return {
+      items,
+      total,
+      page,
+      pageSize,
+      hasMore: page * pageSize < total,
+    };
   };
 
   recordView = async (viewerId: string, viewedUserId: string) => {

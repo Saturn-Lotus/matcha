@@ -38,15 +38,19 @@ export class SocialRepository {
   }
 
   /** Get people who viewed a user's profile, most recent first */
-  async getViewers(viewedUserId: string): Promise<ProfileView[]> {
+  async getViewers(
+    viewedUserId: string,
+    options: { limit: number; offset: number },
+  ): Promise<ProfileView[]> {
     return this.db.query<ProfileView>(
       `SELECT pv."viewerId", pv."viewedUserId", pv."viewedAt",
               up."firstName", up."lastName", up."avatarUrl"
        FROM profile_views pv
        JOIN user_profiles up ON up."userId" = pv."viewerId"
        WHERE pv."viewedUserId" = $1
-       ORDER BY pv."viewedAt" DESC;`,
-      [viewedUserId],
+       ORDER BY pv."viewedAt" DESC
+       LIMIT $2 OFFSET $3;`,
+      [viewedUserId, options.limit, options.offset],
     );
   }
 
@@ -67,15 +71,19 @@ export class SocialRepository {
   }
 
   /** Get people who liked a user, most recent first */
-  async getLikers(likedUserId: string): Promise<UserLike[]> {
+  async getLikers(
+    likedUserId: string,
+    options: { limit: number; offset: number },
+  ): Promise<UserLike[]> {
     return this.db.query<UserLike>(
       `SELECT ul."likerUserId", ul."likedUserId", ul."likedAt",
               up."firstName", up."lastName", up."avatarUrl"
        FROM user_likes ul
        JOIN user_profiles up ON up."userId" = ul."likerUserId"
        WHERE ul."likedUserId" = $1
-       ORDER BY ul."likedAt" DESC;`,
-      [likedUserId],
+       ORDER BY ul."likedAt" DESC
+       LIMIT $2 OFFSET $3;`,
+      [likedUserId, options.limit, options.offset],
     );
   }
 

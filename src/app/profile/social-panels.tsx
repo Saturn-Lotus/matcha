@@ -11,11 +11,20 @@ import { Eye, Heart } from 'lucide-react';
 import Image from 'next/image';
 
 interface SocialUser {
+  userId: string;
   firstName: string;
   lastName: string;
   avatarUrl: string | null;
   viewedAt?: string;
   likedAt?: string;
+}
+
+interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  hasMore: boolean;
 }
 
 function Avatar({ user }: { user: SocialUser }) {
@@ -63,13 +72,20 @@ function SocialList({
   emptyMessage: string;
 }) {
   const [users, setUsers] = useState<SocialUser[]>([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(endpoint)
+    fetch(`${endpoint}?page=1&pageSize=20`)
       .then((r) => r.json())
-      .then((data) => setUsers(Array.isArray(data) ? data : []))
-      .catch(() => setUsers([]))
+      .then((data: PaginatedResponse<SocialUser>) => {
+        setUsers(Array.isArray(data.items) ? data.items : []);
+        setTotal(typeof data.total === 'number' ? data.total : 0);
+      })
+      .catch(() => {
+        setUsers([]);
+        setTotal(0);
+      })
       .finally(() => setLoading(false));
   }, [endpoint]);
 
@@ -81,7 +97,7 @@ function SocialList({
           {title}
           {!loading && (
             <span className="ml-auto text-sm font-normal text-gray-400">
-              {users.length}
+              {total}
             </span>
           )}
         </CardTitle>
@@ -102,8 +118,8 @@ function SocialList({
           </p>
         ) : (
           <div className="max-h-56 overflow-y-auto">
-            {users.map((u, i) => (
-              <Avatar key={i} user={u} />
+            {users.map((u) => (
+              <Avatar key={u.userId} user={u} />
             ))}
           </div>
         )}

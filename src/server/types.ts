@@ -56,6 +56,30 @@ export type SuggestionsResult = {
   hasMore: boolean;
 };
 
+export type PaginatedResult<T> = {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  hasMore: boolean;
+};
+
+export type LikerEntry = {
+  userId: string;
+  firstName: string;
+  lastName: string;
+  avatarUrl: string | null;
+  likedAt: string;
+};
+
+export type ViewerEntry = {
+  userId: string;
+  firstName: string;
+  lastName: string;
+  avatarUrl: string | null;
+  viewedAt: string;
+};
+
 export type UserSearchResult = {
   id: string;
   username: string;

@@ -1,18 +1,29 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Clock, Eye, Heart } from 'lucide-react';
 import Image from 'next/image';
 import { cn, relativeTime } from '@/lib/utils';
 import { apiClient } from '@/lib/api/client';
 
 interface SocialEntry {
+  userId: string;
   firstName: string;
   lastName: string;
   avatarUrl: string | null;
   viewedAt?: string;
   likedAt?: string;
 }
+
+interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  hasMore: boolean;
+}
+
+const PAGE_SIZE = 20;
 
 function SocialCard({
   entry,
@@ -78,23 +89,58 @@ interface SocialGridProps {
 
 export function SocialGrid({ userId, type }: SocialGridProps) {
   const [entries, setEntries] = useState<SocialEntry[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const inFlightRef = useRef(false);
 
   const endpoint =
     type === 'view' ? `/users/${userId}/views` : `/users/${userId}/likes`;
 
-  useEffect(() => {
-    (async () => {
+  const loadPage = useCallback(
+    async (targetPage: number) => {
+      if (inFlightRef.current) return;
+      inFlightRef.current = true;
       try {
-        const data = await apiClient.get<SocialEntry[]>(endpoint);
-        setEntries(Array.isArray(data) ? data : []);
+        const data = await apiClient.get<PaginatedResponse<SocialEntry>>(
+          `${endpoint}?page=${targetPage}&pageSize=${PAGE_SIZE}`,
+        );
+        const items = Array.isArray(data.items) ? data.items : [];
+        setEntries((prev) => (targetPage === 1 ? items : [...prev, ...items]));
+        setHasMore(Boolean(data.hasMore));
+        setPage(targetPage);
       } catch {
-        setEntries([]);
+        if (targetPage === 1) setEntries([]);
       } finally {
-        setLoading(false);
+        inFlightRef.current = false;
       }
-    })();
-  }, [endpoint]);
+    },
+    [endpoint],
+  );
+
+  useEffect(() => {
+    setLoading(true);
+    setEntries([]);
+    setPage(1);
+    setHasMore(false);
+    loadPage(1).finally(() => setLoading(false));
+  }, [loadPage]);
+
+  useEffect(() => {
+    const node = sentinelRef.current;
+    if (!node || !hasMore) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && !inFlightRef.current) {
+          loadPage(page + 1);
+        }
+      },
+      { rootMargin: '160px' },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [hasMore, page, loadPage]);
 
   if (loading) {
     return (
@@ -128,9 +174,12 @@ export function SocialGrid({ userId, type }: SocialGridProps) {
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-      {entries.map((entry, i) => (
-        <SocialCard key={i} entry={entry} type={type} />
+      {entries.map((entry) => (
+        <SocialCard key={entry.userId} entry={entry} type={type} />
       ))}
+      {hasMore && (
+        <div ref={sentinelRef} className="col-span-full h-8" aria-hidden />
+      )}
     </div>
   );
 }
