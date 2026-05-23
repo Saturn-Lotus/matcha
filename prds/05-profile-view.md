@@ -80,7 +80,7 @@ Connection state is derived: mutual likes with no block between them.
 - Blocked either direction → 404 (PV-11).
 
 ### Visitors & likers history
-- Already surfaced as tabs in `/browse` (`Views` and `Likes` tabs in [browse-content.tsx](src/app/browse/browse-content.tsx)). No separate `/settings/visitors` or `/settings/likes` pages required.
+- Surfaced through a floating **Activity pill** at the bottom of `/browse` that opens an **Activity bottom-sheet drawer** ([activity-drawer.tsx](src/app/browse/components/activity-drawer.tsx)) containing two pill tabs (Likes / Views). This replaced the cramped 3-tab pill so Discover stays immersive on mobile and the inbox affordance gets a distinctive entry point. No separate `/settings/visitors` or `/settings/likes` pages required.
 
 ---
 
@@ -152,9 +152,9 @@ Stage 8 (feed card adoption of all the above) is a UI assembly step — no new u
 ### UI
 - [ ] `FeedCard` — extend with "More" button next to like/pass, opening a sheet with full profile details + block/report/unlike
 - [ ] `FeedCard` — render relational state as a primary-colored icon/badge on the card (visible without opening More)
-- [ ] `FeedCard` — emit a `view` event when the viewer advances past the first photo (debounced/idempotent per day)
+- [x] `FeedCard` — emit a `view` event when the viewer advances past the first photo (idempotent per session via `recordedViewsRef` in `discover-feed.tsx`; server enforces idempotency per pair via `ON CONFLICT` in `social-repository.ts`)
 - [ ] `/users/[id]` page — minimal Messenger-style layout (avatar, name, age, online, fame, relational badge, action row + expandable details)
-- [ ] `/users/[id]` — fire `POST /api/users/[id]/view` once on mount
+- [x] `/users/[id]` — fire `POST /api/users/[id]/views` once on mount ([profile-view.tsx](src/app/users/[id]/profile-view.tsx))
 - [ ] `/users/[id]` — server-side redirect to `/settings` if `id === viewer.id`
 - [ ] `/users/[id]` — return 404 when blocked either direction
 - [ ] `LikeButton` component — disabled + tooltip when no profile picture; shared between feed card and permalink
