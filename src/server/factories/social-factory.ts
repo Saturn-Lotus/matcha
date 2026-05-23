@@ -9,5 +9,9 @@ export const getSocialRepo = (): SocialRepository => {
 };
 
 export const getSocialService = (): SocialService => {
-  return new SocialService(getSocialRepo(), getFameService(), getUserRepository());
+  return new SocialService(
+    getSocialRepo(),
+    getFameService(),
+    getUserRepository(),
+  );
 };

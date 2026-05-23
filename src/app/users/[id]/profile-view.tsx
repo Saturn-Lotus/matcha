@@ -3,7 +3,13 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Heart, MessageCircle, MoreVertical, User as UserIcon, ChevronLeft } from 'lucide-react';
+import {
+  Heart,
+  MessageCircle,
+  MoreVertical,
+  User as UserIcon,
+  ChevronLeft,
+} from 'lucide-react';
 import { cn, relativeTime } from '@/lib/utils';
 import { Button } from '@/app/components/ui/button';
 import { ProgressSegments } from '@/app/browse/components/progress-segments';
@@ -21,7 +27,8 @@ export function ProfileView({ id }: ProfileViewProps) {
   const [photoIdx, setPhotoIdx] = useState(0);
 
   useEffect(() => {
-    apiClient.get<PublicProfile>(`/users/${id}`)
+    apiClient
+      .get<PublicProfile>(`/users/${id}`)
       .then(setProfile)
       .catch(() => setNotFound(true));
 
@@ -67,7 +74,8 @@ export function ProfileView({ id }: ProfileViewProps) {
   const photos = profile.pictures ?? [];
   const avatarSrc = profile.avatarUrl ?? photos[0] ?? null;
 
-  const tapLeft = () => setPhotoIdx((i) => (i - 1 + photos.length) % photos.length);
+  const tapLeft = () =>
+    setPhotoIdx((i) => (i - 1 + photos.length) % photos.length);
   const tapRight = () => setPhotoIdx((i) => (i + 1) % photos.length);
 
   return (

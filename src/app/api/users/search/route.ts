@@ -29,6 +29,10 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
   });
 
   const userService = await getUserService();
-  const results = await userService.searchUsers(viewerId, q, limit ?? DEFAULT_LIMIT);
+  const results = await userService.searchUsers(
+    viewerId,
+    q,
+    limit ?? DEFAULT_LIMIT,
+  );
   return NextResponse.json(results);
 });
