@@ -32,4 +32,9 @@ class BadRequestException extends Error {
   }
 }
 
-export { NotFoundException, BadRequestException, UnauthorizedException, ForbiddenException };
+export {
+  NotFoundException,
+  BadRequestException,
+  UnauthorizedException,
+  ForbiddenException,
+};

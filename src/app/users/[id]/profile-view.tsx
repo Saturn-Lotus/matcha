@@ -171,9 +171,7 @@ export function ProfileView({ id }: ProfileViewProps) {
               <Heart
                 className={cn(
                   'w-6 h-6 transition-transform',
-                  isLiked
-                    ? 'fill-white text-white scale-110'
-                    : 'text-primary',
+                  isLiked ? 'fill-white text-white scale-110' : 'text-primary',
                 )}
               />
             </button>
