@@ -98,35 +98,52 @@ export function SocialGrid({ userId, type }: SocialGridProps) {
   const endpoint =
     type === 'view' ? `/users/${userId}/views` : `/users/${userId}/likes`;
 
-  const loadPage = useCallback(
+  const loadMore = useCallback(
     async (targetPage: number) => {
       if (inFlightRef.current) return;
       inFlightRef.current = true;
-      if (targetPage === 1) setLoading(true);
       try {
         const data = await apiClient.get<PaginatedResponse<SocialEntry>>(
           `${endpoint}?page=${targetPage}&pageSize=${PAGE_SIZE}`,
         );
         const items = Array.isArray(data.items) ? data.items : [];
-        setEntries((prev) => (targetPage === 1 ? items : [...prev, ...items]));
+        setEntries((prev) => [...prev, ...items]);
         setHasMore(Boolean(data.hasMore));
         setPage(targetPage);
-      } catch {
-        if (targetPage === 1) {
-          setEntries([]);
-          setHasMore(false);
-        }
       } finally {
         inFlightRef.current = false;
-        if (targetPage === 1) setLoading(false);
       }
     },
     [endpoint],
   );
 
   useEffect(() => {
-    loadPage(1);
-  }, [loadPage]);
+    let cancelled = false;
+    inFlightRef.current = true;
+    (async () => {
+      try {
+        const data = await apiClient.get<PaginatedResponse<SocialEntry>>(
+          `${endpoint}?page=1&pageSize=${PAGE_SIZE}`,
+        );
+        if (cancelled) return;
+        const items = Array.isArray(data.items) ? data.items : [];
+        setEntries(items);
+        setHasMore(Boolean(data.hasMore));
+        setPage(1);
+      } catch {
+        if (!cancelled) {
+          setEntries([]);
+          setHasMore(false);
+        }
+      } finally {
+        inFlightRef.current = false;
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [endpoint]);
 
   useEffect(() => {
     const node = sentinelRef.current;
@@ -134,14 +151,14 @@ export function SocialGrid({ userId, type }: SocialGridProps) {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0]?.isIntersecting && !inFlightRef.current) {
-          loadPage(page + 1);
+          loadMore(page + 1);
         }
       },
       { rootMargin: '160px' },
     );
     observer.observe(node);
     return () => observer.disconnect();
-  }, [hasMore, page, loadPage]);
+  }, [hasMore, page, loadMore]);
 
   if (loading) {
     return (
