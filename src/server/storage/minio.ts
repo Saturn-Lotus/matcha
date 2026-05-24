@@ -107,7 +107,10 @@ export class MinioStorage implements IStorage {
   }
 
   async deleteFile(urlOrKey: string): Promise<void> {
-    await this.client.removeObject(this.bucket, this.extractObjectKey(urlOrKey));
+    await this.client.removeObject(
+      this.bucket,
+      this.extractObjectKey(urlOrKey),
+    );
   }
 
   async getFileUrl(urlOrKey: string): Promise<string> {

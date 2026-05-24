@@ -102,6 +102,7 @@ export function SocialGrid({ userId, type }: SocialGridProps) {
     async (targetPage: number) => {
       if (inFlightRef.current) return;
       inFlightRef.current = true;
+      if (targetPage === 1) setLoading(true);
       try {
         const data = await apiClient.get<PaginatedResponse<SocialEntry>>(
           `${endpoint}?page=${targetPage}&pageSize=${PAGE_SIZE}`,
@@ -111,20 +112,20 @@ export function SocialGrid({ userId, type }: SocialGridProps) {
         setHasMore(Boolean(data.hasMore));
         setPage(targetPage);
       } catch {
-        if (targetPage === 1) setEntries([]);
+        if (targetPage === 1) {
+          setEntries([]);
+          setHasMore(false);
+        }
       } finally {
         inFlightRef.current = false;
+        if (targetPage === 1) setLoading(false);
       }
     },
     [endpoint],
   );
 
   useEffect(() => {
-    setLoading(true);
-    setEntries([]);
-    setPage(1);
-    setHasMore(false);
-    loadPage(1).finally(() => setLoading(false));
+    loadPage(1);
   }, [loadPage]);
 
   useEffect(() => {
