@@ -122,6 +122,7 @@ DECLARE
   user_seen    TIMESTAMPTZ;
   ulat         FLOAT;
   ulng         FLOAT;
+  ubirthdate   TIMESTAMPTZ;
 
   fn_len  INT := array_length(first_names,  1);
   ln_len  INT := array_length(last_names,   1);
@@ -182,6 +183,11 @@ BEGIN
     ulat := center_lat + (random() - 0.5) * 0.9;   -- ±~50 km latitude
     ulng := center_lng + (random() - 0.5) * 1.1;   -- ±~50 km longitude at 48°N
 
+    -- Birth date: random age between 18 and 55 years old
+    ubirthdate := NOW()
+                  - (interval '18 years')
+                  - (random() * interval '37 years');
+
     -- ── users ──────────────────────────────────────────────────────────────
     INSERT INTO users (id, username, email, "pendingEmail", "passwordHash", "isVerified")
     VALUES (uid, uname, uemail, uemail, pw_hash, TRUE)
@@ -189,14 +195,14 @@ BEGIN
 
     -- ── user_profiles ──────────────────────────────────────────────────────
     INSERT INTO user_profiles (
-      "userId", "firstName", "lastName",
+      "userId", "firstName", "lastName", "birthDate",
       bio, gender, "sexualPreference",
       interests, "isProfileComplete",
       "avatarUrl", pictures,
       "fameRating", "isOnline", "lastSeenAt"
     )
     VALUES (
-      uid, fname, lname,
+      uid, fname, lname, ubirthdate,
       ubio, ugender::gender_t, upref::sexual_preference_t,
       user_tags, TRUE,
       avatar, user_pics,

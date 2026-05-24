@@ -45,6 +45,11 @@ export function SettingsForm({
   const [interests, setInterests] = useState<string[]>(profile.interests || []);
   const [firstName, setFirstName] = useState(profile.firstName || '');
   const [lastName, setLastName] = useState(profile.lastName || '');
+  const [birthDate, setBirthDate] = useState(
+    profile.birthDate
+      ? new Date(profile.birthDate).toISOString().slice(0, 10)
+      : '',
+  );
   const [email, setEmail] = useState(currentEmail);
 
   const [location, setLocation] = useState<LocationState>({
@@ -86,6 +91,7 @@ export function SettingsForm({
 
       if (firstName) formData.append('firstName', firstName);
       if (lastName) formData.append('lastName', lastName);
+      if (birthDate) formData.append('birthDate', birthDate);
       if (email && email !== currentEmail) formData.append('email', email);
       if (bio) formData.append('bio', bio);
       if (gender) formData.append('gender', gender);
@@ -302,6 +308,15 @@ export function SettingsForm({
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                     placeholder="Last name"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className={labelCls}>Date of Birth</label>
+                  <input
+                    type="date"
+                    className={inputCls}
+                    value={birthDate}
+                    onChange={(e) => setBirthDate(e.target.value)}
                   />
                 </div>
                 <div className="md:col-span-2">

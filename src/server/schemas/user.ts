@@ -31,6 +31,7 @@ export const UserProfileSchema = Su.object({
   userId: Su.string(),
   firstName: Su.string(),
   lastName: Su.string(),
+  birthDate: Su.date(),
   bio: Su.null(Su.string()),
   gender: Su.null(Su.literal(GENDERS)),
   sexualPreference: Su.null(Su.literal(SEXUAL_PREFERENCES)),
@@ -66,6 +67,7 @@ export const CreateUserProfileSchema = Su.object({
 export const UpdateUserProfileSchema = Su.object({
   firstName: Su.optional(Su.string()),
   lastName: Su.optional(Su.string()),
+  birthDate: Su.optional(Su.string()),
   email: Su.optional(Su.string().email()),
   gender: Su.optional(Su.literal(GENDERS)),
   sexualPreference: Su.optional(Su.literal(SEXUAL_PREFERENCES)),
