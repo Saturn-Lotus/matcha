@@ -9,10 +9,13 @@ export const GET = withErrorHandler(
   ) => {
     const { id } = await context.params;
     const userService = await getUserService();
-    const { buffer, contentType } = await userService.getAvatarFile(id);
-    return new NextResponse(new Uint8Array(buffer), {
+    const result = await userService.getAvatarFile(id);
+    if (result.kind === 'redirect') {
+      return NextResponse.redirect(result.url, 302);
+    }
+    return new NextResponse(new Uint8Array(result.buffer), {
       headers: {
-        'Content-Type': contentType,
+        'Content-Type': result.contentType,
         'Cache-Control': 'public, max-age=3600',
       },
     });

@@ -12,6 +12,10 @@ export interface BrowseProfile {
   lastSeenAt: string | null;
   bio: string | null;
   tags: string[];
+  viewerLiked: boolean;
+  targetLiked: boolean;
+  targetViewedViewer: boolean;
+  connected: boolean;
 }
 
 export interface BrowseResponse {

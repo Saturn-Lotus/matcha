@@ -3,10 +3,15 @@
 import { ActivityDrawer } from './components/activity-drawer';
 import { DiscoverFeed } from './components/discover-feed';
 
-export function BrowseContent({ userId }: { userId: string }) {
+interface BrowseContentProps {
+  userId: string;
+  viewerHasAvatar: boolean;
+}
+
+export function BrowseContent({ userId, viewerHasAvatar }: BrowseContentProps) {
   return (
     <div className="relative h-full flex flex-col">
-      <DiscoverFeed userId={userId} />
+      <DiscoverFeed userId={userId} viewerHasAvatar={viewerHasAvatar} />
       <ActivityDrawer userId={userId} />
     </div>
   );

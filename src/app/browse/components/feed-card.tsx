@@ -6,6 +6,15 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { cn, relativeTime } from '@/lib/utils';
 import { ProgressSegments } from './progress-segments';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/app/components/ui/tooltip';
+import {
+  RelationBadge,
+  pickRelationVariant,
+} from '@/app/components/ui/relation-badge';
 import type { BrowseProfile } from '../types';
 
 const getPhotosListFromProfile = (profile: BrowseProfile) => {
@@ -21,6 +30,7 @@ interface FeedCardProps {
   isLiked: boolean;
   framed: boolean;
   viewerInterests: string[];
+  viewerHasAvatar: boolean;
   onLike: (id: string) => void;
   onPass: (id: string) => void;
   onPhotoView?: (id: string) => void;
@@ -32,6 +42,7 @@ export function FeedCard({
   isLiked,
   framed,
   viewerInterests,
+  viewerHasAvatar,
   onLike,
   onPass,
   onPhotoView,
@@ -68,9 +79,16 @@ export function FeedCard({
     setPhotoIdx((i) => (i - 1 + photos.length) % photos.length);
   const tapRight = () => setPhotoIdx((i) => (i + 1) % photos.length);
 
+  const likeDisabled = !viewerHasAvatar && !isLiked;
+  const relationVariant = pickRelationVariant({
+    connected: profile.connected,
+    targetLiked: profile.targetLiked,
+    targetViewedViewer: profile.targetViewedViewer,
+  });
+
   const handleLike = () => {
     onLike(profile.id);
-    if (!isLiked) setBurst((n) => n + 1);
+    if (!isLiked && !likeDisabled) setBurst((n) => n + 1);
   };
 
   const tags = profile.tags.slice(0, 5);
@@ -128,7 +146,10 @@ export function FeedCard({
         </>
       )}
 
-      <div className="absolute top-6 left-3 right-3 flex justify-end items-center z-10 pointer-events-none">
+      <div className="absolute top-6 left-3 right-3 flex justify-between items-center z-10 pointer-events-none">
+        <div className="flex items-center gap-1.5 pointer-events-auto">
+          {relationVariant && <RelationBadge variant={relationVariant} />}
+        </div>
         <span className="inline-flex items-center gap-1.5 bg-black/30 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-semibold text-white pointer-events-auto">
           <Heart className="w-3 h-3 text-pink-400 fill-current" />
           For you
@@ -211,23 +232,35 @@ export function FeedCard({
         </Link>
 
         <div className="flex flex-col items-center gap-1">
-          <button
-            onClick={handleLike}
-            aria-label={isLiked ? 'Unlike' : 'Like'}
-            className={cn(
-              'w-12 h-12 rounded-full flex items-center justify-center transition-all duration-150 cursor-pointer border-0',
-              isLiked
-                ? 'bg-gradient-to-br from-pink-600 to-pink-400'
-                : 'bg-white/[0.13] backdrop-blur hover:bg-white/20',
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={handleLike}
+                aria-label={isLiked ? 'Unlike' : 'Like'}
+                aria-disabled={likeDisabled || undefined}
+                className={cn(
+                  'w-12 h-12 rounded-full flex items-center justify-center transition-all duration-150 border-0',
+                  isLiked
+                    ? 'bg-gradient-to-br from-pink-600 to-pink-400 cursor-pointer'
+                    : likeDisabled
+                      ? 'bg-white/[0.13] backdrop-blur opacity-60 cursor-not-allowed'
+                      : 'bg-white/[0.13] backdrop-blur hover:bg-white/20 cursor-pointer',
+                )}
+              >
+                <Heart
+                  className={cn(
+                    'w-6 h-6 transition-transform',
+                    isLiked ? 'fill-white text-white scale-110' : 'text-white',
+                  )}
+                />
+              </button>
+            </TooltipTrigger>
+            {likeDisabled && (
+              <TooltipContent side="left">
+                Add a profile picture to like
+              </TooltipContent>
             )}
-          >
-            <Heart
-              className={cn(
-                'w-6 h-6 transition-transform',
-                isLiked ? 'fill-white text-white scale-110' : 'text-white',
-              )}
-            />
-          </button>
+          </Tooltip>
           <span className="text-[11px] font-semibold text-white drop-shadow">
             {Math.round(
               profile.fameRating + (isLiked ? 1 : 0),

@@ -42,6 +42,10 @@ export type BrowseSuggestion = {
   lastSeenAt: string | null;
   bio: string | null;
   tags: string[];
+  viewerLiked: boolean;
+  targetLiked: boolean;
+  targetViewedViewer: boolean;
+  connected: boolean;
 };
 
 export type SuggestionsResult = {
@@ -50,6 +54,30 @@ export type SuggestionsResult = {
   page: number;
   pageSize: number;
   hasMore: boolean;
+};
+
+export type PaginatedResult<T> = {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  hasMore: boolean;
+};
+
+export type LikerEntry = {
+  userId: string;
+  firstName: string;
+  lastName: string;
+  avatarUrl: string | null;
+  likedAt: string;
+};
+
+export type ViewerEntry = {
+  userId: string;
+  firstName: string;
+  lastName: string;
+  avatarUrl: string | null;
+  viewedAt: string;
 };
 
 export type UserSearchResult = {
@@ -75,4 +103,7 @@ export type PublicProfile = {
   isOnline: boolean;
   lastSeenAt: string | null;
   viewerLiked: boolean;
+  targetLiked: boolean;
+  targetViewedViewer: boolean;
+  connected: boolean;
 };

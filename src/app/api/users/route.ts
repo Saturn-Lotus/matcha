@@ -1,29 +1,19 @@
 import { withErrorHandler } from '@/middlewares/routes-middlewares';
 import { getUserService } from '@/server/factories';
 import { BrowseQuerySchema } from '@/server/schemas';
-import { CheckValidationError } from '@/lib/validator';
+import { coerceSearchParamNumber } from '@/lib/validator';
 import { NextRequest, NextResponse } from 'next/server';
-
-function coerceNumber(sp: URLSearchParams, key: string): number | undefined {
-  const raw = sp.get(key);
-  if (raw === null) return undefined;
-  const value = Number(raw);
-  if (Number.isNaN(value)) {
-    throw new CheckValidationError(raw, `is not a valid number for '${key}'`);
-  }
-  return value;
-}
 
 function coerceBrowseQuery(sp: URLSearchParams) {
   const interests = sp.getAll('interests');
   return {
-    page: coerceNumber(sp, 'page'),
-    pageSize: coerceNumber(sp, 'pageSize'),
+    page: coerceSearchParamNumber(sp, 'page'),
+    pageSize: coerceSearchParamNumber(sp, 'pageSize'),
     interests: interests.length > 0 ? interests : undefined,
-    maxDistanceKm: coerceNumber(sp, 'maxDistanceKm'),
-    minFameRating: coerceNumber(sp, 'minFameRating'),
-    maxFameRating: coerceNumber(sp, 'maxFameRating'),
-    age: coerceNumber(sp, 'age'),
+    maxDistanceKm: coerceSearchParamNumber(sp, 'maxDistanceKm'),
+    minFameRating: coerceSearchParamNumber(sp, 'minFameRating'),
+    maxFameRating: coerceSearchParamNumber(sp, 'maxFameRating'),
+    age: coerceSearchParamNumber(sp, 'age'),
     sortBy: sp.get('sortBy') ?? undefined,
     sortDirection: sp.get('sortDirection') ?? undefined,
   };

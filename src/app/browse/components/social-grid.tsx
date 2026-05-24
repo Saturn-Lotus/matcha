@@ -1,18 +1,29 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Clock, Eye, Heart } from 'lucide-react';
 import Image from 'next/image';
 import { cn, relativeTime } from '@/lib/utils';
 import { apiClient } from '@/lib/api/client';
 
 interface SocialEntry {
+  userId: string;
   firstName: string;
   lastName: string;
   avatarUrl: string | null;
   viewedAt?: string;
   likedAt?: string;
 }
+
+interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  hasMore: boolean;
+}
+
+const PAGE_SIZE = 20;
 
 function SocialCard({
   entry,
@@ -78,23 +89,76 @@ interface SocialGridProps {
 
 export function SocialGrid({ userId, type }: SocialGridProps) {
   const [entries, setEntries] = useState<SocialEntry[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const inFlightRef = useRef(false);
 
   const endpoint =
     type === 'view' ? `/users/${userId}/views` : `/users/${userId}/likes`;
 
+  const loadMore = useCallback(
+    async (targetPage: number) => {
+      if (inFlightRef.current) return;
+      inFlightRef.current = true;
+      try {
+        const data = await apiClient.get<PaginatedResponse<SocialEntry>>(
+          `${endpoint}?page=${targetPage}&pageSize=${PAGE_SIZE}`,
+        );
+        const items = Array.isArray(data.items) ? data.items : [];
+        setEntries((prev) => [...prev, ...items]);
+        setHasMore(Boolean(data.hasMore));
+        setPage(targetPage);
+      } finally {
+        inFlightRef.current = false;
+      }
+    },
+    [endpoint],
+  );
+
   useEffect(() => {
+    let cancelled = false;
+    inFlightRef.current = true;
     (async () => {
       try {
-        const data = await apiClient.get<SocialEntry[]>(endpoint);
-        setEntries(Array.isArray(data) ? data : []);
+        const data = await apiClient.get<PaginatedResponse<SocialEntry>>(
+          `${endpoint}?page=1&pageSize=${PAGE_SIZE}`,
+        );
+        if (cancelled) return;
+        const items = Array.isArray(data.items) ? data.items : [];
+        setEntries(items);
+        setHasMore(Boolean(data.hasMore));
+        setPage(1);
       } catch {
-        setEntries([]);
+        if (!cancelled) {
+          setEntries([]);
+          setHasMore(false);
+        }
       } finally {
-        setLoading(false);
+        inFlightRef.current = false;
+        if (!cancelled) setLoading(false);
       }
     })();
+    return () => {
+      cancelled = true;
+    };
   }, [endpoint]);
+
+  useEffect(() => {
+    const node = sentinelRef.current;
+    if (!node || !hasMore) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && !inFlightRef.current) {
+          loadMore(page + 1);
+        }
+      },
+      { rootMargin: '160px' },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [hasMore, page, loadMore]);
 
   if (loading) {
     return (
@@ -128,9 +192,12 @@ export function SocialGrid({ userId, type }: SocialGridProps) {
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-      {entries.map((entry, i) => (
-        <SocialCard key={i} entry={entry} type={type} />
+      {entries.map((entry) => (
+        <SocialCard key={entry.userId} entry={entry} type={type} />
       ))}
+      {hasMore && (
+        <div ref={sentinelRef} className="col-span-full h-8" aria-hidden />
+      )}
     </div>
   );
 }
