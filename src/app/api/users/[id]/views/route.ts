@@ -1,19 +1,9 @@
 import { BadRequestException } from '@/lib/exception-http-mapper';
 import { withErrorHandler } from '@/middlewares/routes-middlewares';
 import { getSocialService } from '@/server/factories';
-import { CheckValidationError } from '@/lib/validator';
+import { coerceSearchParamNumber } from '@/lib/validator';
 import { NextRequest, NextResponse } from 'next/server';
 import { SocialListQuerySchema } from '@/server/schemas';
-
-function coerceNumber(sp: URLSearchParams, key: string): number | undefined {
-  const raw = sp.get(key);
-  if (raw === null) return undefined;
-  const value = Number(raw);
-  if (Number.isNaN(value)) {
-    throw new CheckValidationError(raw, `is not a valid number for '${key}'`);
-  }
-  return value;
-}
 
 export const GET = withErrorHandler(
   async (
@@ -29,8 +19,8 @@ export const GET = withErrorHandler(
 
     const sp = request.nextUrl.searchParams;
     const query = SocialListQuerySchema.parse({
-      page: coerceNumber(sp, 'page'),
-      pageSize: coerceNumber(sp, 'pageSize'),
+      page: coerceSearchParamNumber(sp, 'page'),
+      pageSize: coerceSearchParamNumber(sp, 'pageSize'),
     });
 
     const socialService = getSocialService();

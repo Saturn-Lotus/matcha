@@ -49,6 +49,19 @@ export function assertFile(value: unknown): asserts value is File {
   }
 }
 
+export function coerceSearchParamNumber(
+  sp: URLSearchParams,
+  key: string,
+): number | undefined {
+  const raw = sp.get(key);
+  if (raw === null) return undefined;
+  const value = Number(raw);
+  if (Number.isNaN(value)) {
+    throw new CheckValidationError(raw, `is not a valid number for '${key}'`);
+  }
+  return value;
+}
+
 export class StringParser implements Parser<string> {
   private readonly checks: CheckFunc<string>[] = [];
 
