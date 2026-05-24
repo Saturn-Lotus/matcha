@@ -281,6 +281,11 @@ export class UserRepository extends BaseRepositoryClass<User> {
              OR up."sexualPreference" = 'both'
              OR up."sexualPreference" = $3::sexual_preference_t
            )
+           AND NOT EXISTS (
+             SELECT 1 FROM user_blocks ub
+             WHERE (ub."blockerUserId" = $1 AND ub."blockedUserId" = u.id)
+                OR (ub."blockerUserId" = u.id AND ub."blockedUserId" = $1)
+           )
        ),
        enriched AS (
          SELECT
@@ -372,6 +377,11 @@ export class UserRepository extends BaseRepositoryClass<User> {
        WHERE u."isVerified" = TRUE
          AND up."isProfileComplete" = TRUE
          AND u.id <> $3
+         AND NOT EXISTS (
+           SELECT 1 FROM user_blocks ub
+           WHERE (ub."blockerUserId" = $3 AND ub."blockedUserId" = u.id)
+              OR (ub."blockerUserId" = u.id AND ub."blockedUserId" = $3)
+         )
          AND (
            u.username ILIKE $1
            OR up."firstName" ILIKE $1

@@ -9,6 +9,7 @@ import {
   MoreVertical,
   User as UserIcon,
   ChevronLeft,
+  Ban,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn, relativeTime } from '@/lib/utils';
@@ -18,6 +19,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/app/components/ui/tooltip';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/app/components/ui/dropdown-menu';
 import {
   RelationBadge,
   pickRelationVariant,
@@ -38,6 +45,8 @@ export function ProfileView({ id, viewerHasAvatar }: ProfileViewProps) {
   const [photoIdx, setPhotoIdx] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
   const [burst, setBurst] = useState(0);
+  const [showBlockConfirm, setShowBlockConfirm] = useState(false);
+  const [blocking, setBlocking] = useState(false);
 
   useEffect(() => {
     apiClient
@@ -71,6 +80,22 @@ export function ProfileView({ id, viewerHasAvatar }: ProfileViewProps) {
       }
     } catch {
       setIsLiked(wasLiked);
+    }
+  };
+
+  const confirmBlock = async () => {
+    if (blocking) return;
+    setBlocking(true);
+    try {
+      await apiClient.post(`/users/${id}/block`);
+      toast.success(
+        profile?.username ? `You blocked @${profile.username}` : 'User blocked',
+      );
+      router.replace('/browse');
+    } catch {
+      toast.error('Could not block user. Please try again.');
+      setBlocking(false);
+      setShowBlockConfirm(false);
     }
   };
 
@@ -223,25 +248,43 @@ export function ProfileView({ id, viewerHasAvatar }: ProfileViewProps) {
             </span>
           </div>
 
-          {(
-            [
-              { icon: MessageCircle, label: 'Message' },
-              { icon: MoreVertical, label: 'More' },
-            ] as const
-          ).map(({ icon: Icon, label }) => (
-            <div key={label} className="flex flex-col items-center gap-1">
-              <button
-                disabled
-                aria-label={label}
-                className="w-12 h-12 rounded-full flex items-center justify-center bg-white/[0.13] border border-border opacity-50 cursor-not-allowed transition-all"
-              >
-                <Icon className="w-6 h-6 text-muted-foreground" />
-              </button>
-              <span className="text-[11px] font-semibold text-muted-foreground drop-shadow">
-                {label}
-              </span>
-            </div>
-          ))}
+          <div className="flex flex-col items-center gap-1">
+            <button
+              disabled
+              aria-label="Message"
+              className="w-12 h-12 rounded-full flex items-center justify-center bg-white/[0.13] border border-border opacity-50 cursor-not-allowed transition-all"
+            >
+              <MessageCircle className="w-6 h-6 text-muted-foreground" />
+            </button>
+            <span className="text-[11px] font-semibold text-muted-foreground drop-shadow">
+              Message
+            </span>
+          </div>
+
+          <div className="flex flex-col items-center gap-1">
+            <DropdownMenu modal={false}>
+              <DropdownMenuTrigger asChild>
+                <button
+                  aria-label="More"
+                  className="w-12 h-12 rounded-full flex items-center justify-center bg-white/[0.13] border border-border hover:bg-accent cursor-pointer transition-all"
+                >
+                  <MoreVertical className="w-6 h-6 text-foreground" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  variant="destructive"
+                  onSelect={() => setShowBlockConfirm(true)}
+                >
+                  <Ban className="w-4 h-4" />
+                  Block user
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <span className="text-[11px] font-semibold text-muted-foreground drop-shadow">
+              More
+            </span>
+          </div>
         </div>
 
         {burst > 0 && (
@@ -352,6 +395,48 @@ export function ProfileView({ id, viewerHasAvatar }: ProfileViewProps) {
           </section>
         )}
       </div>
+
+      {showBlockConfirm && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-6"
+          onClick={() => !blocking && setShowBlockConfirm(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl bg-white border border-border p-5 shadow-xl text-neutral-900"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold">
+              Block {profile.firstName}?
+            </h3>
+            <p className="text-sm text-neutral-600 mt-2">
+              They won&apos;t appear in your browse feed or search results, and
+              you won&apos;t see each other&apos;s profile. Any existing likes
+              between you will be removed.
+            </p>
+            <div className="flex justify-end gap-2 mt-5">
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={blocking}
+                onClick={() => setShowBlockConfirm(false)}
+                className="text-neutral-700 hover:bg-neutral-100"
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                disabled={blocking}
+                onClick={confirmBlock}
+                className="strawberry-matcha-gradient text-white border-0 hover:opacity-90"
+              >
+                {blocking ? 'Blocking…' : 'Block'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

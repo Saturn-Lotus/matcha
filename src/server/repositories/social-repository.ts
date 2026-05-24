@@ -127,6 +127,40 @@ export class SocialRepository {
     return rows[0]?.exists ?? false;
   }
 
+  /** Block a user — inserts the block row and deletes likes both directions atomically */
+  async blockUser(blockerUserId: string, blockedUserId: string): Promise<void> {
+    await this.db.transaction(async (tx) => {
+      await tx.query(
+        `INSERT INTO user_blocks ("blockerUserId", "blockedUserId", "blockedAt")
+         VALUES ($1, $2, CURRENT_TIMESTAMP)
+         ON CONFLICT DO NOTHING;`,
+        [blockerUserId, blockedUserId],
+      );
+      await tx.query(
+        `DELETE FROM user_likes
+         WHERE ("likerUserId" = $1 AND "likedUserId" = $2)
+            OR ("likerUserId" = $2 AND "likedUserId" = $1);`,
+        [blockerUserId, blockedUserId],
+      );
+    });
+  }
+
+  /** Check whether either user has blocked the other */
+  async isBlockedEitherDirection(
+    userA: string,
+    userB: string,
+  ): Promise<boolean> {
+    const rows = await this.db.query<{ exists: boolean }>(
+      `SELECT EXISTS(
+         SELECT 1 FROM user_blocks
+         WHERE ("blockerUserId" = $1 AND "blockedUserId" = $2)
+            OR ("blockerUserId" = $2 AND "blockedUserId" = $1)
+       ) AS exists;`,
+      [userA, userB],
+    );
+    return rows[0]?.exists ?? false;
+  }
+
   /** Get the relational state between viewer and target in a single query */
   async getRelationState(
     viewerId: string,

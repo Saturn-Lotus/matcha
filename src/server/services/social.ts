@@ -35,6 +35,14 @@ export class CannotLikeWithoutPictureError extends Error {
   }
 }
 
+@HTTPError(400)
+export class CannotSelfActError extends Error {
+  constructor(message = 'Cannot perform this action on yourself') {
+    super(message);
+    this.name = 'CannotSelfActError';
+  }
+}
+
 export class SocialService {
   private readonly socialRepository: SocialRepository;
   private readonly fameService: FameService;
@@ -132,11 +140,26 @@ export class SocialService {
     await this.fameService.recompute(viewedUserId);
   };
 
+  blockUser = async (viewerId: string, targetId: string) => {
+    if (viewerId === targetId) throw new CannotSelfActError();
+    const target = await this.userRepository.findById(targetId);
+    if (!target) throw new UserNotFoundError();
+    await this.socialRepository.blockUser(viewerId, targetId);
+    await this.fameService.recompute(targetId);
+  };
+
   getPublicProfile = async (
     targetId: string,
     viewerId: string,
   ): Promise<PublicProfile> => {
     const isSelf = viewerId === targetId;
+    if (!isSelf) {
+      const blocked = await this.socialRepository.isBlockedEitherDirection(
+        viewerId,
+        targetId,
+      );
+      if (blocked) throw new UserNotFoundError();
+    }
     const [user, profile, relation] = await Promise.all([
       this.userRepository.findById(targetId),
       this.userRepository.findProfileByUserId(targetId),
