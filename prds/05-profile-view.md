@@ -111,7 +111,7 @@ Stage 8 (feed card adoption of all the above) is a UI assembly step — no new u
 ### Migrations
 - [ ] Migration `create-profile-views-table` — id uuid, viewer_id, viewed_id, viewed_at; index `(viewed_id, viewed_at DESC)`, unique `(viewer_id, viewed_id, date(viewed_at))` (optional, for rate limiting)
 - [ ] Migration `create-likes-table` — liker_id, liked_id, created_at; composite PK
-- [ ] Migration `create-blocks-table` — blocker_id, blocked_id, created_at; composite PK
+- [x] Migration `create-user-blocks-table` — `blockerUserId`, `blockedUserId`, `blockedAt`; composite PK + index on `blockedUserId` + self-block CHECK
 - [ ] Migration `create-reports-table` — id uuid, reporter_id, reported_id, reason text, created_at
 
 ### Repository — `SocialRepository`
@@ -119,9 +119,9 @@ Stage 8 (feed card adoption of all the above) is a UI assembly step — no new u
 - [ ] `like(likerId, likedId)` — insert into `likes`; return whether it created a connection (both directions exist)
 - [ ] `unlike(likerId, likedId)` — delete row; return whether a connection was broken
 - [ ] `getLikeState(viewerId, targetId)` — `{ viewerLiked, targetLiked, connected }`
-- [ ] `block(blockerId, blockedId)` — insert into `blocks`
+- [x] `blockUser(blockerId, blockedId)` — insert into `user_blocks` + delete likes both directions inside a transaction
 - [ ] `unblock(blockerId, blockedId)` — delete row
-- [ ] `isBlocked(userA, userB)` — either direction
+- [x] `isBlockedEitherDirection(userA, userB)` — either direction
 - [ ] `report(reporterId, reportedId, reason)` — insert into `reports`
 - [ ] `getVisitors(userId, limit, cursor)` — paginated visit history
 - [ ] `getLikers(userId, limit, cursor)` — paginated list of who liked the user
@@ -130,18 +130,20 @@ Stage 8 (feed card adoption of all the above) is a UI assembly step — no new u
 - [ ] `viewProfile(viewerId, targetId)` — check blocks, record view, emit `profile_viewed` notification
 - [x] `likeUser(likerUserId, likedUserId)` — checks viewer has at least one profile picture (throws `CannotLikeWithoutPictureError`), inserts like, recomputes fame; mutual-like notification still pending
 - [ ] `unlike(viewerId, targetId)` — delete like, emit `unliked` notification if was connected
-- [ ] `block(viewerId, targetId)` — insert block, delete any existing likes both ways, emit no notification
+- [x] `blockUser(viewerId, targetId)` — validates target exists, throws `CannotSelfActError`, delegates to repo (atomic block + like cleanup), recomputes fame
 - [ ] `unblock(viewerId, targetId)`
 - [ ] `report(viewerId, targetId, reason)`
-- [x] `getPublicProfile(viewerId, targetId)` — returns profile minus email/password plus `viewerLiked` / `targetLiked` / `targetViewedViewer` / `connected` via `SocialRepository.getRelationState` (404 on missing user; block check pending)
+- [x] `getPublicProfile(viewerId, targetId)` — returns profile minus email/password plus `viewerLiked` / `targetLiked` / `targetViewedViewer` / `connected`; throws `UserNotFoundError` (404) if user missing or if blocked in either direction
 - [x] Domain error: `CannotLikeWithoutPictureError` (HTTP 422)
-- [ ] Remaining domain errors: `AlreadyLiked`, `NotLiked`, `CannotSelfAct`, `AlreadyBlocked`
+- [x] Domain error: `CannotSelfActError` (HTTP 400)
+- [ ] Remaining domain errors: `AlreadyLiked`, `NotLiked`, `AlreadyBlocked`
 
 ### Routes
 - [ ] `GET /api/users/[id]` — call `SocialService.getPublicProfile`, return 200 or 404
 - [ ] `POST /api/users/[id]/view` — call service, return 204
 - [ ] `POST /api/users/[id]/like` / `DELETE` — call service, return 200 + new connection state
-- [ ] `POST /api/users/[id]/block` / `DELETE`
+- [x] `POST /api/users/[id]/block` — calls `socialService.blockUser`, returns 204
+- [ ] `DELETE /api/users/[id]/block` (unblock — out of scope for this stage)
 - [ ] `POST /api/users/[id]/report`
 - [ ] `GET /api/users/me/visits` — paginated
 - [ ] `GET /api/users/me/likes` — paginated
@@ -158,11 +160,13 @@ Stage 8 (feed card adoption of all the above) is a UI assembly step — no new u
 - [x] `/users/[id]` — fire `POST /api/users/[id]/views` once on mount ([profile-view.tsx](src/app/users/[id]/profile-view.tsx))
 - [x] `/users/[id]` — Like / Unlike button with optimistic toggle and burst animation; initial state from `viewerLiked` returned by `GET /api/users/[id]` ([profile-view.tsx](src/app/users/[id]/profile-view.tsx))
 - [x] `/users/[id]` — server-side redirect to `/settings` if `id === viewer.id` ([users/[id]/page.tsx](src/app/users/[id]/page.tsx))
-- [ ] `/users/[id]` — return 404 when blocked either direction
+- [x] `/users/[id]` — returns 404 (renders the existing "User not found" UI) when blocked either direction; enforced in `SocialService.getPublicProfile` via `SocialRepository.isBlockedEitherDirection`
+- [x] Browse feed hides blocked users in either direction (`NOT EXISTS` clause against `user_blocks` in `getUsersWithProfiles`)
 - [x] Like button gated when viewer has no profile picture — server-side via `CannotLikeWithoutPictureError` in `SocialService.likeUser`, client-side via `viewerHasAvatar` prop drilled from `browse/page.tsx` and `users/[id]/page.tsx` with `Tooltip` + Sonner toast
 - [x] `RelationBadge` component — `connected` / `liked-you` / `viewed-you` variants ([src/app/components/ui/relation-badge.tsx](src/app/components/ui/relation-badge.tsx)); shared between feed card and permalink
 - [ ] `OnlineIndicator` component — green dot or "Last seen X ago"
-- [ ] Overflow menu with "Block" + "Report" items + confirm dialogs (used inside the More sheet and on the permalink action row)
+- [x] Overflow menu on `/users/[id]` action row with "Block user" item + confirm modal (sonner toast on success, redirects to `/browse`); Report still pending
+
 - [ ] Notifications and chat headers link to `/users/[id]` (deep-link target)
 
 ### Tests
