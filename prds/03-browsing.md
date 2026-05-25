@@ -78,7 +78,7 @@ Response item: `{ id, username, firstName, age, distanceKm, fameRating, sharedTa
   - `ST_Distance` (PostGIS) for distance calculation
   - Left join `likes` to exclude already-liked users (optional; or keep them but mark)
   - Join `user_tags` intersection count for shared tags
-  - `WHERE` clause filters out: the viewer, blocked users (both directions), unverified / incomplete profiles
+  - `WHERE` clause filters out: the viewer, blocked users (both directions) ✓ already implemented via `NOT EXISTS` on `user_blocks`, unverified / incomplete profiles
   - `ORDER BY` based on `sort` param; tie-break on `user_id` for determinism
   - Cursor pagination via `WHERE (distance, user_id) > (cursor_distance, cursor_id)`
 

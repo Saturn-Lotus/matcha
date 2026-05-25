@@ -48,6 +48,11 @@ export class SocialRepository {
        FROM profile_views pv
        JOIN user_profiles up ON up."userId" = pv."viewerId"
        WHERE pv."viewedUserId" = $1
+         AND NOT EXISTS (
+           SELECT 1 FROM user_blocks ub
+           WHERE (ub."blockerUserId" = $1 AND ub."blockedUserId" = pv."viewerId")
+              OR (ub."blockerUserId" = pv."viewerId" AND ub."blockedUserId" = $1)
+         )
        ORDER BY pv."viewedAt" DESC
        LIMIT $2 OFFSET $3;`,
       [viewedUserId, options.limit, options.offset],
@@ -97,7 +102,13 @@ export class SocialRepository {
 
   async getViewsCount(userId: string): Promise<number> {
     const rows = await this.db.query<{ count: string }>(
-      `SELECT COUNT(*) AS count FROM profile_views WHERE "viewedUserId" = $1;`,
+      `SELECT COUNT(*) AS count FROM profile_views pv
+       WHERE pv."viewedUserId" = $1
+         AND NOT EXISTS (
+           SELECT 1 FROM user_blocks ub
+           WHERE (ub."blockerUserId" = $1 AND ub."blockedUserId" = pv."viewerId")
+              OR (ub."blockerUserId" = pv."viewerId" AND ub."blockedUserId" = $1)
+         );`,
       [userId],
     );
     return parseInt(rows[0]?.count ?? '0', 10);
