@@ -286,6 +286,10 @@ export class UserRepository extends BaseRepositoryClass<User> {
              WHERE (ub."blockerUserId" = $1 AND ub."blockedUserId" = u.id)
                 OR (ub."blockerUserId" = u.id AND ub."blockedUserId" = $1)
            )
+           AND NOT EXISTS (
+             SELECT 1 FROM account_reports ar
+             WHERE ar."reporterUserId" = $1 AND ar."reportedUserId" = u.id
+           )
        ),
        enriched AS (
          SELECT
