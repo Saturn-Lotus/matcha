@@ -71,6 +71,19 @@
   --color-glass-bg: var(--color-glass-bg);
   --color-black: var(--color-black);
   --color-settings-bg: var(--color-settings-bg);
+  --color-recipe-shell: var(--color-recipe-shell);
+  --color-recipe-shell-soft: var(--color-recipe-shell-soft);
+  --color-recipe-paper: var(--color-recipe-paper);
+  --color-recipe-paper-soft: var(--color-recipe-paper-soft);
+  --color-recipe-ink: var(--color-recipe-ink);
+  --color-recipe-edge: var(--color-recipe-edge);
+  --color-recipe-rule: var(--color-recipe-rule);
+  --color-recipe-dash: var(--color-recipe-dash);
+  --color-recipe-matcha: var(--color-recipe-matcha);
+  --color-recipe-matcha-soft: var(--color-recipe-matcha-soft);
+  --color-recipe-dark: var(--color-recipe-dark);
+  --color-recipe-cream: var(--color-recipe-cream);
+  --color-cafe-paper: var(--color-cafe-paper);
 }
 
 :root {
@@ -140,6 +153,19 @@
   --color-settings-bg: #fbf9f8;
   --glass-blur: 10px;
   --color-black: #000;
+  --color-recipe-shell: #f4f0e8;
+  --color-recipe-shell-soft: #f6f0e6;
+  --color-recipe-paper: #fffaf0;
+  --color-recipe-paper-soft: #fbf5e9;
+  --color-recipe-ink: #2c2119;
+  --color-recipe-edge: #d8cdb8;
+  --color-recipe-rule: #e2d6c4;
+  --color-recipe-dash: #d9ccb8;
+  --color-recipe-matcha: #1fa34a;
+  --color-recipe-matcha-soft: #e6efbd;
+  --color-recipe-dark: #2d1f14;
+  --color-recipe-cream: #f8efe1;
+  --color-cafe-paper: #faf6f1;
 }
 
 .dark {
@@ -258,6 +284,54 @@
       var(--color-button-gradient-start),
       var(--color-button-gradient-mid),
       var(--color-button-gradient-end)
+    );
+  }
+
+  .register-recipe-bg {
+    background: radial-gradient(
+      circle at 18% 100%,
+      var(--color-header-bg-2) 0,
+      var(--color-recipe-shell-soft) 34%,
+      var(--color-header-bg-3) 100%
+    );
+  }
+
+  .recipe-lined-paper {
+    background-color: var(--color-recipe-paper);
+    background-image: linear-gradient(
+      rgba(105, 81, 48, 0.08) 1px,
+      transparent 1px
+    );
+    background-size: 100% 3rem;
+  }
+
+  .strawberry-hatch {
+    background-image: repeating-linear-gradient(
+      135deg,
+      rgba(236, 72, 153, 0.12) 0,
+      rgba(236, 72, 153, 0.12) 1px,
+      transparent 1px,
+      transparent 18px
+    );
+  }
+
+  .stone-hatch {
+    background-image: repeating-linear-gradient(
+      135deg,
+      rgba(120, 113, 108, 0.11) 0,
+      rgba(120, 113, 108, 0.11) 1px,
+      transparent 1px,
+      transparent 19px
+    );
+  }
+
+  .matcha-hatch {
+    background-image: repeating-linear-gradient(
+      135deg,
+      rgba(34, 197, 94, 0.13) 0,
+      rgba(34, 197, 94, 0.13) 1px,
+      transparent 1px,
+      transparent 18px
     );
   }
 }

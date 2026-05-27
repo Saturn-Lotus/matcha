@@ -1,16 +1,9 @@
 'use client';
 import { Button } from '@/app/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/app/components/ui/card';
-import { Heart, User, Lock, Loader2, AlertCircle } from 'lucide-react';
+import { ArrowRight, Loader2, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import FormInputRow from './ui/form-input-row';
 import { useRef, useState } from 'react';
-import { Separator } from './ui/separator';
 import { cn } from '@/lib/utils';
 import { apiClient } from '@/lib/api/client';
 import { signInResponseSchema } from '@/lib/api/schemas';
@@ -19,6 +12,15 @@ type SignInResponse = {
   id: string;
   email: string;
 };
+
+const recipeFieldClass =
+  'flex h-12 items-center border-b border-dashed border-recipe-dash bg-transparent';
+
+const recipeInputClass =
+  'h-full border-0 px-0 text-lg font-semibold text-recipe-ink shadow-none placeholder:text-recipe-ink focus-visible:ring-0';
+
+const recipeErrorClass =
+  'ml-11 text-xs font-semibold uppercase tracking-widest text-rose-600 animate-in fade-in slide-in-from-top-1 duration-150';
 
 export function LoginForm() {
   const formRef = useRef<HTMLFormElement>(null);
@@ -66,87 +68,119 @@ export function LoginForm() {
   };
 
   return (
-    <div className="flex-1 w-full h-full flex-col flex bg-strawberry-matcha py-8 justify-center px-4">
-      <div className="text-center md:mb-8 mb-4">
-        <h1 className="text-2xl font-bold strawberry-matcha-gradient flex items-center justify-center space-x-2">
-          <Heart className="h-8 w-8 fill-current mr-2 text-icon-primary" />
-          Strawberry Matcha
-        </h1>
-        <p className="text-text-muted">
-          Welcome back! Let&apos;s brew some sweet connections.
-        </p>
-      </div>
-      <Card className="h-fit max-h-full md:w-[400px] card-bg self-center">
-        <CardHeader className="justify-center text-xl">
-          <CardTitle className="font-bold text-md md:text-lg">
-            Sign In
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="max-h-full overflow-y-auto">
-          <form ref={formRef} onSubmit={loginUser}>
-            <div className="flex flex-col gap-3">
-              {error && (
-                <div className="flex items-center gap-2 p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg animate-in fade-in slide-in-from-top-1 duration-150">
-                  <AlertCircle className="h-4 w-4 shrink-0" />
-                  <span>{error}</span>
-                </div>
-              )}
-              <FormInputRow
-                id="username"
-                type="username"
-                placeholder="Username"
-                name="username"
-                handleValidate={() => true}
-                errorMessage=""
-                icon={<User className="h-5 w-5 text-icon-muted" />}
-              />
-              <FormInputRow
-                id="password"
-                type="password"
-                placeholder="Password"
-                name="password"
-                handleValidate={() => true}
-                errorMessage=""
-                icon={<Lock className="h-5 w-5 text-icon-muted" />}
-              />
-              <div className="flex flex-col gap-2 mt-1">
-                <Button
-                  type="submit"
-                  disabled={isLoading}
-                  className={cn(
-                    'w-full strawberry-matcha-btn hover:opacity-90 text-white bg-card transition-all duration-200',
-                    isLoading && 'opacity-80',
-                  )}
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Signing in...
-                    </>
-                  ) : (
-                    'Sign In'
-                  )}
-                </Button>
-                <Link
-                  href="/reset-password"
-                  className="text-sm text-center underline-offset-4 hover:underline flex items-center justify-center w-full text-link-alt"
-                >
-                  Forgot your password?
-                </Link>
+    <div className="register-recipe-bg flex w-full flex-1 items-start justify-center px-4 py-8 text-recipe-ink sm:py-12">
+      <section className="recipe-lined-paper relative min-h-screen w-full max-w-3xl overflow-hidden rounded-md border border-recipe-edge px-6 pb-10 pt-9 shadow-2xl sm:px-12 lg:px-16">
+        <div className="absolute left-0 right-0 top-0 h-2 border-b border-recipe-rule bg-recipe-paper-soft" />
+        <div className="mb-10 flex items-start justify-between gap-4">
+          <div>
+            <p className="font-mono text-xs font-bold uppercase tracking-widest text-pink-500">
+              Recipe no 02 . sign in
+            </p>
+            <h1 className="mt-6 max-w-2xl text-5xl font-black leading-none tracking-tight sm:text-6xl lg:text-7xl">
+              Pick up where
+              <span className="block font-serif italic font-normal text-recipe-matcha">
+                you left off.
+              </span>
+            </h1>
+            <p className="mt-5 max-w-xl text-base font-medium leading-7 text-slate-600 sm:text-lg">
+              Pop the jar open with your two ingredients. Forgot one? We&apos;ll
+              write you a new label.
+            </p>
+          </div>
+          <div className="hidden rotate-3 rounded-full border border-pink-400 px-5 py-2 font-mono text-xs font-bold uppercase tracking-widest text-pink-500 sm:block">
+            Welcome back
+          </div>
+        </div>
+
+        <form ref={formRef} onSubmit={loginUser}>
+          <div className="mb-8 flex items-center gap-3 font-mono text-xs uppercase tracking-widest text-slate-500">
+            <span>-</span>
+            <span>Ingredients</span>
+            <span>-</span>
+          </div>
+
+          <div className="flex flex-col gap-6">
+            {error && (
+              <div className="flex items-center gap-2 rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700 animate-in fade-in slide-in-from-top-1 duration-150">
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                <span>{error}</span>
               </div>
+            )}
+            <FormInputRow
+              id="username"
+              type="username"
+              placeholder="@yourname"
+              name="username"
+              label="Username"
+              marker="i."
+              handleValidate={() => true}
+              errorMessage=""
+              fieldClassName={recipeFieldClass}
+              inputClassName={recipeInputClass}
+              errorClassName={recipeErrorClass}
+            />
+            <FormInputRow
+              id="password"
+              type="password"
+              placeholder="password"
+              name="password"
+              label="Password"
+              marker="ii."
+              handleValidate={() => true}
+              errorMessage=""
+              fieldClassName={recipeFieldClass}
+              inputClassName={recipeInputClass}
+              errorClassName={recipeErrorClass}
+            />
+
+            <div className="mt-6 flex flex-col items-start justify-between gap-6 border-b border-recipe-rule pb-10 sm:flex-row sm:items-center">
+              <Button
+                type="submit"
+                disabled={isLoading}
+                className={cn(
+                  'h-16 rounded-full bg-recipe-dark px-8 font-mono text-xs font-black uppercase tracking-widest text-recipe-cream shadow-xl transition-all duration-200 hover:-translate-y-0.5 hover:bg-recipe-ink sm:min-w-64',
+                  isLoading && 'opacity-80',
+                )}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Opening jar...
+                  </>
+                ) : (
+                  <>
+                    Open the jar
+                    <ArrowRight className="size-7 rounded-full bg-recipe-matcha-soft p-1.5 text-recipe-dark" />
+                  </>
+                )}
+              </Button>
+              <Link
+                href="/reset-password"
+                className="font-mono text-sm font-semibold text-link-alt underline decoration-link-alt underline-offset-4 hover:text-link-alt-hover"
+              >
+                Forgot your password?
+              </Link>
             </div>
-            <Separator className="my-4" />
-            <div className="text-center">
-              <p className="text-text-muted text-sm">
-                Don&apos;t have an account?{' '}
-                <Link href="/register" className="font-semibold text-link">
-                  Sign up here
+
+            <div className="flex flex-col justify-between gap-3 pt-6 font-mono text-xs tracking-widest text-slate-500 sm:flex-row">
+              <p>
+                New here?{' '}
+                <Link
+                  href="/register"
+                  className="font-bold text-pink-500 underline decoration-pink-300 underline-offset-4"
+                >
+                  Start a fresh batch -&gt;
                 </Link>
               </p>
+              <p>est. 2025</p>
             </div>
-          </form>
-        </CardContent>
-      </Card>
+          </div>
+        </form>
+
+        <div className="absolute bottom-0 left-1/2 hidden -translate-x-1/2 translate-y-1/2 border border-recipe-rule bg-recipe-paper px-6 py-3 font-mono text-xs font-bold uppercase tracking-widest text-pink-500 sm:block">
+          Strawberry x Matcha
+        </div>
+      </section>
     </div>
   );
 }

@@ -24,10 +24,8 @@ const isAllowed = (path: string, routes: string[]) =>
       (r.endsWith('/') && path.startsWith(r)),
   );
 
-
 export const withProfileComplete: MiddlewareFactory = (next) => {
   return async (request, event) => {
-
     const cookieStore = await cookies();
     const sessionCookie = cookieStore.get('session')?.value;
     const session = await decrypt(sessionCookie);
