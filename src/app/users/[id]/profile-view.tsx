@@ -10,6 +10,7 @@ import {
   User as UserIcon,
   ChevronLeft,
   Ban,
+  Flag,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn, relativeTime } from '@/lib/utils';
@@ -47,6 +48,11 @@ export function ProfileView({ id, viewerHasAvatar }: ProfileViewProps) {
   const [burst, setBurst] = useState(0);
   const [showBlockConfirm, setShowBlockConfirm] = useState(false);
   const [blocking, setBlocking] = useState(false);
+  const [showReportConfirm, setShowReportConfirm] = useState(false);
+  const [reporting, setReporting] = useState(false);
+  const [reportReason, setReportReason] = useState<
+    'fake_account' | 'spam' | 'harassment'
+  >('fake_account');
 
   useEffect(() => {
     apiClient
@@ -80,6 +86,25 @@ export function ProfileView({ id, viewerHasAvatar }: ProfileViewProps) {
       }
     } catch {
       setIsLiked(wasLiked);
+    }
+  };
+
+  const confirmReport = async () => {
+    if (reporting) return;
+    setReporting(true);
+    try {
+      await apiClient.post(`/users/${id}/report`, { reason: reportReason });
+      toast.success('Report submitted', {
+        description: 'Thanks for helping keep the community safe.',
+      });
+      setShowReportConfirm(false);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Could not submit report';
+      toast.error(message);
+      setShowReportConfirm(false);
+    } finally {
+      setReporting(false);
     }
   };
 
@@ -271,13 +296,22 @@ export function ProfileView({ id, viewerHasAvatar }: ProfileViewProps) {
                   <MoreVertical className="w-6 h-6 text-foreground" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent align="end" className="p-2 min-w-[10rem]">
                 <DropdownMenuItem
                   variant="destructive"
+                  className="px-3 py-2.5 text-sm"
                   onSelect={() => setShowBlockConfirm(true)}
                 >
                   <Ban className="w-4 h-4" />
                   Block user
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  variant="destructive"
+                  className="px-3 py-2.5 text-sm"
+                  onSelect={() => setShowReportConfirm(true)}
+                >
+                  <Flag className="w-4 h-4" />
+                  Report user
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -429,9 +463,71 @@ export function ProfileView({ id, viewerHasAvatar }: ProfileViewProps) {
                 size="sm"
                 disabled={blocking}
                 onClick={confirmBlock}
-                className="strawberry-matcha-gradient text-white border-0 hover:opacity-90"
+                className="strawberry-matcha-btn text-white hover:opacity-90"
               >
                 {blocking ? 'Blocking…' : 'Block'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showReportConfirm && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-6"
+          onClick={() => !reporting && setShowReportConfirm(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl bg-white border border-border p-5 shadow-xl text-neutral-900"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold">
+              Report {profile.firstName}?
+            </h3>
+            <p className="text-sm text-neutral-600 mt-2">
+              Let us know what&apos;s wrong with this profile. Our team will
+              review your report.
+            </p>
+            <label
+              htmlFor="report-reason"
+              className="block text-xs font-semibold text-neutral-700 mt-4 mb-1"
+            >
+              Reason
+            </label>
+            <select
+              id="report-reason"
+              value={reportReason}
+              disabled={reporting}
+              onChange={(e) =>
+                setReportReason(
+                  e.target.value as 'fake_account' | 'spam' | 'harassment',
+                )
+              }
+              className="w-full h-10 rounded-md border border-neutral-300 bg-white px-3 text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-primary/40"
+            >
+              <option value="fake_account">Fake account</option>
+              <option value="spam">Spam</option>
+              <option value="harassment">Harassment</option>
+            </select>
+            <div className="flex justify-end gap-2 mt-5">
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={reporting}
+                onClick={() => setShowReportConfirm(false)}
+                className="text-neutral-700 hover:bg-neutral-100"
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                disabled={reporting}
+                onClick={confirmReport}
+                className="strawberry-matcha-btn text-white hover:opacity-90"
+              >
+                {reporting ? 'Reporting…' : 'Submit report'}
               </Button>
             </div>
           </div>

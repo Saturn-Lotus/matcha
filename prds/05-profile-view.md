@@ -112,7 +112,7 @@ Stage 8 (feed card adoption of all the above) is a UI assembly step — no new u
 - [ ] Migration `create-profile-views-table` — id uuid, viewer_id, viewed_id, viewed_at; index `(viewed_id, viewed_at DESC)`, unique `(viewer_id, viewed_id, date(viewed_at))` (optional, for rate limiting)
 - [ ] Migration `create-likes-table` — liker_id, liked_id, created_at; composite PK
 - [x] Migration `create-user-blocks-table` — `blockerUserId`, `blockedUserId`, `blockedAt`; composite PK + index on `blockedUserId` + self-block CHECK
-- [ ] Migration `create-reports-table` — id uuid, reporter_id, reported_id, reason text, created_at
+- [x] Migration `create-account-reports-table` — id uuid, reporterUserId, reportedUserId, reason text, createdAt; unique `(reporterUserId, reportedUserId)` + self-report CHECK + index on `reportedUserId`
 
 ### Repository — `SocialRepository`
 - [ ] `recordView(viewerId, viewedId)` — insert into `profile_views` (idempotent within same day)
@@ -122,7 +122,7 @@ Stage 8 (feed card adoption of all the above) is a UI assembly step — no new u
 - [x] `blockUser(blockerId, blockedId)` — insert into `user_blocks` + delete likes both directions inside a transaction
 - [ ] `unblock(blockerId, blockedId)` — delete row
 - [x] `isBlockedEitherDirection(userA, userB)` — either direction
-- [ ] `report(reporterId, reportedId, reason)` — insert into `reports`
+- [x] `report(reporterId, reportedId, reason)` — insert into `account_reports`; returns `false` if a report for this pair already exists (via `ON CONFLICT DO NOTHING`)
 - [ ] `getVisitors(userId, limit, cursor)` — paginated visit history
 - [ ] `getLikers(userId, limit, cursor)` — paginated list of who liked the user
 
@@ -132,10 +132,11 @@ Stage 8 (feed card adoption of all the above) is a UI assembly step — no new u
 - [ ] `unlike(viewerId, targetId)` — delete like, emit `unliked` notification if was connected
 - [x] `blockUser(viewerId, targetId)` — validates target exists, throws `CannotSelfActError`, delegates to repo (atomic block + like cleanup), recomputes fame
 - [ ] `unblock(viewerId, targetId)`
-- [ ] `report(viewerId, targetId, reason)`
+- [x] `report(viewerId, targetId, reason)` — validates target exists, throws `CannotSelfActError`, throws `AlreadyReportedError` if the viewer has already reported this user
 - [x] `getPublicProfile(viewerId, targetId)` — returns profile minus email/password plus `viewerLiked` / `targetLiked` / `targetViewedViewer` / `connected`; throws `UserNotFoundError` (404) if user missing or if blocked in either direction
 - [x] Domain error: `CannotLikeWithoutPictureError` (HTTP 422)
 - [x] Domain error: `CannotSelfActError` (HTTP 400)
+- [x] Domain error: `AlreadyReportedError` (HTTP 409)
 - [ ] Remaining domain errors: `AlreadyLiked`, `NotLiked`, `AlreadyBlocked`
 
 ### Routes
@@ -144,7 +145,7 @@ Stage 8 (feed card adoption of all the above) is a UI assembly step — no new u
 - [ ] `POST /api/users/[id]/like` / `DELETE` — call service, return 200 + new connection state
 - [x] `POST /api/users/[id]/block` — calls `socialService.blockUser`, returns 204
 - [ ] `DELETE /api/users/[id]/block` (unblock — out of scope for this stage)
-- [ ] `POST /api/users/[id]/report`
+- [x] `POST /api/users/[id]/report` — validates body via `ReportBodySchema` (`reason` enum: `fake_account` | `spam` | `harassment` | `other`), returns 204
 - [ ] `GET /api/users/me/visits` — paginated
 - [ ] `GET /api/users/me/likes` — paginated
 
@@ -165,7 +166,7 @@ Stage 8 (feed card adoption of all the above) is a UI assembly step — no new u
 - [x] Like button gated when viewer has no profile picture — server-side via `CannotLikeWithoutPictureError` in `SocialService.likeUser`, client-side via `viewerHasAvatar` prop drilled from `browse/page.tsx` and `users/[id]/page.tsx` with `Tooltip` + Sonner toast
 - [x] `RelationBadge` component — `connected` / `liked-you` / `viewed-you` variants ([src/app/components/ui/relation-badge.tsx](src/app/components/ui/relation-badge.tsx)); shared between feed card and permalink
 - [ ] `OnlineIndicator` component — green dot or "Last seen X ago"
-- [x] Overflow menu on `/users/[id]` action row with "Block user" item + confirm modal (sonner toast on success, redirects to `/browse`); Report still pending
+- [x] Overflow menu on `/users/[id]` action row with "Block user" and "Report user" items + confirm modals (sonner toast on success; block redirects to `/browse`, report stays on page); the report modal exposes a reason dropdown
 
 - [ ] Notifications and chat headers link to `/users/[id]` (deep-link target)
 

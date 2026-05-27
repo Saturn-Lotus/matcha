@@ -6,3 +6,11 @@ export const SocialListQuerySchema = Su.object({
 });
 
 export type SocialListQuery = SuInfer<typeof SocialListQuerySchema>;
+
+export const REPORT_REASONS = ['fake_account', 'spam', 'harassment'] as const;
+
+export const ReportBodySchema = Su.object({
+  reason: Su.literal(REPORT_REASONS),
+});
+
+export type ReportBody = SuInfer<typeof ReportBodySchema>;

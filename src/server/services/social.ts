@@ -7,7 +7,7 @@ import {
   PublicProfile,
   ViewerEntry,
 } from '../types';
-import { SocialListQuery } from '../schemas';
+import { ReportBody, SocialListQuery } from '../schemas';
 
 @HTTPError(400)
 export class InvalidLikeError extends Error {
@@ -40,6 +40,14 @@ export class CannotSelfActError extends Error {
   constructor(message = 'Cannot perform this action on yourself') {
     super(message);
     this.name = 'CannotSelfActError';
+  }
+}
+
+@HTTPError(409)
+export class AlreadyReportedError extends Error {
+  constructor(message = 'You have already reported this user') {
+    super(message);
+    this.name = 'AlreadyReportedError';
   }
 }
 
@@ -146,6 +154,22 @@ export class SocialService {
     if (!target) throw new UserNotFoundError();
     await this.socialRepository.blockUser(viewerId, targetId);
     await this.fameService.recompute(targetId);
+  };
+
+  report = async (
+    reporterId: string,
+    reportedId: string,
+    reason: ReportBody['reason'],
+  ) => {
+    if (reporterId === reportedId) throw new CannotSelfActError();
+    const target = await this.userRepository.findById(reportedId);
+    if (!target) throw new UserNotFoundError();
+    const inserted = await this.socialRepository.report(
+      reporterId,
+      reportedId,
+      reason,
+    );
+    if (!inserted) throw new AlreadyReportedError();
   };
 
   getPublicProfile = async (

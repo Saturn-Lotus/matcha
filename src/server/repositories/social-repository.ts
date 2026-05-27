@@ -172,6 +172,22 @@ export class SocialRepository {
     return rows[0]?.exists ?? false;
   }
 
+  /** Insert a new report row. Returns false if a report already exists for this (reporter, reported) pair. */
+  async report(
+    reporterUserId: string,
+    reportedUserId: string,
+    reason: string,
+  ): Promise<boolean> {
+    const rows = await this.db.query<{ id: string }>(
+      `INSERT INTO account_reports ("reporterUserId", "reportedUserId", reason, "createdAt")
+       VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+       ON CONFLICT ON CONSTRAINT account_reports_unique_pair DO NOTHING
+       RETURNING id;`,
+      [reporterUserId, reportedUserId, reason],
+    );
+    return rows.length > 0;
+  }
+
   /** Get the relational state between viewer and target in a single query */
   async getRelationState(
     viewerId: string,
