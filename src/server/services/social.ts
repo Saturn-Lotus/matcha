@@ -1,4 +1,9 @@
-import { HTTPError } from '@/lib/exception-http-mapper';
+import {
+  AlreadyExistsException,
+  HTTPError,
+  NotFoundException,
+  SelfActionForbiddenException,
+} from '@/lib/exception-http-mapper';
 import { SocialRepository, UserRepository } from '../repositories';
 import { LocationRepository } from '../repositories/location-repository';
 import { FameService } from './fame';
@@ -11,22 +16,6 @@ import {
 import { ReportBody, SocialListQuery } from '../schemas';
 import { yearsBetween } from '@/lib/utils';
 
-@HTTPError(400)
-export class InvalidLikeError extends Error {
-  constructor(message = 'Invalid like action') {
-    super(message);
-    this.name = 'InvalidLikeError';
-  }
-}
-
-@HTTPError(404)
-export class UserNotFoundError extends Error {
-  constructor(message = 'User not found') {
-    super(message);
-    this.name = 'UserNotFoundError';
-  }
-}
-
 @HTTPError(422)
 export class CannotLikeWithoutPictureError extends Error {
   constructor(
@@ -34,22 +23,6 @@ export class CannotLikeWithoutPictureError extends Error {
   ) {
     super(message);
     this.name = 'CannotLikeWithoutPictureError';
-  }
-}
-
-@HTTPError(400)
-export class CannotSelfActError extends Error {
-  constructor(message = 'Cannot perform this action on yourself') {
-    super(message);
-    this.name = 'CannotSelfActError';
-  }
-}
-
-@HTTPError(409)
-export class AlreadyReportedError extends Error {
-  constructor(message = 'You have already reported this user') {
-    super(message);
-    this.name = 'AlreadyReportedError';
   }
 }
 
@@ -100,7 +73,7 @@ export class SocialService {
 
   likeUser = async (likerUserId: string, likedUserId: string) => {
     if (likerUserId === likedUserId) {
-      throw new InvalidLikeError('Cannot like yourself');
+      throw new SelfActionForbiddenException('Cannot like yourself');
     }
     const likerProfile =
       await this.userRepository.findProfileByUserId(likerUserId);
@@ -108,12 +81,24 @@ export class SocialService {
     if (!hasPicture) {
       throw new CannotLikeWithoutPictureError();
     }
-    await this.socialRepository.likeUser(likerUserId, likedUserId);
+    const inserted = await this.socialRepository.likeUser(
+      likerUserId,
+      likedUserId,
+    );
+    if (!inserted) {
+      throw new AlreadyExistsException('You have already liked this user');
+    }
     await this.fameService.recompute(likedUserId);
   };
 
   unlikeUser = async (likerUserId: string, likedUserId: string) => {
-    await this.socialRepository.unlikeUser(likerUserId, likedUserId);
+    const deleted = await this.socialRepository.unlikeUser(
+      likerUserId,
+      likedUserId,
+    );
+    if (!deleted) {
+      throw new NotFoundException('You have not liked this user');
+    }
     await this.fameService.recompute(likedUserId);
   };
 
@@ -154,10 +139,13 @@ export class SocialService {
   };
 
   blockUser = async (viewerId: string, targetId: string) => {
-    if (viewerId === targetId) throw new CannotSelfActError();
+    if (viewerId === targetId) throw new SelfActionForbiddenException();
     const target = await this.userRepository.findById(targetId);
-    if (!target) throw new UserNotFoundError();
-    await this.socialRepository.blockUser(viewerId, targetId);
+    if (!target) throw new NotFoundException('User not found');
+    const inserted = await this.socialRepository.blockUser(viewerId, targetId);
+    if (!inserted) {
+      throw new AlreadyExistsException('You have already blocked this user');
+    }
     await this.fameService.recompute(targetId);
   };
 
@@ -166,15 +154,17 @@ export class SocialService {
     reportedId: string,
     reason: ReportBody['reason'],
   ) => {
-    if (reporterId === reportedId) throw new CannotSelfActError();
+    if (reporterId === reportedId) throw new SelfActionForbiddenException();
     const target = await this.userRepository.findById(reportedId);
-    if (!target) throw new UserNotFoundError();
+    if (!target) throw new NotFoundException('User not found');
     const inserted = await this.socialRepository.report(
       reporterId,
       reportedId,
       reason,
     );
-    if (!inserted) throw new AlreadyReportedError();
+    if (!inserted) {
+      throw new AlreadyExistsException('You have already reported this user');
+    }
   };
 
   getPublicProfile = async (
@@ -187,7 +177,7 @@ export class SocialService {
         viewerId,
         targetId,
       );
-      if (blocked) throw new UserNotFoundError();
+      if (blocked) throw new NotFoundException('User not found');
     }
     const [user, profile, relation, distanceKm, targetLocation] =
       await Promise.all([
@@ -206,7 +196,7 @@ export class SocialService {
           : this.locationRepository.distanceKmBetween(viewerId, targetId),
         this.locationRepository.findByUserId(targetId),
       ]);
-    if (!user || !profile) throw new UserNotFoundError();
+    if (!user || !profile) throw new NotFoundException('User not found');
     const age = profile.birthDate
       ? yearsBetween(new Date(profile.birthDate), new Date())
       : null;
