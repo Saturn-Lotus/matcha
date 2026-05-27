@@ -1,5 +1,6 @@
 import { HTTPError } from '@/lib/exception-http-mapper';
 import { SocialRepository, UserRepository } from '../repositories';
+import { LocationRepository } from '../repositories/location-repository';
 import { FameService } from './fame';
 import {
   LikerEntry,
@@ -8,6 +9,7 @@ import {
   ViewerEntry,
 } from '../types';
 import { ReportBody, SocialListQuery } from '../schemas';
+import { yearsBetween } from '@/lib/utils';
 
 @HTTPError(400)
 export class InvalidLikeError extends Error {
@@ -55,15 +57,18 @@ export class SocialService {
   private readonly socialRepository: SocialRepository;
   private readonly fameService: FameService;
   private readonly userRepository: UserRepository;
+  private readonly locationRepository: LocationRepository;
 
   constructor(
     socialRepository: SocialRepository,
     fameService: FameService,
     userRepository: UserRepository,
+    locationRepository: LocationRepository,
   ) {
     this.socialRepository = socialRepository;
     this.fameService = fameService;
     this.userRepository = userRepository;
+    this.locationRepository = locationRepository;
   }
 
   listLikers = async (
@@ -184,24 +189,33 @@ export class SocialService {
       );
       if (blocked) throw new UserNotFoundError();
     }
-    const [user, profile, relation] = await Promise.all([
-      this.userRepository.findById(targetId),
-      this.userRepository.findProfileByUserId(targetId),
-      isSelf
-        ? Promise.resolve({
-            viewerLiked: false,
-            targetLiked: false,
-            targetViewedViewer: false,
-            connected: false,
-          })
-        : this.socialRepository.getRelationState(viewerId, targetId),
-    ]);
+    const [user, profile, relation, distanceKm, targetLocation] =
+      await Promise.all([
+        this.userRepository.findById(targetId),
+        this.userRepository.findProfileByUserId(targetId),
+        isSelf
+          ? Promise.resolve({
+              viewerLiked: false,
+              targetLiked: false,
+              targetViewedViewer: false,
+              connected: false,
+            })
+          : this.socialRepository.getRelationState(viewerId, targetId),
+        isSelf
+          ? Promise.resolve(null)
+          : this.locationRepository.distanceKmBetween(viewerId, targetId),
+        this.locationRepository.findByUserId(targetId),
+      ]);
     if (!user || !profile) throw new UserNotFoundError();
+    const age = profile.birthDate
+      ? yearsBetween(new Date(profile.birthDate), new Date())
+      : null;
     return {
       id: user.id,
       username: user.username,
       firstName: profile.firstName,
       lastName: profile.lastName,
+      age,
       bio: profile.bio,
       gender: profile.gender,
       sexualPreference: profile.sexualPreference,
@@ -211,6 +225,9 @@ export class SocialService {
       fameRating: profile.fameRating,
       isOnline: profile.isOnline,
       lastSeenAt: profile.lastSeenAt?.toISOString() ?? null,
+      distanceKm,
+      city: targetLocation?.city ?? null,
+      memberSince: user.createdAt?.toISOString() ?? null,
       viewerLiked: relation.viewerLiked,
       targetLiked: relation.targetLiked,
       targetViewedViewer: relation.targetViewedViewer,

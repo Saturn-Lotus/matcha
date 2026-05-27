@@ -2,37 +2,36 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import {
+  Award,
+  Calendar,
+  Clock,
   Heart,
-  MessageCircle,
-  MoreVertical,
+  MapPin,
   User as UserIcon,
-  ChevronLeft,
-  Ban,
-  Flag,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { cn, relativeTime } from '@/lib/utils';
+import {
+  formatDistanceKm,
+  formatGenderLabel,
+  formatMonthYear,
+  formatOrientationLabel,
+  formatPreferenceLabel,
+  relativeTime,
+} from '@/lib/utils';
 import { Button } from '@/app/components/ui/button';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/app/components/ui/tooltip';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/app/components/ui/dropdown-menu';
-import {
-  RelationBadge,
-  pickRelationVariant,
-} from '@/app/components/ui/relation-badge';
-import { ProgressSegments } from '@/app/browse/components/progress-segments';
+import { pickRelationVariant } from '@/app/components/ui/relation-badge';
 import { apiClient } from '@/lib/api';
 import type { PublicProfile } from '@/server/types';
+import { ProfileSubnav } from './components/profile-subnav';
+import { ProfileCard } from './components/profile-card';
+import { ProfileHeroPhoto } from './components/profile-hero-photo';
+import { ProfileActionRow } from './components/profile-action-row';
+import { ProfileSection, ProfileDivider } from './components/profile-section';
+import { ProfileInterestTags } from './components/profile-interest-tags';
+import { ProfileDetailGrid } from './components/profile-detail-grid';
+
+type ReportReason = 'fake_account' | 'spam' | 'harassment';
 
 interface ProfileViewProps {
   id: string;
@@ -43,16 +42,14 @@ export function ProfileView({ id, viewerHasAvatar }: ProfileViewProps) {
   const router = useRouter();
   const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [notFound, setNotFound] = useState(false);
-  const [photoIdx, setPhotoIdx] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
-  const [burst, setBurst] = useState(0);
+
   const [showBlockConfirm, setShowBlockConfirm] = useState(false);
   const [blocking, setBlocking] = useState(false);
   const [showReportConfirm, setShowReportConfirm] = useState(false);
   const [reporting, setReporting] = useState(false);
-  const [reportReason, setReportReason] = useState<
-    'fake_account' | 'spam' | 'harassment'
-  >('fake_account');
+  const [reportReason, setReportReason] =
+    useState<ReportReason>('fake_account');
 
   useEffect(() => {
     apiClient
@@ -62,7 +59,6 @@ export function ProfileView({ id, viewerHasAvatar }: ProfileViewProps) {
         setIsLiked(p.viewerLiked);
       })
       .catch(() => setNotFound(true));
-
     apiClient.post(`/users/${id}/views`);
   }, [id]);
 
@@ -77,7 +73,6 @@ export function ProfileView({ id, viewerHasAvatar }: ProfileViewProps) {
     }
     const wasLiked = isLiked;
     setIsLiked(!wasLiked);
-    if (!wasLiked) setBurst((n) => n + 1);
     try {
       if (wasLiked) {
         await apiClient.delete(`/users/${id}/likes`);
@@ -126,7 +121,7 @@ export function ProfileView({ id, viewerHasAvatar }: ProfileViewProps) {
 
   if (notFound) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-3 text-center px-6">
+      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3 text-center px-6">
         <UserIcon className="w-14 h-14 text-muted-foreground" />
         <p className="text-lg font-semibold">User not found</p>
         <p className="text-sm text-muted-foreground">
@@ -141,19 +136,29 @@ export function ProfileView({ id, viewerHasAvatar }: ProfileViewProps) {
 
   if (!profile) {
     return (
-      <div className="min-h-screen flex flex-col">
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
-          <div className="w-8 h-8 rounded-full bg-muted animate-pulse" />
-          <div className="h-4 w-32 rounded bg-muted animate-pulse" />
+      <div className="flex flex-col">
+        <div className="mx-auto w-full max-w-[560px] px-4 pt-4 pb-2 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-white/50 animate-pulse" />
+          <div className="flex flex-col gap-1.5 flex-1">
+            <div className="h-4 w-40 rounded bg-white/50 animate-pulse" />
+            <div className="h-3 w-24 rounded bg-white/40 animate-pulse" />
+          </div>
         </div>
-        <div className="flex flex-col items-center gap-4 pt-10 px-6">
-          <div className="w-24 h-24 rounded-full bg-muted animate-pulse" />
-          <div className="h-5 w-40 rounded bg-muted animate-pulse" />
-          <div className="h-4 w-24 rounded bg-muted animate-pulse" />
-          <div className="flex gap-4 mt-2">
-            <div className="w-12 h-12 rounded-full bg-muted animate-pulse" />
-            <div className="w-12 h-12 rounded-full bg-muted animate-pulse" />
-            <div className="w-12 h-12 rounded-full bg-muted animate-pulse" />
+        <div className="mx-auto w-full max-w-[560px] px-4 pb-10">
+          <div className="bg-white rounded-[28px] overflow-hidden shadow-sm">
+            <div className="aspect-[4/5] bg-muted animate-pulse" />
+            <div className="p-6 flex flex-col gap-4">
+              <div className="flex justify-center gap-5">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="w-12 h-12 rounded-full bg-muted animate-pulse"
+                  />
+                ))}
+              </div>
+              <div className="h-4 w-3/4 bg-muted rounded animate-pulse" />
+              <div className="h-4 w-2/3 bg-muted rounded animate-pulse" />
+            </div>
           </div>
         </div>
       </div>
@@ -161,273 +166,141 @@ export function ProfileView({ id, viewerHasAvatar }: ProfileViewProps) {
   }
 
   const photos = profile.pictures ?? [];
-  const avatarSrc = profile.avatarUrl ?? photos[0] ?? null;
+  const heroPhotos =
+    photos.length > 0 ? photos : profile.avatarUrl ? [profile.avatarUrl] : [];
+
+  const genderLabel = formatGenderLabel(profile.gender);
+  const orientationLabel = formatOrientationLabel(
+    profile.gender,
+    profile.sexualPreference,
+  );
+  const preferenceLabel = formatPreferenceLabel(profile.sexualPreference);
+  const distanceLabel = formatDistanceKm(profile.distanceKm);
+  const memberSince = formatMonthYear(profile.memberSince);
+  const locationLong = [profile.city, distanceLabel]
+    .filter(Boolean)
+    .join(' · ');
   const relationVariant = pickRelationVariant({
     connected: profile.connected,
     targetLiked: profile.targetLiked,
     targetViewedViewer: profile.targetViewedViewer,
   });
 
-  const tapLeft = () =>
-    setPhotoIdx((i) => (i - 1 + photos.length) % photos.length);
-  const tapRight = () => setPhotoIdx((i) => (i + 1) % photos.length);
+  const openReport = () => setShowReportConfirm(true);
+  const openBlock = () => setShowBlockConfirm(true);
 
-  return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-border sticky top-0 bg-background z-10">
-        <button
-          onClick={() => router.back()}
-          className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-accent transition-colors"
-          aria-label="Go back"
-        >
-          <ChevronLeft className="w-5 h-5" />
-        </button>
-        <span className="font-semibold text-base truncate">
-          {profile.firstName} {profile.lastName}
+  const detailItems = [
+    genderLabel && {
+      icon: <UserIcon className="w-4 h-4" />,
+      label: <span className="font-semibold">{genderLabel}</span>,
+      accent: 'pink' as const,
+    },
+    preferenceLabel && {
+      icon: <Heart className="w-4 h-4 fill-current" />,
+      label: <span className="font-semibold">{preferenceLabel}</span>,
+      accent: 'pink' as const,
+    },
+    locationLong && {
+      icon: <MapPin className="w-4 h-4" />,
+      label: locationLong,
+      accent: 'pink' as const,
+    },
+    (profile.isOnline || profile.lastSeenAt) && {
+      icon: <Clock className="w-4 h-4" />,
+      label: profile.isOnline ? (
+        <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+          Online now
         </span>
-      </div>
-
-      <div className="relative flex flex-col items-center gap-3 pt-8 pb-6 px-6">
-        <div className="relative w-24 h-24 rounded-full overflow-hidden bg-muted border-2 border-border">
-          {avatarSrc ? (
-            <Image
-              src={avatarSrc}
-              alt={profile.firstName}
-              fill
-              unoptimized
-              className="object-cover"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <UserIcon className="w-10 h-10 text-muted-foreground" />
-            </div>
-          )}
-        </div>
-
-        <div className="flex flex-col items-center gap-1">
-          <h1 className="text-xl font-bold">
-            {profile.firstName} {profile.lastName}
-          </h1>
-          <p className="text-sm text-muted-foreground">@{profile.username}</p>
-          {relationVariant && (
-            <div className="mt-1.5">
-              <RelationBadge variant={relationVariant} withLabel size="md" />
-            </div>
-          )}
-        </div>
-
-        <div className="flex items-center gap-3 text-sm">
-          {profile.isOnline ? (
-            <span className="inline-flex items-center gap-1.5 text-emerald-500 font-medium">
-              <span className="w-2 h-2 rounded-full bg-emerald-400" />
-              Online now
-            </span>
-          ) : profile.lastSeenAt ? (
-            <span className="text-muted-foreground">
-              Active {relativeTime(profile.lastSeenAt)}
-            </span>
-          ) : (
-            <span className="text-muted-foreground">Recently active</span>
-          )}
-          <span className="inline-flex items-center gap-1 text-muted-foreground">
-            <Heart className="w-3.5 h-3.5 text-primary fill-primary" />
+      ) : (
+        <>Active {relativeTime(profile.lastSeenAt!)}</>
+      ),
+      accent: 'pink' as const,
+    },
+    {
+      icon: <Award className="w-4 h-4" />,
+      label: (
+        <>
+          Fame rating{' '}
+          <span className="font-semibold">
             {Math.round(profile.fameRating)}
           </span>
-        </div>
+        </>
+      ),
+      accent: 'pink' as const,
+    },
+    memberSince && {
+      icon: <Calendar className="w-4 h-4" />,
+      label: <>Member since {memberSince}</>,
+      accent: 'pink' as const,
+    },
+  ].filter(Boolean) as {
+    icon: React.ReactNode;
+    label: React.ReactNode;
+    accent: 'pink' | 'matcha';
+  }[];
 
-        <div className="flex items-center gap-6 mt-2">
-          <div className="flex flex-col items-center gap-1">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={toggleLike}
-                  aria-label={isLiked ? 'Unlike' : 'Like'}
-                  aria-disabled={likeDisabled || undefined}
-                  className={cn(
-                    'w-12 h-12 rounded-full flex items-center justify-center transition-all duration-150 border-0',
-                    isLiked
-                      ? 'bg-gradient-to-br from-pink-600 to-pink-400 cursor-pointer'
-                      : likeDisabled
-                        ? 'bg-white/[0.13] border border-border opacity-60 cursor-not-allowed'
-                        : 'bg-white/[0.13] border border-border hover:bg-accent cursor-pointer',
-                  )}
-                >
-                  <Heart
-                    className={cn(
-                      'w-6 h-6 transition-transform',
-                      isLiked
-                        ? 'fill-white text-white scale-110'
-                        : 'text-primary',
-                    )}
-                  />
-                </button>
-              </TooltipTrigger>
-              {likeDisabled && (
-                <TooltipContent side="bottom">
-                  Add a profile picture to like
-                </TooltipContent>
-              )}
-            </Tooltip>
-            <span className="text-[11px] font-semibold text-muted-foreground drop-shadow">
-              {isLiked ? 'Liked' : 'Like'}
-            </span>
+  return (
+    <div className="flex flex-col w-full pb-10">
+      <ProfileSubnav
+        firstName={profile.firstName}
+        lastName={profile.lastName}
+        username={profile.username}
+        onReport={openReport}
+      />
+
+      <div className="mx-auto w-full max-w-[560px] px-4">
+        <ProfileCard>
+          <ProfileHeroPhoto
+            photos={heroPhotos}
+            firstName={profile.firstName}
+            lastName={profile.lastName}
+            age={profile.age}
+            genderLabel={genderLabel}
+            orientationLabel={orientationLabel}
+            fameRating={profile.fameRating}
+            isOnline={profile.isOnline}
+            lastSeenAt={profile.lastSeenAt}
+            city={profile.city}
+            distanceKm={profile.distanceKm}
+            relationVariant={relationVariant}
+          />
+
+          <ProfileActionRow
+            isLiked={isLiked}
+            likeDisabled={likeDisabled}
+            isConnected={profile.connected}
+            onPass={() => router.back()}
+            onLike={toggleLike}
+            onReport={openReport}
+            onBlock={openBlock}
+          />
+
+          <div className="flex flex-col gap-3.5 px-5 sm:px-6 pt-5 pb-5">
+            {profile.bio && (
+              <>
+                <ProfileSection title={`About ${profile.firstName}`}>
+                  <p className="text-[14px] leading-relaxed text-foreground/90 whitespace-pre-wrap">
+                    {profile.bio}
+                  </p>
+                </ProfileSection>
+                <ProfileDivider />
+              </>
+            )}
+
+            {profile.interests && profile.interests.length > 0 && (
+              <>
+                <ProfileSection title="Interests">
+                  <ProfileInterestTags tags={profile.interests} />
+                </ProfileSection>
+                <ProfileDivider />
+              </>
+            )}
+
+            <ProfileSection title="Details">
+              <ProfileDetailGrid items={detailItems} />
+            </ProfileSection>
           </div>
-
-          <div className="flex flex-col items-center gap-1">
-            <button
-              disabled
-              aria-label="Message"
-              className="w-12 h-12 rounded-full flex items-center justify-center bg-white/[0.13] border border-border opacity-50 cursor-not-allowed transition-all"
-            >
-              <MessageCircle className="w-6 h-6 text-muted-foreground" />
-            </button>
-            <span className="text-[11px] font-semibold text-muted-foreground drop-shadow">
-              Message
-            </span>
-          </div>
-
-          <div className="flex flex-col items-center gap-1">
-            <DropdownMenu modal={false}>
-              <DropdownMenuTrigger asChild>
-                <button
-                  aria-label="More"
-                  className="w-12 h-12 rounded-full flex items-center justify-center bg-white/[0.13] border border-border hover:bg-accent cursor-pointer transition-all"
-                >
-                  <MoreVertical className="w-6 h-6 text-foreground" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="p-2 min-w-[10rem]">
-                <DropdownMenuItem
-                  variant="destructive"
-                  className="px-3 py-2.5 text-sm"
-                  onSelect={() => setShowBlockConfirm(true)}
-                >
-                  <Ban className="w-4 h-4" />
-                  Block user
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  variant="destructive"
-                  className="px-3 py-2.5 text-sm"
-                  onSelect={() => setShowReportConfirm(true)}
-                >
-                  <Flag className="w-4 h-4" />
-                  Report user
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <span className="text-[11px] font-semibold text-muted-foreground drop-shadow">
-              More
-            </span>
-          </div>
-        </div>
-
-        {burst > 0 && (
-          <div
-            key={burst}
-            className="absolute left-1/2 top-1/2 z-[6] pointer-events-none animate-like-burst text-pink-400"
-          >
-            <Heart className="w-[120px] h-[120px] fill-current drop-shadow-[0_6px_16px_rgba(244,114,182,0.6)]" />
-          </div>
-        )}
-      </div>
-
-      <div className="border-t border-border" />
-
-      <div className="flex flex-col gap-6 px-5 py-6">
-        {photos.length > 0 && (
-          <section>
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-              Photos
-            </h2>
-            <div className="relative w-full aspect-square rounded-xl overflow-hidden bg-muted">
-              {photos.map((src, i) => (
-                <div
-                  key={i}
-                  className={cn(
-                    'absolute inset-0 transition-opacity duration-300',
-                    i === photoIdx ? 'opacity-100' : 'opacity-0',
-                  )}
-                >
-                  <Image
-                    src={src}
-                    alt=""
-                    fill
-                    unoptimized
-                    className="object-cover"
-                    priority={i === 0}
-                  />
-                </div>
-              ))}
-              {photos.length > 1 && (
-                <>
-                  <div
-                    className="absolute z-10 inset-y-0 left-0 w-2/5 cursor-pointer"
-                    onClick={tapLeft}
-                  />
-                  <div
-                    className="absolute z-10 inset-y-0 right-0 w-2/5 cursor-pointer"
-                    onClick={tapRight}
-                  />
-                  <ProgressSegments
-                    total={photos.length}
-                    activeIdx={photoIdx}
-                    isActive={true}
-                  />
-                </>
-              )}
-            </div>
-          </section>
-        )}
-
-        {profile.bio && (
-          <section>
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-              About
-            </h2>
-            <p className="text-sm leading-relaxed">{profile.bio}</p>
-          </section>
-        )}
-
-        {profile.interests && profile.interests.length > 0 && (
-          <section>
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-              Interests
-            </h2>
-            <div className="flex flex-wrap gap-2">
-              {profile.interests.map((tag) => (
-                <span
-                  key={tag}
-                  className="inline-flex items-center text-xs h-7 px-3 rounded-full bg-primary/10 text-primary font-medium"
-                >
-                  #{tag}
-                </span>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {(profile.gender || profile.sexualPreference) && (
-          <section>
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-2">
-              Identity
-            </h2>
-            <div className="flex flex-wrap gap-2">
-              {profile.gender && (
-                <span className="inline-flex items-center text-xs h-7 px-3 rounded-full border border-border text-foreground capitalize">
-                  {profile.gender}
-                </span>
-              )}
-              {profile.sexualPreference && (
-                <span className="inline-flex items-center text-xs h-7 px-3 rounded-full border border-border text-foreground capitalize">
-                  Interested in{' '}
-                  {profile.sexualPreference === 'both'
-                    ? 'everyone'
-                    : profile.sexualPreference}
-                </span>
-              )}
-            </div>
-          </section>
-        )}
+        </ProfileCard>
       </div>
 
       {showBlockConfirm && (
@@ -500,11 +373,7 @@ export function ProfileView({ id, viewerHasAvatar }: ProfileViewProps) {
               id="report-reason"
               value={reportReason}
               disabled={reporting}
-              onChange={(e) =>
-                setReportReason(
-                  e.target.value as 'fake_account' | 'spam' | 'harassment',
-                )
-              }
+              onChange={(e) => setReportReason(e.target.value as ReportReason)}
               className="w-full h-10 rounded-md border border-neutral-300 bg-white px-3 text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-primary/40"
             >
               <option value="fake_account">Fake account</option>
