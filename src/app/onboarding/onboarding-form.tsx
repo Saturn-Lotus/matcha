@@ -417,7 +417,7 @@ export function OnboardingForm({ userId }: { userId: string }) {
       }
 
       toast.success('Profile created! Welcome 🎉');
-      router.push('/home');
+      router.push('/');
     } catch {
       toast.error('Something went wrong. Please try again.');
     } finally {

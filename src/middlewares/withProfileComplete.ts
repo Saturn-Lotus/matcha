@@ -24,11 +24,9 @@ const isAllowed = (path: string, routes: string[]) =>
       (r.endsWith('/') && path.startsWith(r)),
   );
 
-const DISABLE_AUTH = process.env.DISABLE_AUTH === 'true';
 
 export const withProfileComplete: MiddlewareFactory = (next) => {
   return async (request, event) => {
-    if (DISABLE_AUTH) return next(request, event);
 
     const cookieStore = await cookies();
     const sessionCookie = cookieStore.get('session')?.value;

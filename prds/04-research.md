@@ -6,18 +6,19 @@ Subject §IV.4. Dedicated search experience with explicit filter selection, dist
 ---
 
 ## Scope
-User picks one or more criteria:
+User picks one or more criteria (subject §IV.4):
 - Age range (min/max years).
 - Fame rating range (min/max).
 - Location (city string or coordinates + radius in km).
 - One or more interest tags (AND semantics — user must have ALL selected tags).
 
-Results are sortable and filterable by the same axes as browsing (age, distance, fame, tags).  
+Results must be sortable **and** filterable by age, location, fame rating, and interest tags (same axes as browsing §IV.3).
 At least one criterion must be provided (no full-table browse).
 
 ## Out of scope
 - Free-text name/bio search.
 - Saved searches.
+- Shareable search URLs / URL-synced filters (not required by the subject).
 
 ---
 
@@ -41,9 +42,9 @@ Same response shape as `/api/users/suggestions`.
 ## UI
 - `/search` page with a visible form above results.
 - Age range slider (min/max), fame range slider, location input + radius slider, tag multi-select autocomplete.
-- URL-synced filters — changing filters updates query params so results are shareable and survive back-button.
 - Same `ProfileCard` component as browsing (reuse, no duplication).
 - Empty state when no results; validation error when no criterion given.
+- Post-search sort and filter controls applied to the result set (age, location, fame, tags).
 
 ---
 
@@ -57,8 +58,7 @@ Same response shape as `/api/users/suggestions`.
 | SR-4 | logged-in user | to search by one or more tags (AND) | I find people who share all my listed interests |
 | SR-5 | logged-in user | to combine multiple criteria in one search | I get precisely targeted results |
 | SR-6 | logged-in user | to sort and filter the search results | I can explore the result set further |
-| SR-7 | logged-in user | the search URL to be shareable | I can bookmark or share my exact search |
-| SR-8 | logged-in user | an error when I submit empty filters | I understand that a criterion is required |
+| SR-7 | logged-in user | an error when I submit empty filters | I understand that a criterion is required |
 
 ---
 
@@ -83,9 +83,8 @@ Same response shape as `/api/users/suggestions`.
 
 ### UI
 - [ ] `/search` page with a `SearchForm` component — age, fame, location+radius, tag fields; "Search" submit button
-- [ ] URL sync via `useSearchParams` + `router.push` on form submit
 - [ ] Reuse `ProfileCard` from browsing
-- [ ] Reuse `SortControl` from browsing
+- [ ] Reuse `SortControl` and filter controls from browsing for post-search refinement
 - [ ] Show "No results" with a different message than browsing (user explicitly searched, not a filter mismatch)
 - [ ] Show inline validation: "Please enter at least one criterion"
 
@@ -100,10 +99,12 @@ Same response shape as `/api/users/suggestions`.
 ---
 
 ## Acceptance criteria
+- All four criteria types are supported: age range, fame range, location, interest tags.
 - Search respects gender/orientation gating (same as browsing; blocked users excluded).
 - Empty criteria returns 400 (not a full-table scan).
 - Tag filter applies AND semantics; case-insensitive.
-- Results paginated; URL params survive page reload.
+- Results are sortable and filterable by age, location, fame rating, and interest tags after the initial search.
+- Results paginated.
 - Ranges validated server-side (min ≤ max; caps enforced).
 
 ---
