@@ -28,6 +28,45 @@ jobs:
       - name: Type check
         run: bunx tsc --noEmit
 
+  migrations:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_USER: matcha
+          POSTGRES_PASSWORD: matcha
+          POSTGRES_DB: matcha
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://matcha:matcha@localhost:5432/matcha
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1'
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Migrate base → head
+        run: bun run db:migrate
+
+      - name: Migrate head → base
+        run: bunx node-pg-migrate down 0
+
+      - name: Migrate base → head again
+        run: bun run db:migrate
+
   test-and-build:
     runs-on: ubuntu-latest
     steps:

@@ -94,6 +94,7 @@ export type PublicProfile = {
   username: string;
   firstName: string;
   lastName: string;
+  age: number | null;
   bio: string | null;
   gender: 'male' | 'female' | null;
   sexualPreference: 'male' | 'female' | 'both' | null;
@@ -103,6 +104,9 @@ export type PublicProfile = {
   fameRating: number;
   isOnline: boolean;
   lastSeenAt: string | null;
+  distanceKm: number | null;
+  city: string | null;
+  memberSince: string | null;
   viewerLiked: boolean;
   targetLiked: boolean;
   targetViewedViewer: boolean;

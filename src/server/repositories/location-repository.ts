@@ -27,6 +27,21 @@ export class LocationRepository {
     return rows[0] ?? null;
   }
 
+  async distanceKmBetween(
+    userIdA: string,
+    userIdB: string,
+  ): Promise<number | null> {
+    const rows = await this.db.query<{ distanceKm: number | null }>(
+      `SELECT ST_Distance(a.location, b.location) / 1000.0 AS "distanceKm"
+       FROM user_locations a
+       JOIN user_locations b ON b."userId" = $2
+       WHERE a."userId" = $1
+       LIMIT 1;`,
+      [userIdA, userIdB],
+    );
+    return rows[0]?.distanceKm ?? null;
+  }
+
   async upsert(
     userId: string,
     data: UpsertLocationInput,

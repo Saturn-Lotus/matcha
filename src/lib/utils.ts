@@ -25,3 +25,50 @@ export function relativeTime(iso: string): string {
   if (d < 7) return `${d}d ago`;
   return new Date(iso).toLocaleDateString();
 }
+
+export function formatGenderLabel(g: 'male' | 'female' | null): string | null {
+  if (g === 'male') return 'Man';
+  if (g === 'female') return 'Woman';
+  return null;
+}
+
+export function formatPreferenceLabel(
+  pref: 'male' | 'female' | 'both' | null,
+): string | null {
+  if (pref === 'male') return 'Interested in men';
+  if (pref === 'female') return 'Interested in women';
+  if (pref === 'both') return 'Interested in everyone';
+  return null;
+}
+
+export function formatOrientationLabel(
+  gender: 'male' | 'female' | null,
+  pref: 'male' | 'female' | 'both' | null,
+): string | null {
+  if (!gender || !pref) return null;
+  if (pref === 'both') return 'Bi';
+  if (gender === pref) return 'Gay';
+  return 'Straight';
+}
+
+export function formatDistanceKm(km: number | null): string | null {
+  if (km === null) return null;
+  if (km < 1) return '<1 km away';
+  if (km < 10) return `${km.toFixed(1)} km away`;
+  return `${Math.round(km)} km away`;
+}
+
+export function formatDistanceKmShort(km: number | null): string | null {
+  if (km === null) return null;
+  if (km < 1) return '<1 km';
+  if (km < 10) return `${km.toFixed(1)} km`;
+  return `${Math.round(km)} km`;
+}
+
+export function formatMonthYear(iso: string | null): string | null {
+  if (!iso) return null;
+  return new Date(iso).toLocaleDateString(undefined, {
+    month: 'long',
+    year: 'numeric',
+  });
+}

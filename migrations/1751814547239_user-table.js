@@ -65,6 +65,7 @@ exports.down = (pgm) => {
 		DROP TABLE IF EXISTS user_profiles;
 		DROP TABLE IF EXISTS users;
 		DROP TYPE IF EXISTS gender_t;
+		DROP TYPE IF EXISTS sexual_preference_t;
 	`);
   pgm.sql(sql`
 		DROP EXTENSION IF EXISTS "uuid-ossp";

@@ -2,6 +2,7 @@ import { SocialRepository } from '../repositories';
 import { SocialService } from '../services/social';
 import { getPostgresDB } from './db-factory';
 import { getFameService } from './fame-factory';
+import { getLocationRepository } from './location-factory';
 import { getUserRepository } from './user-factory';
 
 export const getSocialRepo = (): SocialRepository => {
@@ -13,5 +14,6 @@ export const getSocialService = (): SocialService => {
     getSocialRepo(),
     getFameService(),
     getUserRepository(),
+    getLocationRepository(),
   );
 };
