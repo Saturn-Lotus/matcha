@@ -103,7 +103,7 @@ Response item: `{ id, username, firstName, age, distanceKm, fameRating, sharedTa
 - [ ] Empty state component with CTA to widen filters
 
 ### Indexes (migration)
-- [ ] Migration `add-browsing-indexes` — GIST on location, btree on fame_rating, btree on birthdate
+- [x] Migration `add-browsing-indexes` — btree on `user_profiles."fameRating"` DESC, btree on `user_profiles."birthDate"` (GIST on `user_locations.location` already shipped in earlier migration)
 
 ### Tests
 - [ ] Unit: `SuggestionService.resolveOrientation` — all 6 gender/preference combos
