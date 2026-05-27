@@ -1,8 +1,4 @@
-import {
-  StoredSearchPreferences,
-  User,
-  UserProfile,
-} from '@/server/schemas';
+import { StoredSearchPreferences, User, UserProfile } from '@/server/schemas';
 import BaseRepositoryClass from './base';
 import { PostgresDB } from '../db/postgres';
 import {
@@ -435,10 +431,12 @@ export class UserRepository extends BaseRepositoryClass<User> {
       'prefMaxDistanceKm',
       'prefTags',
     ];
-    const entries = (Object.entries(prefs) as [
-      keyof StoredSearchPreferences,
-      StoredSearchPreferences[keyof StoredSearchPreferences],
-    ][]).filter(([key, value]) => allowed.includes(key) && value !== undefined);
+    const entries = (
+      Object.entries(prefs) as [
+        keyof StoredSearchPreferences,
+        StoredSearchPreferences[keyof StoredSearchPreferences],
+      ][]
+    ).filter(([key, value]) => allowed.includes(key) && value !== undefined);
 
     if (entries.length === 0) {
       const existing = await this.getSearchPreferences(userId);

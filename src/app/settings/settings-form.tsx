@@ -1,14 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import {
-  MapPin,
-  UserCircle,
-  User,
-  Images,
-  Lock,
-  Sliders,
-} from 'lucide-react';
+import { MapPin, UserCircle, User, Images, Lock, Sliders } from 'lucide-react';
 import { toast } from 'sonner';
 import { UserProfile } from '@/server/schemas';
 import { PhotoGallery, PicturesState } from './photo-gallery';
