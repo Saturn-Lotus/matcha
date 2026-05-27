@@ -72,9 +72,10 @@ Connection state is derived: mutual likes with no block between them.
 - **View recording trigger**: when the viewer advances past the first photo (taps to photo #2) of a card. This converts the "card flashed past me" noise into an intentional engagement signal. Idempotent per viewer/viewed pair per day.
 
 ### Surface 2 — Permalink page (`/users/[id]`)
-- Minimal Messenger-style layout. Entry point for notifications, chat headers, and direct links.
-- **Above the fold (always visible)**: avatar, full name, age, online/last-seen, fame rating, relational badge, action row (Like/Unlike, Message if connected, `⋮` overflow with Block + Report).
-- **Expandable / below the fold**: photo gallery (up to 5), bio, all interest tags, gender, sexual preferences, location/distance.
+- Hero-card layout (a single large 4:5 / 5:6 photo card on top, content stacked beneath). Entry point for notifications, chat headers, and direct links.
+- **Above the fold**: hero photo with photo-carousel pips, chevron arrows, online/last-seen + location/distance chips, relational badge, name + age + gender + orientation + fame overlaid at the bottom of the photo. Action row (Like/Unlike, Message if connected, `⋮` overflow with Block + Report) immediately below the card.
+- **Below the fold**: `About` (bio), `Interests` (chips alternating strawberry/matcha), `Details` (icon list: gender, sexual preference, city + distance, online/last-seen, fame rating).
+- **Friendly labels** — raw enum values are never shown. Gender renders as `Man`/`Woman`. Sexual preference renders as `Interested in men`/`Interested in women`/`Interested in everyone`. A derived `Straight`/`Gay`/`Bi` orientation chip sits next to the name (computed from `gender` × `sexualPreference`). All helpers live in [src/lib/utils.ts](src/lib/utils.ts) (`formatGenderLabel`, `formatPreferenceLabel`, `formatOrientationLabel`, `formatDistanceKm`).
 - **View recording trigger**: fired once on mount (idempotent per day).
 - Self-view → server-side redirect to `/settings`.
 - Blocked either direction → 404 (PV-11).
@@ -133,7 +134,7 @@ Stage 8 (feed card adoption of all the above) is a UI assembly step — no new u
 - [x] `blockUser(viewerId, targetId)` — validates target exists, throws `CannotSelfActError`, delegates to repo (atomic block + like cleanup), recomputes fame
 - [ ] `unblock(viewerId, targetId)`
 - [x] `report(viewerId, targetId, reason)` — validates target exists, throws `CannotSelfActError`, throws `AlreadyReportedError` if the viewer has already reported this user
-- [x] `getPublicProfile(viewerId, targetId)` — returns profile minus email/password plus `viewerLiked` / `targetLiked` / `targetViewedViewer` / `connected`; throws `UserNotFoundError` (404) if user missing or if blocked in either direction
+- [x] `getPublicProfile(viewerId, targetId)` — returns profile minus email/password plus `age` (derived from `birthDate`), `city`, `distanceKm` (via `LocationRepository.distanceKmBetween`), and `viewerLiked` / `targetLiked` / `targetViewedViewer` / `connected`; throws `UserNotFoundError` (404) if user missing or if blocked in either direction
 - [x] Domain error: `CannotLikeWithoutPictureError` (HTTP 422)
 - [x] Domain error: `CannotSelfActError` (HTTP 400)
 - [x] Domain error: `AlreadyReportedError` (HTTP 409)
@@ -157,7 +158,7 @@ Stage 8 (feed card adoption of all the above) is a UI assembly step — no new u
 - [ ] `FeedCard` — extend with "More" button next to like/pass, opening a sheet with full profile details + block/report/unlike
 - [x] `FeedCard` — render relational state as an icon badge on the card (top-left), driven by `BrowseProfile.connected`/`targetLiked`/`targetViewedViewer`; uses shared `RelationBadge`
 - [x] `FeedCard` — emit a `view` event when the viewer advances past the first photo (idempotent per session via `recordedViewsRef` in `discover-feed.tsx`; server enforces idempotency per pair via `ON CONFLICT` in `social-repository.ts`)
-- [ ] `/users/[id]` page — minimal Messenger-style layout (avatar, name, age, online, fame, relational badge, action row + expandable details)
+- [x] `/users/[id]` page — hero-card layout: 4:5 photo card on top with carousel pips, chevron nav, online/distance chips, relational badge, name + age + gender + orientation + fame overlay; action row (Like / Message / More) below; About, Interests, Details sections ([profile-view.tsx](src/app/users/[id]/profile-view.tsx))
 - [x] `/users/[id]` — fire `POST /api/users/[id]/views` once on mount ([profile-view.tsx](src/app/users/[id]/profile-view.tsx))
 - [x] `/users/[id]` — Like / Unlike button with optimistic toggle and burst animation; initial state from `viewerLiked` returned by `GET /api/users/[id]` ([profile-view.tsx](src/app/users/[id]/profile-view.tsx))
 - [x] `/users/[id]` — server-side redirect to `/settings` if `id === viewer.id` ([users/[id]/page.tsx](src/app/users/[id]/page.tsx))
@@ -165,9 +166,9 @@ Stage 8 (feed card adoption of all the above) is a UI assembly step — no new u
 - [x] Browse feed hides blocked users in either direction (`NOT EXISTS` clause against `user_blocks` in `getUsersWithProfiles`)
 - [x] Like button gated when viewer has no profile picture — server-side via `CannotLikeWithoutPictureError` in `SocialService.likeUser`, client-side via `viewerHasAvatar` prop drilled from `browse/page.tsx` and `users/[id]/page.tsx` with `Tooltip` + Sonner toast
 - [x] `RelationBadge` component — `connected` / `liked-you` / `viewed-you` variants ([src/app/components/ui/relation-badge.tsx](src/app/components/ui/relation-badge.tsx)); shared between feed card and permalink
+- [x] Friendly label helpers — `formatGenderLabel`, `formatPreferenceLabel`, `formatOrientationLabel`, `formatDistanceKm` in [src/lib/utils.ts](src/lib/utils.ts) so raw enum values (`male`/`female`/`both`) never reach the UI
 - [ ] `OnlineIndicator` component — green dot or "Last seen X ago"
-- [x] Overflow menu on `/users/[id]` action row with "Block user" and "Report user" items + confirm modals (sonner toast on success; block redirects to `/browse`, report stays on page); the report modal exposes a reason dropdown
-
+- [x] Overflow menu with "Block" + "Report" items (UI only — stubs that toast "coming soon"; live in both the subnav kebab and the `More` action button on [profile-view.tsx](src/app/users/[id]/profile-view.tsx)); confirm dialogs + wired actions still pending
 - [ ] Notifications and chat headers link to `/users/[id]` (deep-link target)
 
 ### Tests
