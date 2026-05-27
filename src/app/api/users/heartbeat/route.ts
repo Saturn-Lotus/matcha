@@ -7,10 +7,8 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
   const userId = request.headers.get('x-user-id');
   if (!userId) throw new UnauthorizedException('Not authenticated');
 
-  const online = request.nextUrl.searchParams.get('online') !== 'false';
-
   const userService = await getUserService();
-  await userService.setOnlineStatus(userId, online);
+  await userService.recordHeartbeat(userId);
 
   return NextResponse.json({ ok: true });
 });

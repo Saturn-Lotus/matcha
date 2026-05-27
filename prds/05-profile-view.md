@@ -151,8 +151,8 @@ Stage 8 (feed card adoption of all the above) is a UI assembly step — no new u
 - [ ] `GET /api/users/me/likes` — paginated
 
 ### Online presence
-- [ ] Heartbeat: update `users.last_seen_at` + `is_online = true` on every authenticated request via middleware
-- [ ] Scheduled job or TTL: set `is_online = false` after 5 min of inactivity (or on WebSocket disconnect)
+- [x] Heartbeat: client `useHeartbeat` posts `POST /api/users/heartbeat` every 60s (and on visibility change); server updates `user_profiles.lastSeenAt = NOW()` only
+- [x] Offline TTL: `isOnline` is no longer a stored column — it is derived on read as `lastSeenAt > NOW() - INTERVAL '5 minutes'` in every query that exposes it (`findProfileByUserId`, `getUsersWithProfiles`). This eliminates the need for a scheduled job. Migration `1779884913161_drop-users-is-online-column.js` drops the column.
 
 ### UI
 - [ ] `FeedCard` — extend with "More" button next to like/pass, opening a sheet with full profile details + block/report/unlike
