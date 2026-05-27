@@ -1,10 +1,10 @@
 #!/bin/bash
-# populate_users.sh
-# Seeds the database with 500 randomised users via populate_users.sql.
+# seed_users.sh
+# Seeds the database with 500 randomised users via seed_users.sql.
 #
 # Usage:
-#   bash scripts/populate_users.sh          # append seed users
-#   bash scripts/populate_users.sh --clean  # wipe seed users first, then re-seed
+#   bash scripts/seed_users.sh          # append seed users
+#   bash scripts/seed_users.sh --clean  # wipe seed users first, then re-seed
 
 set -euo pipefail
 
@@ -49,5 +49,5 @@ if [[ "${1:-}" == "--clean" ]]; then
 fi
 
 echo "Seeding database with 500 users..."
-psql "$POSTGRES_CONNECTION_STRING" -f "$SCRIPT_DIR/populate_users.sql"
+psql "$POSTGRES_CONNECTION_STRING" -f "$SCRIPT_DIR/seed_users.sql"
 echo "Done."

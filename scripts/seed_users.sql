@@ -1,10 +1,10 @@
--- populate_users.sql
+-- seed_users.sql
 -- Seeds the database with 500 users for browse/feed testing.
 -- Populates: users, user_profiles (with pictures, fameRating, isOnline),
 --            and user_locations (with PostGIS geometry) near Paris.
 --
 -- All users share the password "password123".
--- Run via: bash scripts/populate_users.sh
+-- Run via: bash scripts/seed_users.sh
 
 DO $$
 DECLARE
