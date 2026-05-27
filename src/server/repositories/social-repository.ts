@@ -59,20 +59,26 @@ export class SocialRepository {
     );
   }
 
-  async likeUser(likerUserId: string, likedUserId: string): Promise<void> {
-    await this.db.query(
+  /** Insert a like row. Returns false if the pair already existed. */
+  async likeUser(likerUserId: string, likedUserId: string): Promise<boolean> {
+    const rows = await this.db.query<{ likerUserId: string }>(
       `INSERT INTO user_likes ("likerUserId", "likedUserId", "likedAt")
        VALUES ($1, $2, CURRENT_TIMESTAMP)
-       ON CONFLICT DO NOTHING;`,
+       ON CONFLICT DO NOTHING
+       RETURNING "likerUserId";`,
       [likerUserId, likedUserId],
     );
+    return rows.length > 0;
   }
 
-  async unlikeUser(likerUserId: string, likedUserId: string): Promise<void> {
-    await this.db.query(
-      `DELETE FROM user_likes WHERE "likerUserId" = $1 AND "likedUserId" = $2;`,
+  /** Delete a like row. Returns false if no row existed. */
+  async unlikeUser(likerUserId: string, likedUserId: string): Promise<boolean> {
+    const rows = await this.db.query<{ likerUserId: string }>(
+      `DELETE FROM user_likes WHERE "likerUserId" = $1 AND "likedUserId" = $2
+       RETURNING "likerUserId";`,
       [likerUserId, likedUserId],
     );
+    return rows.length > 0;
   }
 
   /** Get people who liked a user, most recent first */
@@ -138,21 +144,28 @@ export class SocialRepository {
     return rows[0]?.exists ?? false;
   }
 
-  /** Block a user — inserts the block row and deletes likes both directions atomically */
-  async blockUser(blockerUserId: string, blockedUserId: string): Promise<void> {
-    await this.db.transaction(async (tx) => {
-      await tx.query(
+  /** Block a user — inserts the block row and deletes likes both directions atomically.
+   *  Returns false if the block already existed. */
+  async blockUser(
+    blockerUserId: string,
+    blockedUserId: string,
+  ): Promise<boolean> {
+    return this.db.transaction(async (tx) => {
+      const rows = await tx.query<{ blockerUserId: string }>(
         `INSERT INTO user_blocks ("blockerUserId", "blockedUserId", "blockedAt")
          VALUES ($1, $2, CURRENT_TIMESTAMP)
-         ON CONFLICT DO NOTHING;`,
+         ON CONFLICT DO NOTHING
+         RETURNING "blockerUserId";`,
         [blockerUserId, blockedUserId],
       );
+      if (rows.length === 0) return false;
       await tx.query(
         `DELETE FROM user_likes
          WHERE ("likerUserId" = $1 AND "likedUserId" = $2)
             OR ("likerUserId" = $2 AND "likedUserId" = $1);`,
         [blockerUserId, blockedUserId],
       );
+      return true;
     });
   }
 

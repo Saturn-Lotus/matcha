@@ -73,11 +73,8 @@ export class UserService {
     });
   };
 
-  setOnlineStatus = async (
-    userId: string,
-    isOnline: boolean,
-  ): Promise<void> => {
-    await this.userRepository.setOnline(userId, isOnline);
+  recordHeartbeat = async (userId: string): Promise<void> => {
+    await this.userRepository.touchLastSeen(userId);
   };
 
   getUserById = async (id: string) => {

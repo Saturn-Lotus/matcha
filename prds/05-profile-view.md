@@ -129,16 +129,16 @@ Stage 8 (feed card adoption of all the above) is a UI assembly step — no new u
 
 ### Service — `SocialService`
 - [ ] `viewProfile(viewerId, targetId)` — check blocks, record view, emit `profile_viewed` notification
-- [x] `likeUser(likerUserId, likedUserId)` — checks viewer has at least one profile picture (throws `CannotLikeWithoutPictureError`), inserts like, recomputes fame; mutual-like notification still pending
-- [ ] `unlike(viewerId, targetId)` — delete like, emit `unliked` notification if was connected
-- [x] `blockUser(viewerId, targetId)` — validates target exists, throws `CannotSelfActError`, delegates to repo (atomic block + like cleanup), recomputes fame
+- [x] `likeUser(likerUserId, likedUserId)` — checks viewer has at least one profile picture (throws `CannotLikeWithoutPictureError`), inserts like, throws `AlreadyExistsException` (409) if pair already liked, recomputes fame; mutual-like notification still pending
+- [x] `unlikeUser(viewerId, targetId)` — delete like (throws `NotFoundException` (404) if no like existed), recompute fame; `unliked` notification still pending
+- [x] `blockUser(viewerId, targetId)` — validates target exists, throws `SelfActionForbiddenException`, throws `AlreadyExistsException` (409) if pair already blocked, delegates to repo (atomic block + like cleanup), recomputes fame
 - [ ] `unblock(viewerId, targetId)`
-- [x] `report(viewerId, targetId, reason)` — validates target exists, throws `CannotSelfActError`, throws `AlreadyReportedError` if the viewer has already reported this user
-- [x] `getPublicProfile(viewerId, targetId)` — returns profile minus email/password plus `age` (derived from `birthDate`), `city`, `distanceKm` (via `LocationRepository.distanceKmBetween`), and `viewerLiked` / `targetLiked` / `targetViewedViewer` / `connected`; throws `UserNotFoundError` (404) if user missing or if blocked in either direction
+- [x] `report(viewerId, targetId, reason)` — validates target exists, throws `SelfActionForbiddenException`, throws `AlreadyExistsException` (409) if the viewer has already reported this user
+- [x] `getPublicProfile(viewerId, targetId)` — returns profile minus email/password plus `age` (derived from `birthDate`), `city`, `distanceKm` (via `LocationRepository.distanceKmBetween`), and `viewerLiked` / `targetLiked` / `targetViewedViewer` / `connected`; throws `NotFoundException` (404) if user missing or if blocked in either direction
 - [x] Domain error: `CannotLikeWithoutPictureError` (HTTP 422)
-- [x] Domain error: `CannotSelfActError` (HTTP 400)
-- [x] Domain error: `AlreadyReportedError` (HTTP 409)
-- [ ] Remaining domain errors: `AlreadyLiked`, `NotLiked`, `AlreadyBlocked`
+- [x] Shared error: `SelfActionForbiddenException` (HTTP 400) — from `@/lib/exception-http-mapper`
+- [x] Shared error: `AlreadyExistsException` (HTTP 409) — covers already-liked / already-blocked / already-reported; message set at throw site
+- [x] Shared error: `NotFoundException` (HTTP 404) — covers user-not-found / not-liked; message set at throw site
 
 ### Routes
 - [ ] `GET /api/users/[id]` — call `SocialService.getPublicProfile`, return 200 or 404
@@ -151,8 +151,8 @@ Stage 8 (feed card adoption of all the above) is a UI assembly step — no new u
 - [ ] `GET /api/users/me/likes` — paginated
 
 ### Online presence
-- [ ] Heartbeat: update `users.last_seen_at` + `is_online = true` on every authenticated request via middleware
-- [ ] Scheduled job or TTL: set `is_online = false` after 5 min of inactivity (or on WebSocket disconnect)
+- [x] Heartbeat: client `useHeartbeat` posts `POST /api/users/heartbeat` every 60s (and on visibility change); server updates `user_profiles.lastSeenAt = NOW()` only
+- [x] Offline TTL: `isOnline` is no longer a stored column — it is derived on read as `lastSeenAt > NOW() - INTERVAL '5 minutes'` in every query that exposes it (`findProfileByUserId`, `getUsersWithProfiles`). This eliminates the need for a scheduled job. Migration `1779884913161_drop-users-is-online-column.js` drops the column.
 
 ### UI
 - [ ] `FeedCard` — extend with "More" button next to like/pass, opening a sheet with full profile details + block/report/unlike

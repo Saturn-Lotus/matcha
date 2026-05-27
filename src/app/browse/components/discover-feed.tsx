@@ -291,6 +291,16 @@ export function DiscoverFeed({ userId, viewerHasAvatar }: DiscoverFeedProps) {
     setPassedIds((s) => new Set([...s, profileId]));
   }, []);
 
+  const handleBlocked = useCallback((profileId: string) => {
+    setProfiles((prev) => prev.filter((p) => p.id !== profileId));
+    setLikedIds((s) => {
+      if (!s.has(profileId)) return s;
+      const next = new Set(s);
+      next.delete(profileId);
+      return next;
+    });
+  }, []);
+
   const recordedViewsRef = useRef<Set<string>>(new Set());
   const handlePhotoView = useCallback((profileId: string) => {
     if (recordedViewsRef.current.has(profileId)) return;
@@ -348,6 +358,7 @@ export function DiscoverFeed({ userId, viewerHasAvatar }: DiscoverFeedProps) {
           onPass={handlePass}
           onActiveChange={setActiveId}
           onPhotoView={handlePhotoView}
+          onBlocked={handleBlocked}
           scrollRef={scrollerRef}
         />
       </div>

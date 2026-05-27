@@ -110,7 +110,8 @@ export class UserRepository extends BaseRepositoryClass<User> {
 
   async findProfileByUserId(userId: string): Promise<UserProfile | null> {
     const rows = await this.db.query<UserProfile>(
-      `SELECT * FROM ${this.userProfilesTable} WHERE "userId" = $1 LIMIT 1;`,
+      `SELECT *, ("lastSeenAt" > NOW() - INTERVAL '5 minutes') AS "isOnline"
+       FROM ${this.userProfilesTable} WHERE "userId" = $1 LIMIT 1;`,
       [userId],
     );
     if (rows.length === 0) {
@@ -201,12 +202,12 @@ export class UserRepository extends BaseRepositoryClass<User> {
     return rows[0];
   }
 
-  async setOnline(userId: string, isOnline: boolean): Promise<void> {
+  async touchLastSeen(userId: string): Promise<void> {
     await this.db.query(
       `UPDATE ${this.userProfilesTable}
-       SET "isOnline" = $1, "lastSeenAt" = NOW()
-       WHERE "userId" = $2;`,
-      [isOnline, userId],
+       SET "lastSeenAt" = NOW()
+       WHERE "userId" = $1;`,
+      [userId],
     );
   }
 
@@ -262,7 +263,7 @@ export class UserRepository extends BaseRepositoryClass<User> {
            up."firstName",
            up."birthDate",
            up."fameRating",
-           up."isOnline",
+           (up."lastSeenAt" > NOW() - INTERVAL '5 minutes') AS "isOnline",
            up."lastSeenAt",
            up."avatarUrl",
            up.pictures,

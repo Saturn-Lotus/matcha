@@ -15,6 +15,7 @@ interface FeedScrollerProps {
   onPass: (id: string) => void;
   onActiveChange?: (id: string) => void;
   onPhotoView?: (id: string) => void;
+  onBlocked?: (id: string) => void;
   scrollRef: React.RefObject<HTMLDivElement | null>;
 }
 
@@ -28,6 +29,7 @@ export function FeedScroller({
   onPass,
   onActiveChange,
   onPhotoView,
+  onBlocked,
   scrollRef,
 }: FeedScrollerProps) {
   const [activeId, setActiveId] = useState(profiles[0]?.id ?? '');
@@ -83,6 +85,7 @@ export function FeedScroller({
                 onLike={onToggleLike}
                 onPass={onPass}
                 onPhotoView={onPhotoView}
+                onBlocked={onBlocked}
               />
             </div>
           ) : (
@@ -96,6 +99,7 @@ export function FeedScroller({
               onLike={onToggleLike}
               onPass={onPass}
               onPhotoView={onPhotoView}
+              onBlocked={onBlocked}
             />
           )}
         </div>

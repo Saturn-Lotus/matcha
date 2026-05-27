@@ -2,7 +2,11 @@ import { IMailer } from '@/lib/mailer/Mailer';
 import { UserRepository, UserTokensRepository } from '@/server/repositories';
 import { randomBytes } from 'crypto';
 import { encrypt, decrypt } from '@/lib/auth/session';
-import { HTTPError, NotFoundException } from '@/lib/exception-http-mapper';
+import {
+  AlreadyExistsException,
+  HTTPError,
+  NotFoundException,
+} from '@/lib/exception-http-mapper';
 import bcrypt from 'bcrypt';
 import { renderTemplate } from '@/lib/mailer/utils';
 
@@ -36,13 +40,6 @@ export class InvalidCredentialsError extends Error {
   constructor(message = 'Invalid username or password') {
     super(message);
     this.name = 'InvalidCredentialsError';
-  }
-}
-
-@HTTPError(409)
-export class EmailInUseError extends Error {
-  constructor(message = 'Email is already in use by another account') {
-    super(message);
   }
 }
 
@@ -186,7 +183,9 @@ export class AuthService {
     }
     const emailInUse = await this.userRepo.findByEmail(user.pendingEmail);
     if (emailInUse && emailInUse.id !== user.id) {
-      throw new EmailInUseError();
+      throw new AlreadyExistsException(
+        'Email is already in use by another account',
+      );
     }
     await this.userRepo.update(user.id, {
       email: user.pendingEmail,
