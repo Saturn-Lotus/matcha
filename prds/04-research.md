@@ -1,113 +1,152 @@
-# PRD 04 — Research (Advanced Search)
+# PRD 04 — Search Preferences & Live Sort
 
 ## Context
-Subject §IV.4. Dedicated search experience with explicit filter selection, distinct from the default suggestion feed.
+Subject §IV.4 asks for an advanced search by age, fame rating, location and
+interest tags, with sortable and filterable results. Instead of a dedicated
+`/search` page, the criteria are persisted as the viewer's **search
+preferences** and applied automatically when browsing. A compact sort popover
+on the feed lets the viewer re-order results live without leaving discovery.
+
+This keeps one discovery surface, reuses the existing browse pipeline, and
+satisfies the requirement that results be both filterable (via persisted
+preferences) and sortable (via the popover).
 
 ---
 
 ## Scope
-User picks one or more criteria (subject §IV.4):
-- Age range (min/max years).
-- Fame rating range (min/max).
-- Location (city string or coordinates + radius in km).
-- One or more interest tags (AND semantics — user must have ALL selected tags).
-
-Results must be sortable **and** filterable by age, location, fame rating, and interest tags (same axes as browsing §IV.3).
-At least one criterion must be provided (no full-table browse).
+- Persist four criteria on `user_profiles`: age range, fame rating range,
+  maximum distance (km), and interest tags (AND semantics).
+- Edit preferences in a new **Search Preferences** section under `/settings`.
+- Apply preferences as the default filters on `/browse`.
+- Sort popover on the feed exposing the five sort keys (`relevance`,
+  `sharedTagCount`, `distance`, `fameRating`, `age`) and the direction
+  (`asc`/`desc`).
+- Extend the browse endpoint with `minAge` so a real age range is supported.
 
 ## Out of scope
+- Standalone `/search` page or `SearchForm` component.
 - Free-text name/bio search.
-- Saved searches.
-- Shareable search URLs / URL-synced filters (not required by the subject).
+- Saved searches, multi-profile preference sets.
+- Shareable URLs / URL-synced filters.
 
 ---
 
 ## Data model
-No new tables. Reuses PRD 02/03 schema.  
-Consider covering index: `(birthdate, fame_rating)` on `users`.
+New columns on `user_profiles` (migration
+`1779911702313_add-search-preferences-to-user-profiles.js`):
+
+| Column | Type | Notes |
+|---|---|---|
+| `prefMinAge` | `INT` | nullable; 18..120 enforced server-side |
+| `prefMaxAge` | `INT` | nullable; 18..120 enforced server-side |
+| `prefMinFame` | `INT` | nullable; 0..100 enforced server-side |
+| `prefMaxFame` | `INT` | nullable; 0..100 enforced server-side |
+| `prefMaxDistanceKm` | `FLOAT` | nullable; 0..20000 enforced server-side |
+| `prefTags` | `TEXT[]` | nullable; max 20 items; AND semantics |
+
+Index: `idx_user_profiles_pref_tags` (GIN on `prefTags`).
 
 ---
 
 ## API surface
 | Method | Route | Description |
-|--------|-------|-------------|
-| `GET` | `/api/users/search` | Explicit advanced search, same response shape as suggestions |
+|---|---|---|
+| `GET` | `/api/users/me/search-preferences` | Returns the viewer's stored prefs |
+| `PATCH` | `/api/users/me/search-preferences` | Updates one or more pref fields |
+| `GET` | `/api/users` | Browse — now also accepts `minAge` |
 
-Query params (all optional but at least one required): `minAge`, `maxAge`, `minFame`, `maxFame`, `location` (city or `lat,lng`), `radius` (km), `tags` (comma-separated), `sort`, `order`, `cursor`, `limit`.
-
-Same response shape as `/api/users/suggestions`.
+`PATCH` body fields are all optional. Sending `null` clears a field; sending a
+value updates it. Cross-field validation enforces
+`prefMinAge ≤ prefMaxAge` and `prefMinFame ≤ prefMaxFame` (400 otherwise).
 
 ---
 
 ## UI
-- `/search` page with a visible form above results.
-- Age range slider (min/max), fame range slider, location input + radius slider, tag multi-select autocomplete.
-- Same `ProfileCard` component as browsing (reuse, no duplication).
-- Empty state when no results; validation error when no criterion given.
-- Post-search sort and filter controls applied to the result set (age, location, fame, tags).
+- **Settings → Search Preferences** (`/settings#preferences`)
+  - Two number inputs for age range, two for fame range, one for max distance.
+  - `InterestsPicker` for tags (reuses the existing component).
+  - Dedicated "Save Preferences" button with its own toast.
+- **Browse feed** (`/browse`)
+  - On mount, preferences are loaded server-side and passed into
+    `DiscoverFeed`, which uses them to build the first `/api/users` request.
+  - `SortPopover` is rendered top-right of the feed viewport
+    (`absolute top-4 right-4 z-10`).
+  - Changing sort resets the page state and refetches page 1.
 
 ---
 
 ## User Stories
 
 | # | As a… | I want… | So that… |
-|---|-------|---------|----------|
-| SR-1 | logged-in user | to search by a specific age range | I find people of the ages I prefer |
-| SR-2 | logged-in user | to search by fame rating range | I find users at a certain activity level |
-| SR-3 | logged-in user | to search by location + radius | I find people in a specific area |
-| SR-4 | logged-in user | to search by one or more tags (AND) | I find people who share all my listed interests |
-| SR-5 | logged-in user | to combine multiple criteria in one search | I get precisely targeted results |
-| SR-6 | logged-in user | to sort and filter the search results | I can explore the result set further |
-| SR-7 | logged-in user | an error when I submit empty filters | I understand that a criterion is required |
+|---|---|---|---|
+| SR-1 | logged-in user | to set min/max age in my preferences | the feed only shows me people in that range |
+| SR-2 | logged-in user | to set min/max fame rating in my preferences | the feed matches my activity expectations |
+| SR-3 | logged-in user | to set a maximum distance in my preferences | the feed shows people nearby |
+| SR-4 | logged-in user | to pick interest tags I require (AND) | the feed only shows people who share all of them |
+| SR-5 | logged-in user | my preferences to persist across sessions | I don't have to reconfigure on every visit |
+| SR-6 | logged-in user | to change sort order from inside the feed | I can explore results without going to settings |
+| SR-7 | logged-in user | server-side validation of impossible ranges | I get a clear error instead of broken results |
 
 ---
 
 ## Tasks
 
-### Repository — `SearchRepository`
-- [ ] `search(viewerId, filters, sort, cursor, limit)` — adapts the same base query as `SuggestionRepository.list` but:
-  - Applies user-supplied explicit filters (no orientation pre-filtering by default; still blocks excluded)
-  - Tag filter uses `HAVING COUNT(DISTINCT tag_id) = $tagCount` for AND semantics
-  - Location filter: if `lat/lng` provided use `ST_DWithin`; if city string provided resolve to coords via geocode or text match on `user_locations.city`
-- [ ] Share a common query builder function with `SuggestionRepository` to avoid duplicated SQL
+### Migration
+- [x] `1779911702313_add-search-preferences-to-user-profiles.js` — six columns + GIN index on `prefTags`.
 
-### Service — `SearchService`
-- [ ] `search(viewerId, query)` — require at least one criterion (throw `NoCriteriaProvided` 400), validate ranges, call repository, map to DTO
-- [ ] `parseLocationInput(input)` — string `"Paris"` → geocode to lat/lng OR `"48.85,2.35"` → parse directly
-- [ ] Reuse `SuggestionService.resolveOrientation` for optional orientation gating (search still respects blocks)
+### Schemas — `src/server/schemas/browse.ts`
+- [x] Add `minAge` to `BrowseQuerySchema`.
+- [x] Add `SearchPreferencesSchema` and `SearchPreferences` type.
+- [x] Add `StoredSearchPreferences` row-shape type.
 
-### Route
-- [ ] `GET /api/users/search` — parse query params, call `SearchService.search`, return paginated response
-- [ ] Return 400 `NoCriteriaProvided` when all filter params absent
-- [ ] Protect with auth middleware
+### Repository — `src/server/repositories/user-repository.ts`
+- [x] `getUsersWithProfiles`: forward `minAge`; SQL clause
+      `AND ($9::INT IS NULL OR "age" >= $9)`.
+- [x] `getSearchPreferences(userId)`.
+- [x] `updateSearchPreferences(userId, prefs)` using the existing dynamic SET pattern.
+
+### Service — `src/server/services/user.ts`
+- [x] Pass `minAge` through `getUsersWithProfiles`.
+- [x] `getSearchPreferences(userId)`.
+- [x] `updateSearchPreferences(userId, prefs)` with cross-field range checks
+      (throws `BadRequestException`).
+
+### Routes
+- [x] `GET/PATCH /api/users/me/search-preferences/route.ts` — wrapped in `withErrorHandler`.
+- [x] Extend `coerceBrowseQuery` in `src/app/api/users/route.ts` with `minAge`.
 
 ### UI
-- [ ] `/search` page with a `SearchForm` component — age, fame, location+radius, tag fields; "Search" submit button
-- [ ] Reuse `ProfileCard` from browsing
-- [ ] Reuse `SortControl` and filter controls from browsing for post-search refinement
-- [ ] Show "No results" with a different message than browsing (user explicitly searched, not a filter mismatch)
-- [ ] Show inline validation: "Please enter at least one criterion"
+- [x] `src/app/settings/search-preferences-tab.tsx` — new client component.
+- [x] Wire into `src/app/settings/settings-form.tsx`: new nav item + section + save handler.
+- [x] `src/app/browse/components/sort-popover.tsx` — dropdown menu with two radio groups.
+- [x] Update `src/app/browse/page.tsx`, `browse-content.tsx`, and `discover-feed.tsx` to load and apply preferences, and to refetch on sort changes.
 
-### Validation schemas
-- [ ] `searchSchema` — extends browsing filters; at-least-one check; min ≤ max checks; radius 1–500 km
-
-### Tests
-- [ ] Unit: `SearchService.search` — no criteria → 400, tag AND semantics, location string parsing
-- [ ] Unit: `SearchRepository.search` — tag AND filter returns only users with all tags
-- [ ] E2E (Cypress): fill tag + age → submit → results shown; clear all fields → submit → validation message
+### Tests (follow-up)
+- [ ] Unit: `UserService.updateSearchPreferences` rejects `prefMinAge > prefMaxAge` and `prefMinFame > prefMaxFame`.
+- [ ] Unit: `UserRepository.getUsersWithProfiles` excludes rows with `age < minAge`.
+- [ ] Route: `/api/users/me/search-preferences` GET (defaults to nulls) + PATCH (200/400).
+- [ ] Cypress: save prefs in `/settings` → land on `/browse` → first request URL includes prefs; toggle sort popover → list refetches.
 
 ---
 
 ## Acceptance criteria
-- All four criteria types are supported: age range, fame range, location, interest tags.
-- Search respects gender/orientation gating (same as browsing; blocked users excluded).
-- Empty criteria returns 400 (not a full-table scan).
-- Tag filter applies AND semantics; case-insensitive.
-- Results are sortable and filterable by age, location, fame rating, and interest tags after the initial search.
-- Results paginated.
-- Ranges validated server-side (min ≤ max; caps enforced).
+- Preferences persist on `user_profiles` and survive logout/login.
+- `/browse` reads the viewer's preferences on the server and uses them as the
+  default filters for the first request.
+- Sort popover changes trigger a fresh page-1 fetch with the new
+  `sortBy`/`sortDirection`.
+- Interest-tag filter applies AND semantics (existing `interests &&` SQL is
+  retained; viewer-supplied tags act as required-overlap).
+- `minAge` and the existing max-age (`age`) clamp the candidate set to a real
+  range; server rejects values outside 18..120.
+- Cross-field validation (`prefMinAge ≤ prefMaxAge`,
+  `prefMinFame ≤ prefMaxFame`) returns 400.
 
 ---
 
 ## Security
-- Validate all ranges server-side (min ≤ max; reasonable caps: age 18–99, fame 0–9999, radius 1–500). Reject malformed inputs with 400.
+- All ranges validated server-side (age 18..120, fame 0..100, distance 0..20000).
+- Tags array capped at 20 items; each tag is parsed as a string.
+- `PATCH /api/users/me/search-preferences` is gated by `x-user-id` (auth
+  middleware) — users cannot edit other users' preferences.
+- No new sensitive data introduced.
