@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Heart, User as UserIcon, X } from 'lucide-react';
+import { Heart, MoreVertical, User as UserIcon, X } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { cn, relativeTime } from '@/lib/utils';
@@ -15,6 +15,11 @@ import {
   RelationBadge,
   pickRelationVariant,
 } from '@/app/components/ui/relation-badge';
+import {
+  BlockConfirmDialog,
+  ReportConfirmDialog,
+} from '@/app/users/[id]/components/safety-dialogs';
+import { FeedCardMoreSheet } from './feed-card-more-sheet';
 import type { BrowseProfile } from '../types';
 
 const getPhotosListFromProfile = (profile: BrowseProfile) => {
@@ -34,6 +39,7 @@ interface FeedCardProps {
   onLike: (id: string) => void;
   onPass: (id: string) => void;
   onPhotoView?: (id: string) => void;
+  onBlocked?: (id: string) => void;
 }
 
 export function FeedCard({
@@ -46,10 +52,14 @@ export function FeedCard({
   onLike,
   onPass,
   onPhotoView,
+  onBlocked,
 }: FeedCardProps) {
   const photos = getPhotosListFromProfile(profile);
   const [photoIdx, setPhotoIdx] = useState(0);
   const [burst, setBurst] = useState(0);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [showBlock, setShowBlock] = useState(false);
+  const [showReport, setShowReport] = useState(false);
   const viewFiredRef = useRef(false);
 
   useEffect(() => {
@@ -211,6 +221,17 @@ export function FeedCard({
       </div>
 
       <div className="absolute right-2 bottom-24 z-20 flex flex-col items-center gap-4">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setSheetOpen(true);
+          }}
+          aria-label="More options"
+          className="w-12 h-12 rounded-full flex items-center justify-center bg-white/[0.13] backdrop-blur hover:bg-white/25 transition-all border-0 cursor-pointer"
+        >
+          <MoreVertical className="w-[22px] h-[22px] text-white" />
+        </button>
+
         <Link
           href={`/users/${profile.id}`}
           aria-label={`View ${profile.firstName}'s profile`}
@@ -293,6 +314,31 @@ export function FeedCard({
           <Heart className="w-[120px] h-[120px] fill-current drop-shadow-[0_6px_16px_rgba(244,114,182,0.6)]" />
         </div>
       )}
+
+      <FeedCardMoreSheet
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+        firstName={profile.firstName}
+        isLiked={isLiked}
+        onUnlike={() => onLike(profile.id)}
+        onReport={() => setShowReport(true)}
+        onBlock={() => setShowBlock(true)}
+      />
+
+      <BlockConfirmDialog
+        open={showBlock}
+        onOpenChange={setShowBlock}
+        targetId={profile.id}
+        targetName={profile.firstName}
+        onBlocked={() => onBlocked?.(profile.id)}
+      />
+
+      <ReportConfirmDialog
+        open={showReport}
+        onOpenChange={setShowReport}
+        targetId={profile.id}
+        targetName={profile.firstName}
+      />
     </div>
   );
 }

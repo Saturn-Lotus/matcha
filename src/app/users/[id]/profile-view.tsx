@@ -30,8 +30,10 @@ import { ProfileActionRow } from './components/profile-action-row';
 import { ProfileSection, ProfileDivider } from './components/profile-section';
 import { ProfileInterestTags } from './components/profile-interest-tags';
 import { ProfileDetailGrid } from './components/profile-detail-grid';
-
-type ReportReason = 'fake_account' | 'spam' | 'harassment';
+import {
+  BlockConfirmDialog,
+  ReportConfirmDialog,
+} from './components/safety-dialogs';
 
 interface ProfileViewProps {
   id: string;
@@ -45,11 +47,7 @@ export function ProfileView({ id, viewerHasAvatar }: ProfileViewProps) {
   const [isLiked, setIsLiked] = useState(false);
 
   const [showBlockConfirm, setShowBlockConfirm] = useState(false);
-  const [blocking, setBlocking] = useState(false);
   const [showReportConfirm, setShowReportConfirm] = useState(false);
-  const [reporting, setReporting] = useState(false);
-  const [reportReason, setReportReason] =
-    useState<ReportReason>('fake_account');
 
   useEffect(() => {
     apiClient
@@ -81,41 +79,6 @@ export function ProfileView({ id, viewerHasAvatar }: ProfileViewProps) {
       }
     } catch {
       setIsLiked(wasLiked);
-    }
-  };
-
-  const confirmReport = async () => {
-    if (reporting) return;
-    setReporting(true);
-    try {
-      await apiClient.post(`/users/${id}/report`, { reason: reportReason });
-      toast.success('Report submitted', {
-        description: 'Thanks for helping keep the community safe.',
-      });
-      setShowReportConfirm(false);
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Could not submit report';
-      toast.error(message);
-      setShowReportConfirm(false);
-    } finally {
-      setReporting(false);
-    }
-  };
-
-  const confirmBlock = async () => {
-    if (blocking) return;
-    setBlocking(true);
-    try {
-      await apiClient.post(`/users/${id}/block`);
-      toast.success(
-        profile?.username ? `You blocked @${profile.username}` : 'User blocked',
-      );
-      router.replace('/browse');
-    } catch {
-      toast.error('Could not block user. Please try again.');
-      setBlocking(false);
-      setShowBlockConfirm(false);
     }
   };
 
@@ -303,105 +266,21 @@ export function ProfileView({ id, viewerHasAvatar }: ProfileViewProps) {
         </ProfileCard>
       </div>
 
-      {showBlockConfirm && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-6"
-          onClick={() => !blocking && setShowBlockConfirm(false)}
-        >
-          <div
-            className="w-full max-w-sm rounded-2xl bg-white border border-border p-5 shadow-xl text-neutral-900"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-lg font-semibold">
-              Block {profile.firstName}?
-            </h3>
-            <p className="text-sm text-neutral-600 mt-2">
-              They won&apos;t appear in your browse feed or search results, and
-              you won&apos;t see each other&apos;s profile. Any existing likes
-              between you will be removed.
-            </p>
-            <div className="flex justify-end gap-2 mt-5">
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={blocking}
-                onClick={() => setShowBlockConfirm(false)}
-                className="text-neutral-700 hover:bg-neutral-100"
-              >
-                Cancel
-              </Button>
-              <Button
-                size="sm"
-                disabled={blocking}
-                onClick={confirmBlock}
-                className="strawberry-matcha-btn text-white hover:opacity-90"
-              >
-                {blocking ? 'Blocking…' : 'Block'}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <BlockConfirmDialog
+        open={showBlockConfirm}
+        onOpenChange={setShowBlockConfirm}
+        targetId={id}
+        targetName={profile.firstName}
+        targetUsername={profile.username}
+        onBlocked={() => router.replace('/browse')}
+      />
 
-      {showReportConfirm && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-6"
-          onClick={() => !reporting && setShowReportConfirm(false)}
-        >
-          <div
-            className="w-full max-w-sm rounded-2xl bg-white border border-border p-5 shadow-xl text-neutral-900"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-lg font-semibold">
-              Report {profile.firstName}?
-            </h3>
-            <p className="text-sm text-neutral-600 mt-2">
-              Let us know what&apos;s wrong with this profile. Our team will
-              review your report.
-            </p>
-            <label
-              htmlFor="report-reason"
-              className="block text-xs font-semibold text-neutral-700 mt-4 mb-1"
-            >
-              Reason
-            </label>
-            <select
-              id="report-reason"
-              value={reportReason}
-              disabled={reporting}
-              onChange={(e) => setReportReason(e.target.value as ReportReason)}
-              className="w-full h-10 rounded-md border border-neutral-300 bg-white px-3 text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-primary/40"
-            >
-              <option value="fake_account">Fake account</option>
-              <option value="spam">Spam</option>
-              <option value="harassment">Harassment</option>
-            </select>
-            <div className="flex justify-end gap-2 mt-5">
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={reporting}
-                onClick={() => setShowReportConfirm(false)}
-                className="text-neutral-700 hover:bg-neutral-100"
-              >
-                Cancel
-              </Button>
-              <Button
-                size="sm"
-                disabled={reporting}
-                onClick={confirmReport}
-                className="strawberry-matcha-btn text-white hover:opacity-90"
-              >
-                {reporting ? 'Reporting…' : 'Submit report'}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ReportConfirmDialog
+        open={showReportConfirm}
+        onOpenChange={setShowReportConfirm}
+        targetId={id}
+        targetName={profile.firstName}
+      />
     </div>
   );
 }
