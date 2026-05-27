@@ -14,6 +14,7 @@ function coerceBrowseQuery(sp: URLSearchParams) {
     minFameRating: coerceSearchParamNumber(sp, 'minFameRating'),
     maxFameRating: coerceSearchParamNumber(sp, 'maxFameRating'),
     age: coerceSearchParamNumber(sp, 'age'),
+    minAge: coerceSearchParamNumber(sp, 'minAge'),
     sortBy: sp.get('sortBy') ?? undefined,
     sortDirection: sp.get('sortDirection') ?? undefined,
   };

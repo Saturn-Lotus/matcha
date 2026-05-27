@@ -21,6 +21,7 @@ import {
 } from '@/app/users/[id]/components/safety-dialogs';
 import { FeedCardMoreSheet } from './feed-card-more-sheet';
 import type { BrowseProfile } from '../types';
+import type { SortBy, SortDirection } from '@/server/types';
 
 const getPhotosListFromProfile = (profile: BrowseProfile) => {
   const hasPhotos = profile.photos.length > 0;
@@ -36,6 +37,9 @@ interface FeedCardProps {
   framed: boolean;
   viewerInterests: string[];
   viewerHasAvatar: boolean;
+  sortBy: SortBy;
+  sortDirection: SortDirection;
+  onSortChange: (sortBy: SortBy, sortDirection: SortDirection) => void;
   onLike: (id: string) => void;
   onPass: (id: string) => void;
   onPhotoView?: (id: string) => void;
@@ -49,6 +53,9 @@ export function FeedCard({
   framed,
   viewerInterests,
   viewerHasAvatar,
+  sortBy,
+  sortDirection,
+  onSortChange,
   onLike,
   onPass,
   onPhotoView,
@@ -221,17 +228,6 @@ export function FeedCard({
       </div>
 
       <div className="absolute right-2 bottom-24 z-20 flex flex-col items-center gap-4">
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setSheetOpen(true);
-          }}
-          aria-label="More options"
-          className="w-12 h-12 rounded-full flex items-center justify-center bg-white/[0.13] backdrop-blur hover:bg-white/25 transition-all border-0 cursor-pointer"
-        >
-          <MoreVertical className="w-[22px] h-[22px] text-white" />
-        </button>
-
         <Link
           href={`/users/${profile.id}`}
           aria-label={`View ${profile.firstName}'s profile`}
@@ -282,11 +278,6 @@ export function FeedCard({
               </TooltipContent>
             )}
           </Tooltip>
-          <span className="text-[11px] font-semibold text-white drop-shadow">
-            {Math.round(
-              profile.fameRating + (isLiked ? 1 : 0),
-            ).toLocaleString()}
-          </span>
         </div>
 
         <div className="flex flex-col items-center gap-1">
@@ -300,10 +291,17 @@ export function FeedCard({
           >
             <X className="w-[22px] h-[22px] text-white" />
           </button>
-          <span className="text-[11px] font-semibold text-white drop-shadow">
-            Pass
-          </span>
         </div>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setSheetOpen(true);
+          }}
+          aria-label="More options"
+          className="w-12 h-12 rounded-full flex items-center justify-center bg-white/[0.13] backdrop-blur hover:bg-white/25 transition-all border-0 cursor-pointer"
+        >
+          <MoreVertical className="w-[22px] h-[22px] text-white" />
+        </button>
       </div>
 
       {burst > 0 && (
@@ -320,6 +318,9 @@ export function FeedCard({
         onOpenChange={setSheetOpen}
         firstName={profile.firstName}
         isLiked={isLiked}
+        sortBy={sortBy}
+        sortDirection={sortDirection}
+        onSortChange={onSortChange}
         onUnlike={() => onLike(profile.id)}
         onReport={() => setShowReport(true)}
         onBlock={() => setShowBlock(true)}

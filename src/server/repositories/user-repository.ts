@@ -1,4 +1,8 @@
-import { User, UserProfile } from '@/server/schemas';
+import {
+  StoredSearchPreferences,
+  User,
+  UserProfile,
+} from '@/server/schemas';
 import BaseRepositoryClass from './base';
 import { PostgresDB } from '../db/postgres';
 import {
@@ -240,6 +244,7 @@ export class UserRepository extends BaseRepositoryClass<User> {
       minFameRating,
       maxFameRating,
       age,
+      minAge,
       sortBy,
       sortDirection,
     } = params;
@@ -334,18 +339,19 @@ export class UserRepository extends BaseRepositoryClass<User> {
        filtered AS (
          SELECT * FROM enriched
          WHERE
-           ($4::TEXT[] IS NULL OR interests && $4::TEXT[])
+           ($4::TEXT[] IS NULL OR $4::TEXT[] <@ COALESCE(interests, '{}'::TEXT[]))
            AND ($5::FLOAT IS NULL OR ("distanceKm" IS NOT NULL AND "distanceKm" <= $5))
            AND ($6::FLOAT IS NULL OR "fameRating" >= $6)
            AND ($7::FLOAT IS NULL OR "fameRating" <= $7)
            AND ($8::INT IS NULL OR "age" <= $8)
+           AND ($9::INT IS NULL OR "age" >= $9)
        )
        SELECT
          *,
          (COUNT(*) OVER ())::INT AS "totalCount"
        FROM filtered
        ORDER BY ${orderSql}
-       LIMIT $9 OFFSET $10;`,
+       LIMIT $10 OFFSET $11;`,
       [
         viewerId,
         allowedGenders,
@@ -355,6 +361,7 @@ export class UserRepository extends BaseRepositoryClass<User> {
         minFameRating,
         maxFameRating,
         age,
+        minAge,
         pageSize,
         offset,
       ],
@@ -401,6 +408,69 @@ export class UserRepository extends BaseRepositoryClass<User> {
     );
   }
 
+  async getSearchPreferences(
+    userId: string,
+  ): Promise<StoredSearchPreferences | null> {
+    const rows = await this.db.query<StoredSearchPreferences>(
+      `SELECT "prefMinAge", "prefMaxAge", "prefMinFame", "prefMaxFame",
+              "prefMaxDistanceKm", "prefTags"
+       FROM ${this.userProfilesTable}
+       WHERE "userId" = $1
+       LIMIT 1;`,
+      [userId],
+    );
+    if (rows.length === 0) return null;
+    return rows[0];
+  }
+
+  async updateSearchPreferences(
+    userId: string,
+    prefs: Partial<StoredSearchPreferences>,
+  ): Promise<StoredSearchPreferences> {
+    const allowed: (keyof StoredSearchPreferences)[] = [
+      'prefMinAge',
+      'prefMaxAge',
+      'prefMinFame',
+      'prefMaxFame',
+      'prefMaxDistanceKm',
+      'prefTags',
+    ];
+    const entries = (Object.entries(prefs) as [
+      keyof StoredSearchPreferences,
+      StoredSearchPreferences[keyof StoredSearchPreferences],
+    ][]).filter(([key, value]) => allowed.includes(key) && value !== undefined);
+
+    if (entries.length === 0) {
+      const existing = await this.getSearchPreferences(userId);
+      if (!existing) {
+        throw new Error(`User profile with userId ${userId} not found`);
+      }
+      return existing;
+    }
+
+    const params: unknown[] = [userId];
+    let paramIdx = 2;
+    const setClause = entries
+      .map(([col, val]) => {
+        params.push(val);
+        return `"${col}" = $${paramIdx++}`;
+      })
+      .join(', ');
+
+    const rows = await this.db.query<StoredSearchPreferences>(
+      `UPDATE ${this.userProfilesTable}
+       SET ${setClause}
+       WHERE "userId" = $1
+       RETURNING "prefMinAge", "prefMaxAge", "prefMinFame", "prefMaxFame",
+                 "prefMaxDistanceKm", "prefTags";`,
+      params,
+    );
+    if (rows.length === 0) {
+      throw new Error(`User profile with userId ${userId} not found`);
+    }
+    return rows[0];
+  }
+
   async userHasLocation(userId: string): Promise<boolean> {
     const rows = await this.db.query<{ hasLocation: boolean }>(
       `SELECT (location IS NOT NULL) AS "hasLocation"
@@ -444,6 +514,7 @@ export type GetUsersWithProfilesParams = {
   minFameRating: number | null;
   maxFameRating: number | null;
   age: number | null;
+  minAge: number | null;
   sortBy: SortBy;
   sortDirection: SortDirection;
 };

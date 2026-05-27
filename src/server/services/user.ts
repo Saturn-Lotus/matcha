@@ -1,10 +1,15 @@
 import {
   BrowseQuery,
   CreateUserProfile,
+  SearchPreferences,
+  StoredSearchPreferences,
   UpdateUserProfile,
   UserProfile,
 } from '@/server/schemas';
-import { UnauthorizedException } from '@/lib/exception-http-mapper';
+import {
+  BadRequestException,
+  UnauthorizedException,
+} from '@/lib/exception-http-mapper';
 import { UserRepository } from '@/server/repositories/user-repository';
 import { NotFoundException } from '@/lib/exception-http-mapper';
 import { IStorage } from '@/server/storage';
@@ -339,6 +344,49 @@ export class UserService {
     await this.userRepository.update(userId, { passwordHash });
   };
 
+  getSearchPreferences = async (
+    userId: string,
+  ): Promise<StoredSearchPreferences> => {
+    const prefs = await this.userRepository.getSearchPreferences(userId);
+    if (!prefs) {
+      throw new NotFoundException('User profile not found');
+    }
+    return prefs;
+  };
+
+  updateSearchPreferences = async (
+    userId: string,
+    prefs: SearchPreferences,
+  ): Promise<StoredSearchPreferences> => {
+    const minAge = prefs.prefMinAge ?? undefined;
+    const maxAge = prefs.prefMaxAge ?? undefined;
+    if (
+      minAge !== undefined &&
+      maxAge !== undefined &&
+      minAge !== null &&
+      maxAge !== null &&
+      minAge > maxAge
+    ) {
+      throw new BadRequestException(
+        'prefMinAge must be less than or equal to prefMaxAge',
+      );
+    }
+    const minFame = prefs.prefMinFame ?? undefined;
+    const maxFame = prefs.prefMaxFame ?? undefined;
+    if (
+      minFame !== undefined &&
+      maxFame !== undefined &&
+      minFame !== null &&
+      maxFame !== null &&
+      minFame > maxFame
+    ) {
+      throw new BadRequestException(
+        'prefMinFame must be less than or equal to prefMaxFame',
+      );
+    }
+    return this.userRepository.updateSearchPreferences(userId, prefs);
+  };
+
   resolveOrientation = (
     sexualPreference: UserProfile['sexualPreference'],
   ): readonly ('male' | 'female')[] => {
@@ -387,6 +435,7 @@ export class UserService {
       minFameRating: filters.minFameRating ?? null,
       maxFameRating: filters.maxFameRating ?? null,
       age: filters.age ?? null,
+      minAge: filters.minAge ?? null,
       sortBy,
       sortDirection,
     });

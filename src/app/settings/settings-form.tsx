@@ -1,13 +1,24 @@
 'use client';
 
-import { useState } from 'react';
-import { MapPin, UserCircle, User, Images, Lock } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import {
+  MapPin,
+  UserCircle,
+  User,
+  Images,
+  Lock,
+  Sliders,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { UserProfile } from '@/server/schemas';
 import { PhotoGallery, PicturesState } from './photo-gallery';
 import { LocationTab, LocationState } from './location-tab';
 import { InterestsPicker } from './interests-picker';
 import { PasswordInput } from './password-input';
+import {
+  SearchPreferencesTab,
+  SearchPreferencesState,
+} from './search-preferences-tab';
 import { apiClient } from '@/lib/api/client';
 
 interface SettingsFormProps {
@@ -77,6 +88,44 @@ export function SettingsForm({
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordSubmitting, setPasswordSubmitting] = useState(false);
 
+  const [preferences, setPreferences] = useState<SearchPreferencesState>({
+    prefMinAge: 18,
+    prefMaxAge: 120,
+    prefMinFame: 0,
+    prefMaxFame: 100,
+    prefMaxDistanceKm: 100,
+    prefTags: [],
+  });
+  const [preferencesSubmitting, setPreferencesSubmitting] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    apiClient
+      .get<{
+        prefMinAge: number | null;
+        prefMaxAge: number | null;
+        prefMinFame: number | null;
+        prefMaxFame: number | null;
+        prefMaxDistanceKm: number | null;
+        prefTags: string[] | null;
+      }>('/users/me/search-preferences')
+      .then((data) => {
+        if (cancelled) return;
+        setPreferences({
+          prefMinAge: data.prefMinAge ?? 18,
+          prefMaxAge: data.prefMaxAge ?? 120,
+          prefMinFame: data.prefMinFame ?? 0,
+          prefMaxFame: data.prefMaxFame ?? 100,
+          prefMaxDistanceKm: Math.min(data.prefMaxDistanceKm ?? 100, 100),
+          prefTags: data.prefTags ?? [],
+        });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const total = pictures.existing.length + pictures.newFiles.length;
@@ -145,6 +194,26 @@ export function SettingsForm({
     }
   };
 
+  const handlePreferencesSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPreferencesSubmitting(true);
+    try {
+      await apiClient.patch('/users/me/search-preferences', {
+        prefMinAge: preferences.prefMinAge,
+        prefMaxAge: preferences.prefMaxAge,
+        prefMinFame: preferences.prefMinFame,
+        prefMaxFame: preferences.prefMaxFame,
+        prefMaxDistanceKm: preferences.prefMaxDistanceKm,
+        prefTags: preferences.prefTags.length > 0 ? preferences.prefTags : null,
+      });
+      toast.success('Search preferences saved');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Something went wrong');
+    } finally {
+      setPreferencesSubmitting(false);
+    }
+  };
+
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPassword !== confirmPassword) {
@@ -183,6 +252,11 @@ export function SettingsForm({
     { id: 'pictures', icon: <Images className="w-4 h-4" />, label: 'Pictures' },
     { id: 'account', icon: <User className="w-4 h-4" />, label: 'Account' },
     { id: 'location', icon: <MapPin className="w-4 h-4" />, label: 'Location' },
+    {
+      id: 'preferences',
+      icon: <Sliders className="w-4 h-4" />,
+      label: 'Search Preferences',
+    },
     { id: 'security', icon: <Lock className="w-4 h-4" />, label: 'Security' },
   ];
 
@@ -360,6 +434,30 @@ export function SettingsForm({
                 {submitting ? 'Saving...' : 'Save Profile'}
               </button>
             </div>
+          </form>
+
+          <form onSubmit={handlePreferencesSubmit}>
+            <section id="preferences" className={sectionCls}>
+              <h2 className="text-2xl font-bold text-rose-500 mb-1">
+                Search Preferences
+              </h2>
+              <p className="text-zinc-500 text-sm mb-6">
+                These filters are applied as defaults when browsing profiles.
+              </p>
+              <SearchPreferencesTab
+                value={preferences}
+                onChange={setPreferences}
+              />
+              <div className="flex justify-end mt-6">
+                <button
+                  type="submit"
+                  disabled={preferencesSubmitting}
+                  className="strawberry-matcha-btn text-white px-8 py-3.5 rounded-full font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-60 cursor-pointer"
+                >
+                  {preferencesSubmitting ? 'Saving...' : 'Save Preferences'}
+                </button>
+              </div>
+            </section>
           </form>
 
           <form onSubmit={handlePasswordChange}>

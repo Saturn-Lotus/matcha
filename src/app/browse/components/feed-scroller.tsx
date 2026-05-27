@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { FeedCard } from './feed-card';
 import type { BrowseProfile } from '../types';
+import type { SortBy, SortDirection } from '@/server/types';
 
 interface FeedScrollerProps {
   profiles: BrowseProfile[];
@@ -11,6 +12,9 @@ interface FeedScrollerProps {
   likedIds: Set<string>;
   viewerInterests: string[];
   viewerHasAvatar: boolean;
+  sortBy: SortBy;
+  sortDirection: SortDirection;
+  onSortChange: (sortBy: SortBy, sortDirection: SortDirection) => void;
   onToggleLike: (id: string) => void;
   onPass: (id: string) => void;
   onActiveChange?: (id: string) => void;
@@ -25,6 +29,9 @@ export function FeedScroller({
   likedIds,
   viewerInterests,
   viewerHasAvatar,
+  sortBy,
+  sortDirection,
+  onSortChange,
   onToggleLike,
   onPass,
   onActiveChange,
@@ -82,6 +89,9 @@ export function FeedScroller({
                 framed
                 viewerInterests={viewerInterests}
                 viewerHasAvatar={viewerHasAvatar}
+                sortBy={sortBy}
+                sortDirection={sortDirection}
+                onSortChange={onSortChange}
                 onLike={onToggleLike}
                 onPass={onPass}
                 onPhotoView={onPhotoView}
@@ -96,6 +106,9 @@ export function FeedScroller({
               framed={false}
               viewerInterests={viewerInterests}
               viewerHasAvatar={viewerHasAvatar}
+              sortBy={sortBy}
+              sortDirection={sortDirection}
+              onSortChange={onSortChange}
               onLike={onToggleLike}
               onPass={onPass}
               onPhotoView={onPhotoView}
