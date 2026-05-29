@@ -4,6 +4,13 @@ import { NavigationBar } from '@/app/components/layout/navigation-bar';
 import { Footer } from '@/app/components/layout/footer';
 import { HeartbeatProvider } from '@/app/components/heartbeat-provider';
 import { headers } from 'next/headers';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  icons: {
+    icon: '/favicon.svg',
+  },
+};
 
 export default async function RootLayout({
   children,

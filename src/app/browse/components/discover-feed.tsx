@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useRef, useState, useEffect } from 'react';
+import { useCallback, useMemo, useRef, useState, useEffect } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 import {
   ChevronDown,
@@ -15,6 +15,8 @@ import { apiClient } from '@/lib/api/client';
 import Image from 'next/image';
 import { FeedScroller } from './feed-scroller';
 import type { BrowseProfile, BrowseResponse } from '../types';
+import type { StoredSearchPreferences } from '@/server/schemas';
+import type { SortBy, SortDirection } from '@/server/types';
 
 function DesktopLeftPanel() {
   return (
@@ -163,11 +165,41 @@ function DiscoverLoading() {
 interface DiscoverFeedProps {
   userId: string;
   viewerHasAvatar: boolean;
+  searchPreferences: StoredSearchPreferences;
 }
 
 const PAGE_SIZE = 20;
 
-export function DiscoverFeed({ userId, viewerHasAvatar }: DiscoverFeedProps) {
+function buildBrowseQuery(
+  page: number,
+  prefs: StoredSearchPreferences,
+  sortBy: SortBy,
+  sortDirection: SortDirection,
+): string {
+  const params = new URLSearchParams();
+  params.set('page', String(page));
+  params.set('pageSize', String(PAGE_SIZE));
+  params.set('sortBy', sortBy);
+  params.set('sortDirection', sortDirection);
+  if (prefs.prefMinAge !== null) params.set('minAge', String(prefs.prefMinAge));
+  if (prefs.prefMaxAge !== null) params.set('age', String(prefs.prefMaxAge));
+  if (prefs.prefMinFame !== null)
+    params.set('minFameRating', String(prefs.prefMinFame));
+  if (prefs.prefMaxFame !== null)
+    params.set('maxFameRating', String(prefs.prefMaxFame));
+  if (prefs.prefMaxDistanceKm !== null)
+    params.set('maxDistanceKm', String(prefs.prefMaxDistanceKm));
+  if (prefs.prefTags && prefs.prefTags.length > 0) {
+    for (const tag of prefs.prefTags) params.append('interests', tag);
+  }
+  return params.toString();
+}
+
+export function DiscoverFeed({
+  userId,
+  viewerHasAvatar,
+  searchPreferences,
+}: DiscoverFeedProps) {
   const [profiles, setProfiles] = useState<BrowseProfile[]>([]);
   const [viewerInterests, setViewerInterests] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -176,8 +208,20 @@ export function DiscoverFeed({ userId, viewerHasAvatar }: DiscoverFeedProps) {
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
   const [passedIds, setPassedIds] = useState<Set<string>>(new Set());
   const [activeId, setActiveId] = useState('');
+  const [sortBy, setSortBy] = useState<SortBy>('relevance');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const scrollerRef = useRef<HTMLDivElement>(null);
   const inFlightRef = useRef(false);
+
+  const prefsRef = useRef(searchPreferences);
+  useEffect(() => {
+    prefsRef.current = searchPreferences;
+  }, [searchPreferences]);
+
+  const sortRef = useRef({ sortBy, sortDirection });
+  useEffect(() => {
+    sortRef.current = { sortBy, sortDirection };
+  }, [sortBy, sortDirection]);
 
   const seedLikedFromItems = useCallback((items: BrowseProfile[]) => {
     setLikedIds((prev) => {
@@ -194,9 +238,13 @@ export function DiscoverFeed({ userId, viewerHasAvatar }: DiscoverFeedProps) {
       if (inFlightRef.current) return;
       inFlightRef.current = true;
       try {
-        const data = await apiClient.get<BrowseResponse>(
-          `/users?page=${targetPage}&pageSize=${PAGE_SIZE}`,
+        const query = buildBrowseQuery(
+          targetPage,
+          prefsRef.current,
+          sortRef.current.sortBy,
+          sortRef.current.sortDirection,
         );
+        const data = await apiClient.get<BrowseResponse>(`/users?${query}`);
         const items = Array.isArray(data.items) ? data.items : [];
         setProfiles((prev) => (targetPage === 1 ? items : [...prev, ...items]));
         seedLikedFromItems(items);
@@ -211,12 +259,19 @@ export function DiscoverFeed({ userId, viewerHasAvatar }: DiscoverFeedProps) {
     [seedLikedFromItems],
   );
 
+  const initialQuery = useMemo(
+    () => buildBrowseQuery(1, searchPreferences, sortBy, sortDirection),
+    // We only want the initial query string for the mount fetch.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
         const [data, profile] = await Promise.all([
-          apiClient.get<BrowseResponse>(`/users?page=1&pageSize=${PAGE_SIZE}`),
+          apiClient.get<BrowseResponse>(`/users?${initialQuery}`),
           apiClient.get<{ interests: string[] | null }>(
             `/users/profiles/${userId}`,
           ),
@@ -239,7 +294,25 @@ export function DiscoverFeed({ userId, viewerHasAvatar }: DiscoverFeedProps) {
     return () => {
       cancelled = true;
     };
-  }, [userId, seedLikedFromItems]);
+  }, [userId, seedLikedFromItems, initialQuery]);
+
+  const handleSortChange = useCallback(
+    (nextSortBy: SortBy, nextSortDirection: SortDirection) => {
+      if (nextSortBy === sortBy && nextSortDirection === sortDirection) return;
+      setSortBy(nextSortBy);
+      setSortDirection(nextSortDirection);
+      sortRef.current = {
+        sortBy: nextSortBy,
+        sortDirection: nextSortDirection,
+      };
+      setProfiles([]);
+      setHasMore(false);
+      setPage(1);
+      setLikedIds(new Set());
+      loadPage(1);
+    },
+    [sortBy, sortDirection, loadPage],
+  );
 
   useEffect(() => {
     const root = scrollerRef.current;
@@ -354,6 +427,9 @@ export function DiscoverFeed({ userId, viewerHasAvatar }: DiscoverFeedProps) {
           likedIds={likedIds}
           viewerInterests={viewerInterests}
           viewerHasAvatar={viewerHasAvatar}
+          sortBy={sortBy}
+          sortDirection={sortDirection}
+          onSortChange={handleSortChange}
           onToggleLike={toggleLike}
           onPass={handlePass}
           onActiveChange={setActiveId}

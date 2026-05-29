@@ -16,6 +16,7 @@ export const BrowseQuerySchema = Su.object({
   maxDistanceKm: Su.optional(Su.number().min(0).max(20000)),
   minFameRating: Su.optional(Su.number().min(0).max(100)),
   maxFameRating: Su.optional(Su.number().min(0).max(100)),
+  minAge: Su.optional(Su.number().min(18).max(120)),
   age: Su.optional(Su.number().min(18).max(120)),
   sortBy: Su.optional(Su.literal(SORT_KEYS)),
   sortDirection: Su.optional(Su.literal(SORT_DIRECTIONS)),
@@ -29,3 +30,23 @@ export const SearchQuerySchema = Su.object({
 });
 
 export type SearchQuery = SuInfer<typeof SearchQuerySchema>;
+
+export const SearchPreferencesSchema = Su.object({
+  prefMinAge: Su.optional(Su.null(Su.number().min(18).max(120))),
+  prefMaxAge: Su.optional(Su.null(Su.number().min(18).max(120))),
+  prefMinFame: Su.optional(Su.null(Su.number().min(0).max(100))),
+  prefMaxFame: Su.optional(Su.null(Su.number().min(0).max(100))),
+  prefMaxDistanceKm: Su.optional(Su.null(Su.number().min(0).max(20000))),
+  prefTags: Su.optional(Su.null(Su.array(Su.string()).length({ max: 20 }))),
+});
+
+export type SearchPreferences = SuInfer<typeof SearchPreferencesSchema>;
+
+export type StoredSearchPreferences = {
+  prefMinAge: number | null;
+  prefMaxAge: number | null;
+  prefMinFame: number | null;
+  prefMaxFame: number | null;
+  prefMaxDistanceKm: number | null;
+  prefTags: string[] | null;
+};
