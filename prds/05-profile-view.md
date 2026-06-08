@@ -36,8 +36,9 @@ Status indicators visible to the viewer (both surfaces):
 - `likes` — liker_id (FK), liked_id (FK), created_at. Composite PK `(liker_id, liked_id)`. Row deleted on unlike.
 - `blocks` — blocker_id (FK), blocked_id (FK), created_at. Composite PK.
 - `reports` — id (uuid), reporter_id (FK), reported_id (FK), reason (text), created_at.
+- `matches` — `userIdA` (FK), `userIdB` (FK), `matchedAt`. Composite PK `(userIdA, userIdB)` stored in canonical order (`CHECK ("userIdA" < "userIdB")`). Indexed on both columns.
 
-Connection state is derived: mutual likes with no block between them.
+Connection state is **persisted in the `matches` table** (the single source of truth), not derived on the fly. A match row is created the moment a like becomes mutual (the second like), and deleted on unlike, block, or report. The `connected` flag exposed by `getRelationState` and the browse query reads `EXISTS` against `matches`. Reporting deletes the match row but leaves the underlying likes; blocking deletes both the likes and the match.
 
 ---
 
@@ -114,22 +115,28 @@ Stage 8 (feed card adoption of all the above) is a UI assembly step — no new u
 - [ ] Migration `create-likes-table` — liker_id, liked_id, created_at; composite PK
 - [x] Migration `create-user-blocks-table` — `blockerUserId`, `blockedUserId`, `blockedAt`; composite PK + index on `blockedUserId` + self-block CHECK
 - [x] Migration `create-account-reports-table` — id uuid, reporterUserId, reportedUserId, reason text, createdAt; unique `(reporterUserId, reportedUserId)` + self-report CHECK + index on `reportedUserId`
+- [x] Migration `create-matches-table` — `userIdA`, `userIdB`, `matchedAt`; composite PK + `CHECK ("userIdA" < "userIdB")` + indexes on both columns; backfills existing mutual likes
 
 ### Repository — `SocialRepository`
 - [ ] `recordView(viewerId, viewedId)` — insert into `profile_views` (idempotent within same day)
 - [ ] `like(likerId, likedId)` — insert into `likes`; return whether it created a connection (both directions exist)
 - [ ] `unlike(likerId, likedId)` — delete row; return whether a connection was broken
 - [ ] `getLikeState(viewerId, targetId)` — `{ viewerLiked, targetLiked, connected }`
-- [x] `blockUser(blockerId, blockedId)` — insert into `user_blocks` + delete likes both directions inside a transaction
+- [x] `blockUser(blockerId, blockedId)` — insert into `user_blocks` + delete likes both directions + delete the match inside a transaction
 - [ ] `unblock(blockerId, blockedId)` — delete row
 - [x] `isBlockedEitherDirection(userA, userB)` — either direction
-- [x] `report(reporterId, reportedId, reason)` — insert into `account_reports`; returns `false` if a report for this pair already exists (via `ON CONFLICT DO NOTHING`)
+- [x] `report(reporterId, reportedId, reason)` — insert into `account_reports` + delete the match (transaction); returns `false` if a report for this pair already exists (via `ON CONFLICT DO NOTHING`)
 - [ ] `getVisitors(userId, limit, cursor)` — paginated visit history
 - [ ] `getLikers(userId, limit, cursor)` — paginated list of who liked the user
+- [x] `likeUser(likerId, likedId)` — insert like + create `matches` row when it becomes mutual (transaction); returns `{ inserted, matched }`
+- [x] `unlikeUser(likerId, likedId)` — delete like + delete the match (transaction)
+- [x] `getMatches(userId, { limit, offset })` / `getMatchesCount(userId)` — paginated list of the user's matches (the other party), newest first
+- [x] `getRelationState` — `connected` now reads `EXISTS` against `matches`
 
 ### Service — `SocialService`
 - [ ] `viewProfile(viewerId, targetId)` — check blocks, record view, emit `profile_viewed` notification
-- [x] `likeUser(likerUserId, likedUserId)` — checks viewer has at least one profile picture (throws `CannotLikeWithoutPictureError`), inserts like, throws `AlreadyExistsException` (409) if pair already liked, recomputes fame; mutual-like notification still pending
+- [x] `likeUser(likerUserId, likedUserId)` — checks viewer has at least one profile picture (throws `CannotLikeWithoutPictureError`), inserts like (creating a match when mutual), throws `AlreadyExistsException` (409) if pair already liked, recomputes fame, returns `{ matched }`; mutual-like notification still pending
+- [x] `listMatches(userId, query)` — paginated `MatchEntry[]` for the Matches page
 - [x] `unlikeUser(viewerId, targetId)` — delete like (throws `NotFoundException` (404) if no like existed), recompute fame; `unliked` notification still pending
 - [x] `blockUser(viewerId, targetId)` — validates target exists, throws `SelfActionForbiddenException`, throws `AlreadyExistsException` (409) if pair already blocked, delegates to repo (atomic block + like cleanup), recomputes fame
 - [ ] `unblock(viewerId, targetId)`
@@ -144,6 +151,8 @@ Stage 8 (feed card adoption of all the above) is a UI assembly step — no new u
 - [ ] `GET /api/users/[id]` — call `SocialService.getPublicProfile`, return 200 or 404
 - [ ] `POST /api/users/[id]/view` — call service, return 204
 - [ ] `POST /api/users/[id]/like` / `DELETE` — call service, return 200 + new connection state
+- [x] `POST /api/users/[id]/likes` — returns `{ ok: true, matched }` so the client can fire the match celebration
+- [x] `GET /api/users/[id]/matches` — paginated `MatchEntry[]` (self only)
 - [x] `POST /api/users/[id]/block` — calls `socialService.blockUser`, returns 204
 - [ ] `DELETE /api/users/[id]/block` (unblock — out of scope for this stage)
 - [x] `POST /api/users/[id]/report` — validates body via `ReportBodySchema` (`reason` enum: `fake_account` | `spam` | `harassment` | `other`), returns 204
@@ -170,6 +179,9 @@ Stage 8 (feed card adoption of all the above) is a UI assembly step — no new u
 - [ ] `OnlineIndicator` component — green dot or "Last seen X ago"
 - [x] Overflow menu with "Block" + "Report" items (UI only — stubs that toast "coming soon"; live in both the subnav kebab and the `More` action button on [profile-view.tsx](src/app/users/[id]/profile-view.tsx)); confirm dialogs + wired actions still pending
 - [ ] Notifications and chat headers link to `/users/[id]` (deep-link target)
+- [x] `MatchCelebration` overlay ([src/app/components/match-celebration.tsx](src/app/components/match-celebration.tsx)) — full-screen branded "It's a Match!" modal (both avatars, animated hearts, CTA to `/matches`); fires when a like returns `matched: true` from both the feed (`discover-feed.tsx`) and the permalink (`profile-view.tsx`)
+- [x] `/matches` page ([src/app/matches/](src/app/matches/page.tsx)) — paginated grid of matches (newest first) with a "Chat coming soon" placeholder; cards link to `/users/[id]`
+- [x] Navigation — "Matches" link added to the header nav ([navigation-bar.tsx](src/app/components/layout/navigation-bar.tsx))
 
 ### Tests
 - [ ] Unit: `SocialService.like` — mutual like triggers connected notification

@@ -67,6 +67,7 @@ Response item: `{ id, username, firstName, age, distanceKm, fameRating, sharedTa
 | BR-8 | logged-in user | to sort the list by age, distance, fame, or shared tags | I can explore the list in different ways |
 | BR-9 | logged-in user | blocked users to never appear in suggestions | I don't see people I've blocked |
 | BR-10 | logged-in user | the list to load more cards as I scroll | I can browse a large pool without pagination UI |
+| BR-11 | logged-in user | a celebratory "It's a Match!" overlay when I like someone who already liked me | I get immediate feedback that a mutual connection formed |
 
 ---
 
@@ -101,6 +102,7 @@ Response item: `{ id, username, firstName, age, distanceKm, fameRating, sharedTa
 - [ ] `/browse` page — assembles `FilterPanel`, `SortControl`, infinite-scroll grid using IntersectionObserver
 - [ ] Zustand slice `useBrowseStore` — holds current filters, sort, cursor, results list; actions: setFilter, loadMore, reset
 - [ ] Empty state component with CTA to widen filters
+- [x] `MatchCelebration` overlay — when a like in the feed becomes mutual (the viewer is the second to like), the `POST /api/users/[id]/likes` response returns `matched: true` and a full-screen branded "It's a Match!" overlay fires showing both avatars + a CTA to `/matches` — implements **BR-11**
 
 ### Indexes (migration)
 - [x] Migration `add-browsing-indexes` — btree on `user_profiles."fameRating"` DESC, btree on `user_profiles."birthDate"` (GIST on `user_locations.location` already shipped in earlier migration)

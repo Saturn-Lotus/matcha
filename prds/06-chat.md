@@ -3,6 +3,8 @@
 ## Context
 Subject §IV.6. Real-time 1-on-1 chat between connected users (mutual likes, not blocked). Global unread indicator visible from every page.
 
+> **Current status:** The `/matches` page (`src/app/matches`) is the live home for connections — it lists every match (backed by the `matches` table; see PRD 05) and links each to the partner's profile. Chat itself is **not yet implemented**: the Matches page renders a "Chat coming soon" placeholder. A `conversation` is keyed to a `matches` row, so the `conversations`/`messages` tables below will reference matches as the connection source of truth.
+
 ---
 
 ## Scope
