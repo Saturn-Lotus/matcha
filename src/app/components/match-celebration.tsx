@@ -18,7 +18,13 @@ interface MatchCelebrationProps {
   onClose: () => void;
 }
 
-function MatchAvatar({ user, className }: { user: MatchUser; className?: string }) {
+function MatchAvatar({
+  user,
+  className,
+}: {
+  user: MatchUser;
+  className?: string;
+}) {
   return (
     <div
       className={cn(

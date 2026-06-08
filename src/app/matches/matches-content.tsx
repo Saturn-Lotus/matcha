@@ -3,7 +3,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Clock, HeartHandshake, MessageCircle, User as UserIcon } from 'lucide-react';
+import {
+  Clock,
+  HeartHandshake,
+  MessageCircle,
+  User as UserIcon,
+} from 'lucide-react';
 import { relativeTime } from '@/lib/utils';
 import { apiClient } from '@/lib/api/client';
 import type { MatchEntry, PaginatedResult } from '@/server/types';
@@ -128,9 +133,7 @@ export function MatchesContent({ userId }: { userId: string }) {
         <h1 className="text-2xl font-extrabold strawberry-matcha-gradient tracking-tight">
           Your Matches
         </h1>
-        <p className="text-sm text-gray-500">
-          People you and they both liked.
-        </p>
+        <p className="text-sm text-gray-500">People you and they both liked.</p>
       </header>
 
       {loading ? (
