@@ -1,5 +1,13 @@
 'use client';
-import { Heart, LogOut, Settings, User, Compass, Flame } from 'lucide-react';
+import {
+  Heart,
+  HeartHandshake,
+  LogOut,
+  Settings,
+  User,
+  Compass,
+  Flame,
+} from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import {
   DropdownMenu,
@@ -109,7 +117,17 @@ export const NavigationBar = ({
     <div className="sticky top-0 z-50 w-full px-4 pt-3 pb-1.5">
       <header className="max-w-5xl mx-auto rounded-2xl bg-white border border-gray-200/80 shadow-[0_2px_20px_rgba(0,0,0,0.06),0_0_0_1px_rgba(0,0,0,0.02)] flex items-center justify-between px-3 h-14 gap-2">
         <Link href="/" className="flex items-center gap-2 shrink-0 pl-1 group">
-          <Heart className="h-5 w-5 text-pink-400 fill-current transition-transform duration-200 group-hover:scale-110" />
+          <span className="relative grid h-7 w-7 place-items-center rounded-full bg-pink-50 text-pink-400 transition-transform duration-200 group-hover:scale-105">
+            <span
+              aria-hidden="true"
+              className="absolute inset-0 rounded-full bg-pink-200/55 animate-logo-heart-halo"
+            />
+            <Heart className="relative h-5 w-5 fill-current animate-logo-heart-beat" />
+            <span
+              aria-hidden="true"
+              className="absolute right-0.5 top-1 h-1.5 w-1.5 rounded-full bg-recipe-matcha shadow-[0_0_10px_rgba(117,152,84,0.45)] animate-logo-heart-spark"
+            />
+          </span>
           <span className="text-[15px] font-bold strawberry-matcha-gradient tracking-tight hidden sm:block">
             Strawberry Matcha
           </span>
@@ -121,6 +139,10 @@ export const NavigationBar = ({
               <NavLink href="/browse" active={pathName === '/browse'}>
                 <Compass className="w-3.5 h-3.5" />
                 <span className="hidden md:inline">Browse</span>
+              </NavLink>
+              <NavLink href="/matches" active={pathName === '/matches'}>
+                <HeartHandshake className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">Matches</span>
               </NavLink>
               <NavLink href="/settings" active={pathName === '/settings'}>
                 <Settings className="w-3.5 h-3.5" />

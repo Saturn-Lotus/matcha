@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { apiClient } from '@/lib/api/client';
 import Image from 'next/image';
 import { FeedScroller } from './feed-scroller';
+import { MatchCelebration } from '@/app/components/match-celebration';
 import type { BrowseProfile, BrowseResponse } from '../types';
 import type { StoredSearchPreferences } from '@/server/schemas';
 import type { SortBy, SortDirection } from '@/server/types';
@@ -210,6 +211,9 @@ export function DiscoverFeed({
   const [activeId, setActiveId] = useState('');
   const [sortBy, setSortBy] = useState<SortBy>('relevance');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [matchedProfile, setMatchedProfile] = useState<BrowseProfile | null>(
+    null,
+  );
   const scrollerRef = useRef<HTMLDivElement>(null);
   const inFlightRef = useRef(false);
 
@@ -347,7 +351,13 @@ export function DiscoverFeed({
         if (isLiked) {
           await apiClient.delete(`/users/${profileId}/likes`);
         } else {
-          await apiClient.post(`/users/${profileId}/likes`);
+          const { matched } = await apiClient.post<{ matched: boolean }>(
+            `/users/${profileId}/likes`,
+          );
+          if (matched) {
+            const profile = profiles.find((p) => p.id === profileId);
+            if (profile) setMatchedProfile(profile);
+          }
         }
       } catch {
         setLikedIds((s) => {
@@ -357,7 +367,7 @@ export function DiscoverFeed({
         });
       }
     },
-    [likedIds, viewerHasAvatar],
+    [likedIds, viewerHasAvatar, profiles],
   );
 
   const handlePass = useCallback((profileId: string) => {
@@ -442,6 +452,19 @@ export function DiscoverFeed({
       <div className="hidden md:flex flex-col justify-center p-8 w-72 shrink-0">
         <DesktopRightPanel profiles={visible} scrollRef={scrollerRef} />
       </div>
+
+      <MatchCelebration
+        open={matchedProfile !== null}
+        viewer={{ name: 'You', avatarUrl: `/api/users/${userId}/avatar` }}
+        matched={{
+          name: matchedProfile?.firstName ?? '',
+          avatarUrl:
+            matchedProfile?.previewPictureUrl ??
+            matchedProfile?.photos[0] ??
+            null,
+        }}
+        onClose={() => setMatchedProfile(null)}
+      />
     </div>
   );
 }

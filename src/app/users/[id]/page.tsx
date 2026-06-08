@@ -22,5 +22,11 @@ export default async function UserProfilePage({
     viewerHasAvatar = (profile?.pictures?.length ?? 0) > 0;
   }
 
-  return <ProfileView id={id} viewerHasAvatar={viewerHasAvatar} />;
+  return (
+    <ProfileView
+      id={id}
+      viewerId={viewerId ?? ''}
+      viewerHasAvatar={viewerHasAvatar}
+    />
+  );
 }

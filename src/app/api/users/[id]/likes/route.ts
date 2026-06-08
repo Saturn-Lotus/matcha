@@ -1,19 +1,9 @@
 import { withErrorHandler } from '@/middlewares/routes-middlewares';
 import { NextRequest, NextResponse } from 'next/server';
-import { CheckValidationError, ValidationError } from '@/lib/validator';
+import { ValidationError, coerceSearchParamNumber } from '@/lib/validator';
 import { getSocialService } from '@/server/factories';
 import { BadRequestException } from '@/lib/exception-http-mapper';
 import { SocialListQuerySchema } from '@/server/schemas';
-
-function coerceNumber(sp: URLSearchParams, key: string): number | undefined {
-  const raw = sp.get(key);
-  if (raw === null) return undefined;
-  const value = Number(raw);
-  if (Number.isNaN(value)) {
-    throw new CheckValidationError(raw, `is not a valid number for '${key}'`);
-  }
-  return value;
-}
 
 export const GET = withErrorHandler(
   async (
@@ -28,8 +18,8 @@ export const GET = withErrorHandler(
 
     const sp = request.nextUrl.searchParams;
     const query = SocialListQuerySchema.parse({
-      page: coerceNumber(sp, 'page'),
-      pageSize: coerceNumber(sp, 'pageSize'),
+      page: coerceSearchParamNumber(sp, 'page'),
+      pageSize: coerceSearchParamNumber(sp, 'pageSize'),
     });
 
     const socialService = getSocialService();
@@ -51,8 +41,8 @@ export const POST = withErrorHandler(
     }
 
     const socialService = getSocialService();
-    await socialService.likeUser(likerUserId, likedUserId);
-    return NextResponse.json({ ok: true }, { status: 201 });
+    const { matched } = await socialService.likeUser(likerUserId, likedUserId);
+    return NextResponse.json({ ok: true, matched }, { status: 201 });
   },
 );
 

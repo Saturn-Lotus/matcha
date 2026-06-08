@@ -3,7 +3,11 @@
 -- Populates: users, user_profiles (with pictures, fameRating, isOnline),
 --            and user_locations (with PostGIS geometry) near Paris.
 --
--- All users share the password "password123".
+-- All seed users share the password "password123".
+--
+-- Also creates a dedicated test account (username "testuser" / password
+-- "Test1234world") and seeds interactions against it: matches, one-directional
+-- likes, and profile views — so the matches/likers/visitors pages have data.
 -- Run via: bash scripts/seed_users.sh
 
 DO $$
@@ -199,14 +203,14 @@ BEGIN
       bio, gender, "sexualPreference",
       interests, "isProfileComplete",
       "avatarUrl", pictures,
-      "fameRating", "isOnline", "lastSeenAt"
+      "fameRating", "lastSeenAt"
     )
     VALUES (
       uid, fname, lname, ubirthdate,
       ubio, ugender::gender_t, upref::sexual_preference_t,
       user_tags, TRUE,
       avatar, user_pics,
-      user_fame, user_online, user_seen
+      user_fame, user_seen
     )
     ON CONFLICT DO NOTHING;
 
@@ -226,5 +230,101 @@ BEGIN
   END LOOP;
 
   RAISE NOTICE 'Seed complete: up to 500 users inserted with locations and pictures.';
+END;
+$$;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Test account + seeded interactions (matches / likes / views)
+-- Credentials: username "testuser" / password "Test1234world"
+-- ─────────────────────────────────────────────────────────────────────────────
+DO $$
+DECLARE
+  test_uid      UUID;
+  test_email    TEXT := 'test@example.com';
+  test_username TEXT := 'testuser';
+  pw_hash       TEXT := crypt('Test1234world', gen_salt('bf', 4));
+  test_pics     TEXT[] := ARRAY[
+    'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=800&q=80&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=800&q=80&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=800&q=80&auto=format&fit=crop'
+  ];
+  match_ids     UUID[];
+  other_uid     UUID;
+BEGIN
+  -- Create the test user (idempotent on email)
+  SELECT id INTO test_uid FROM users WHERE email = test_email;
+  IF test_uid IS NULL THEN
+    test_uid := uuid_generate_v4();
+
+    INSERT INTO users (id, username, email, "pendingEmail", "passwordHash", "isVerified")
+    VALUES (test_uid, test_username, test_email, test_email, pw_hash, TRUE);
+
+    INSERT INTO user_profiles (
+      "userId", "firstName", "lastName", "birthDate",
+      bio, gender, "sexualPreference",
+      interests, "isProfileComplete",
+      "avatarUrl", pictures,
+      "fameRating", "lastSeenAt"
+    )
+    VALUES (
+      test_uid, 'Tess', 'Tester', NOW() - interval '27 years',
+      'Test account. Matcha over coffee. Here to QA your heart.',
+      'female'::gender_t, 'both'::sexual_preference_t,
+      ARRAY['matcha','design','books','hiking'], TRUE,
+      test_pics[1], test_pics,
+      120, NOW()
+    );
+
+    INSERT INTO user_locations (
+      "userId", latitude, longitude,
+      city, "locationType", "consentGiven", location
+    )
+    VALUES (
+      test_uid, 48.8566, 2.3522,
+      'Paris', 'gps', TRUE,
+      ST_SetSRID(ST_MakePoint(2.3522, 48.8566), 4326)::geography
+    );
+  END IF;
+
+  -- ── Matches: 6 seed users mutually liked with the test account ──────────────
+  SELECT ARRAY(
+    SELECT u.id FROM users u
+    WHERE u.email LIKE 'seed\_%@example.com'
+    ORDER BY random() LIMIT 6
+  ) INTO match_ids;
+
+  FOREACH other_uid IN ARRAY match_ids LOOP
+    INSERT INTO user_likes ("likerUserId", "likedUserId", "likedAt")
+    VALUES (test_uid, other_uid, NOW() - (random() * interval '24 hours'))
+    ON CONFLICT DO NOTHING;
+    INSERT INTO user_likes ("likerUserId", "likedUserId", "likedAt")
+    VALUES (other_uid, test_uid, NOW() - (random() * interval '24 hours'))
+    ON CONFLICT DO NOTHING;
+    INSERT INTO matches ("userIdA", "userIdB", "matchedAt")
+    VALUES (LEAST(test_uid, other_uid), GREATEST(test_uid, other_uid),
+            NOW() - (random() * interval '24 hours'))
+    ON CONFLICT DO NOTHING;
+  END LOOP;
+
+  -- ── Likes: 10 seed users like the test account (no match yet) ───────────────
+  -- Like the test account back from any of these to trigger an "It's a Match!".
+  INSERT INTO user_likes ("likerUserId", "likedUserId", "likedAt")
+  SELECT u.id, test_uid, NOW() - (random() * interval '48 hours')
+  FROM users u
+  WHERE u.email LIKE 'seed\_%@example.com'
+    AND NOT (u.id = ANY(COALESCE(match_ids, ARRAY[]::UUID[])))
+  ORDER BY random() LIMIT 10
+  ON CONFLICT DO NOTHING;
+
+  -- ── Views: 15 seed users viewed the test account ───────────────────────────
+  INSERT INTO profile_views ("viewerId", "viewedUserId", "viewedAt")
+  SELECT u.id, test_uid, NOW() - (random() * interval '72 hours')
+  FROM users u
+  WHERE u.email LIKE 'seed\_%@example.com'
+  ORDER BY random() LIMIT 15
+  ON CONFLICT DO NOTHING;
+
+  RAISE NOTICE 'Test account ready: username=% / password=Test1234world (% matches seeded)',
+    test_username, COALESCE(array_length(match_ids, 1), 0);
 END;
 $$;
