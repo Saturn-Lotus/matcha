@@ -81,6 +81,14 @@ export type ViewerEntry = {
   viewedAt: string;
 };
 
+export type MatchEntry = {
+  userId: string;
+  firstName: string;
+  lastName: string;
+  avatarUrl: string | null;
+  matchedAt: string;
+};
+
 export type UserSearchResult = {
   id: string;
   username: string;

@@ -329,7 +329,11 @@ export class UserRepository extends BaseRepositoryClass<User> {
            EXISTS(
              SELECT 1 FROM profile_views
              WHERE "viewerId" = c.id AND "viewedUserId" = $1
-           ) AS "targetViewedViewer"
+           ) AS "targetViewedViewer",
+           EXISTS(
+             SELECT 1 FROM matches
+             WHERE "userIdA" = LEAST($1::uuid, c.id) AND "userIdB" = GREATEST($1::uuid, c.id)
+           ) AS "connected"
          FROM candidates c CROSS JOIN viewer v
        ),
        filtered AS (
@@ -498,6 +502,7 @@ export type SuggestionRow = UserWithProfileRow & {
   viewerLiked: boolean;
   targetLiked: boolean;
   targetViewedViewer: boolean;
+  connected: boolean;
   age: number;
 };
 
