@@ -39,11 +39,12 @@ if [[ "${POSTGRES_CONNECTION_STRING}" == *"sslmode=on"* ]]; then
   POSTGRES_CONNECTION_STRING="${POSTGRES_CONNECTION_STRING//sslmode=on/sslmode=require}"
 fi
 
-# --clean: delete all seed users (emails matching seed_*@example.com) before re-seeding
+# --clean: delete all seed users (emails matching seed_*@example.com) and the
+# test account before re-seeding
 if [[ "${1:-}" == "--clean" ]]; then
   echo "Cleaning existing seed users..."
   psql "$POSTGRES_CONNECTION_STRING" -c "
-    DELETE FROM users WHERE email LIKE 'seed\_%@example.com';
+    DELETE FROM users WHERE email LIKE 'seed\_%@example.com' OR email = 'test@example.com';
   "
   echo "Seed users removed."
 fi
@@ -51,3 +52,8 @@ fi
 echo "Seeding database with 500 users..."
 psql "$POSTGRES_CONNECTION_STRING" -f "$SCRIPT_DIR/seed_users.sql"
 echo "Done."
+echo ""
+echo "Test account ready — log in with:"
+echo "  username: testuser"
+echo "  password: Test1234world"
+echo "It has seeded matches, likers, and profile views."
