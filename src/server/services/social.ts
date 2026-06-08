@@ -9,6 +9,7 @@ import { LocationRepository } from '../repositories/location-repository';
 import { FameService } from './fame';
 import {
   LikerEntry,
+  MatchEntry,
   PaginatedResult,
   PublicProfile,
   ViewerEntry,
@@ -71,7 +72,10 @@ export class SocialService {
     };
   };
 
-  likeUser = async (likerUserId: string, likedUserId: string) => {
+  likeUser = async (
+    likerUserId: string,
+    likedUserId: string,
+  ): Promise<{ matched: boolean }> => {
     if (likerUserId === likedUserId) {
       throw new SelfActionForbiddenException('Cannot like yourself');
     }
@@ -81,7 +85,7 @@ export class SocialService {
     if (!hasPicture) {
       throw new CannotLikeWithoutPictureError();
     }
-    const inserted = await this.socialRepository.likeUser(
+    const { inserted, matched } = await this.socialRepository.likeUser(
       likerUserId,
       likedUserId,
     );
@@ -89,6 +93,7 @@ export class SocialService {
       throw new AlreadyExistsException('You have already liked this user');
     }
     await this.fameService.recompute(likedUserId);
+    return { matched };
   };
 
   unlikeUser = async (likerUserId: string, likedUserId: string) => {
@@ -119,6 +124,33 @@ export class SocialService {
       lastName: row.lastName ?? '',
       avatarUrl: row.avatarUrl ?? null,
       viewedAt: row.viewedAt.toISOString(),
+    }));
+    return {
+      items,
+      total,
+      page,
+      pageSize,
+      hasMore: page * pageSize < total,
+    };
+  };
+
+  listMatches = async (
+    userId: string,
+    query: SocialListQuery = {},
+  ): Promise<PaginatedResult<MatchEntry>> => {
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 20;
+    const offset = (page - 1) * pageSize;
+    const [rows, total] = await Promise.all([
+      this.socialRepository.getMatches(userId, { limit: pageSize, offset }),
+      this.socialRepository.getMatchesCount(userId),
+    ]);
+    const items: MatchEntry[] = rows.map((row) => ({
+      userId: row.userId,
+      firstName: row.firstName ?? '',
+      lastName: row.lastName ?? '',
+      avatarUrl: row.avatarUrl ?? null,
+      matchedAt: row.matchedAt.toISOString(),
     }));
     return {
       items,
