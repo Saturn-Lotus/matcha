@@ -34,17 +34,24 @@ import {
   BlockConfirmDialog,
   ReportConfirmDialog,
 } from './components/safety-dialogs';
+import { MatchCelebration } from '@/app/components/match-celebration';
 
 interface ProfileViewProps {
   id: string;
+  viewerId: string;
   viewerHasAvatar: boolean;
 }
 
-export function ProfileView({ id, viewerHasAvatar }: ProfileViewProps) {
+export function ProfileView({
+  id,
+  viewerId,
+  viewerHasAvatar,
+}: ProfileViewProps) {
   const router = useRouter();
   const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
+  const [showMatch, setShowMatch] = useState(false);
 
   const [showBlockConfirm, setShowBlockConfirm] = useState(false);
   const [showReportConfirm, setShowReportConfirm] = useState(false);
@@ -75,7 +82,10 @@ export function ProfileView({ id, viewerHasAvatar }: ProfileViewProps) {
       if (wasLiked) {
         await apiClient.delete(`/users/${id}/likes`);
       } else {
-        await apiClient.post(`/users/${id}/likes`);
+        const { matched } = await apiClient.post<{ matched: boolean }>(
+          `/users/${id}/likes`,
+        );
+        if (matched) setShowMatch(true);
       }
     } catch {
       setIsLiked(wasLiked);
@@ -280,6 +290,13 @@ export function ProfileView({ id, viewerHasAvatar }: ProfileViewProps) {
         onOpenChange={setShowReportConfirm}
         targetId={id}
         targetName={profile.firstName}
+      />
+
+      <MatchCelebration
+        open={showMatch}
+        viewer={{ name: 'You', avatarUrl: `/api/users/${viewerId}/avatar` }}
+        matched={{ name: profile.firstName, avatarUrl: heroPhotos[0] ?? null }}
+        onClose={() => setShowMatch(false)}
       />
     </div>
   );

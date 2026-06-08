@@ -6,6 +6,11 @@
 @theme inline {
   --animate-seg-fill: seg-fill 4s linear forwards;
   --animate-like-burst: like-burst 0.7s ease-out forwards;
+  --animate-match-pop: match-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  --animate-match-float: match-float 2.8s ease-in-out infinite;
+  --animate-logo-heart-beat: logo-heart-beat 4.8s ease-in-out infinite;
+  --animate-logo-heart-halo: logo-heart-halo 4.8s ease-out infinite;
+  --animate-logo-heart-spark: logo-heart-spark 4.8s ease-in-out infinite;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -361,6 +366,100 @@
   100% {
     opacity: 0;
     transform: translate(-50%, -50%) scale(1.3);
+  }
+}
+
+@keyframes match-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes match-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-8deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(8deg);
+  }
+}
+
+@keyframes logo-heart-beat {
+  0%,
+  8%,
+  22%,
+  100% {
+    filter: drop-shadow(0 0 0 rgba(244, 114, 182, 0));
+    transform: scale(1) rotate(0deg);
+  }
+  11% {
+    filter: drop-shadow(0 3px 8px rgba(244, 114, 182, 0.4));
+    transform: scale(1.22) rotate(-8deg);
+  }
+  15% {
+    transform: scale(0.94) rotate(5deg);
+  }
+  18% {
+    filter: drop-shadow(0 2px 6px rgba(244, 114, 182, 0.28));
+    transform: scale(1.12) rotate(-3deg);
+  }
+}
+
+@keyframes logo-heart-halo {
+  0%,
+  7%,
+  26%,
+  100% {
+    opacity: 0;
+    transform: scale(0.72);
+  }
+  10% {
+    opacity: 0.6;
+    transform: scale(0.86);
+  }
+  22% {
+    opacity: 0;
+    transform: scale(1.8);
+  }
+}
+
+@keyframes logo-heart-spark {
+  0%,
+  9%,
+  24%,
+  100% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.4);
+  }
+  12% {
+    opacity: 1;
+    transform: translate(4px, -3px) scale(1);
+  }
+  18% {
+    opacity: 0.85;
+    transform: translate(8px, -9px) scale(0.7);
+  }
+  23% {
+    opacity: 0;
+    transform: translate(10px, -13px) scale(0.25);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-logo-heart-beat,
+  .animate-logo-heart-halo,
+  .animate-logo-heart-spark {
+    animation: none;
   }
 }
 
