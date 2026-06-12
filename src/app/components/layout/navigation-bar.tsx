@@ -7,6 +7,7 @@ import {
   User,
   Compass,
   Flame,
+  MessageCircle,
 } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import {
@@ -23,6 +24,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { apiClient } from '@/lib/api';
 import { cn } from '@/lib/utils';
+import { useChatStore } from '@/lib/stores/chat-store';
 
 const NO_HEADER_ROUTES = [
   '/login',
@@ -102,6 +104,7 @@ export const NavigationBar = ({
 }: NavigationBarProps) => {
   const pathName = usePathname();
   const router = useRouter();
+  const unreadTotal = useChatStore((s) => s.unreadTotal);
 
   const handleLogout = async () => {
     await apiClient.get('/auth/logout');
@@ -143,6 +146,14 @@ export const NavigationBar = ({
               <NavLink href="/matches" active={pathName === '/matches'}>
                 <HeartHandshake className="w-3.5 h-3.5" />
                 <span className="hidden md:inline">Matches</span>
+              </NavLink>
+              <NavLink
+                href="/messages"
+                active={pathName.startsWith('/messages')}
+                badge={unreadTotal}
+              >
+                <MessageCircle className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">Messages</span>
               </NavLink>
               <NavLink href="/settings" active={pathName === '/settings'}>
                 <Settings className="w-3.5 h-3.5" />
