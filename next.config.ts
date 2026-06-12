@@ -30,6 +30,11 @@ remotePatterns.push({
   hostname: 'api.dicebear.com',
 });
 
+remotePatterns.push({
+  protocol: 'https',
+  hostname: 'images.unsplash.com',
+});
+
 const nextConfig: NextConfig = {
   images: { remotePatterns },
 };
