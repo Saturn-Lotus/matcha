@@ -89,6 +89,50 @@ export type MatchEntry = {
   matchedAt: string;
 };
 
+export type MessageDTO = {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  body: string;
+  createdAt: string;
+  readAt: string | null;
+};
+
+export type MessagesPage = {
+  items: MessageDTO[];
+  nextCursor: string | null;
+};
+
+export type ConversationOtherUser = {
+  userId: string;
+  firstName: string;
+  lastName: string;
+  avatarUrl: string | null;
+};
+
+export type ConversationListItem = {
+  id: string;
+  otherUser: ConversationOtherUser;
+  lastMessage: {
+    body: string;
+    createdAt: string;
+    senderId: string;
+  } | null;
+  unreadCount: number;
+  updatedAt: string;
+};
+
+export type ConversationMeta = {
+  id: string;
+  otherUser: ConversationOtherUser;
+  connected: boolean;
+};
+
+export type SendMessageResult = {
+  message: MessageDTO;
+  recipientId: string;
+};
+
 export type UserSearchResult = {
   id: string;
   username: string;
