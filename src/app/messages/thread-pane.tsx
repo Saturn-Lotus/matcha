@@ -121,7 +121,8 @@ export function ThreadPane({
     : listItem
       ? `${listItem.otherUser.firstName} ${listItem.otherUser.lastName}`
       : 'Conversation';
-  const headerAvatar = other?.avatarUrl ?? listItem?.otherUser.avatarUrl ?? null;
+  const headerAvatar =
+    other?.avatarUrl ?? listItem?.otherUser.avatarUrl ?? null;
   const initials = headerName
     .split(' ')
     .map((p) => p[0] ?? '')

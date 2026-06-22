@@ -56,7 +56,9 @@ function toMessageDTO(row: MessageRow): MessageDTO {
   };
 }
 
-function toConversationListItem(row: ConversationListRow): ConversationListItem {
+function toConversationListItem(
+  row: ConversationListRow,
+): ConversationListItem {
   return {
     id: row.id,
     otherUser: {
@@ -150,7 +152,9 @@ export class ChatService {
     );
     const items = rows.map(toMessageDTO);
     const nextCursor =
-      rows.length === limit ? (rows[rows.length - 1]?.createdAt.toISOString() ?? null) : null;
+      rows.length === limit
+        ? (rows[rows.length - 1]?.createdAt.toISOString() ?? null)
+        : null;
     return { items, nextCursor };
   };
 

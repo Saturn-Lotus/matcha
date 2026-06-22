@@ -22,7 +22,9 @@ export function Messenger({
   userId: string;
   initialConversationId: string | null;
 }) {
-  const [conversations, setConversations] = useState<ConversationListItem[]>([]);
+  const [conversations, setConversations] = useState<ConversationListItem[]>(
+    [],
+  );
   const [loading, setLoading] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(
     initialConversationId,

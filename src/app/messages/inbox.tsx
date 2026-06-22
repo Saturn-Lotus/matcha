@@ -72,7 +72,9 @@ function ConvRow({
           <span
             className={cn(
               'text-sm truncate',
-              hasUnread ? 'font-bold text-gray-900' : 'font-semibold text-gray-800',
+              hasUnread
+                ? 'font-bold text-gray-900'
+                : 'font-semibold text-gray-800',
             )}
           >
             {otherUser.firstName} {otherUser.lastName}

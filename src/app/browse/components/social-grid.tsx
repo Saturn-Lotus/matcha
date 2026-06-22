@@ -38,7 +38,10 @@ function SocialCard({
     `${entry.firstName?.[0] ?? ''}${entry.lastName?.[0] ?? ''}`.toUpperCase();
 
   return (
-    <Link href={`/users/${entry.userId}`} className="group flex flex-col bg-white rounded-2xl overflow-hidden shadow-sm border border-[#ffe4e6] hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+    <Link
+      href={`/users/${entry.userId}`}
+      className="group flex flex-col bg-white rounded-2xl overflow-hidden shadow-sm border border-[#ffe4e6] hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+    >
       <div className="relative aspect-[3/4] bg-pink-50">
         {entry.avatarUrl ? (
           <Image

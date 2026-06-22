@@ -28,10 +28,8 @@ export function emitSendMessage(
   body: string,
 ): Promise<SendAck> {
   return new Promise((resolve) => {
-    getSocket().emit(
-      'message:send',
-      { conversationId, body },
-      (res: SendAck) => resolve(res),
+    getSocket().emit('message:send', { conversationId, body }, (res: SendAck) =>
+      resolve(res),
     );
   });
 }
