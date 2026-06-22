@@ -175,13 +175,13 @@ export function ThreadPane({
 
   useEffect(() => {
     let cancelled = false;
-    setActiveConversation(conversationId);
-    setLoading(true);
-    setMessages([]);
-    setMeta(null);
-    setProfile(null);
-    setNextCursor(null);
     (async () => {
+      setActiveConversation(conversationId);
+      setLoading(true);
+      setMessages([]);
+      setMeta(null);
+      setProfile(null);
+      setNextCursor(null);
       try {
         const [metaData, page] = await Promise.all([
           apiClient.get<ConversationMeta>(`/conversations/${conversationId}`),
