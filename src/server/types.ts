@@ -154,6 +154,7 @@ export type PublicProfile = {
   interests: string[] | null;
   pictures: string[] | null;
   fameRating: number;
+  likesCount: number;
   isOnline: boolean;
   lastSeenAt: string | null;
   distanceKm: number | null;

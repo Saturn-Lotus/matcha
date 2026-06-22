@@ -21,3 +21,23 @@ export const MessagesQuerySchema = Su.object({
 });
 
 export type MessagesQuery = SuInfer<typeof MessagesQuerySchema>;
+
+export const TypingSchema = Su.object({
+  conversationId: Su.string(),
+  isTyping: Su.boolean(),
+});
+
+export type TypingInput = SuInfer<typeof TypingSchema>;
+
+export const MessageDeliveredSchema = Su.object({
+  conversationId: Su.string(),
+  messageId: Su.optional(Su.string()),
+});
+
+export type MessageDeliveredInput = SuInfer<typeof MessageDeliveredSchema>;
+
+export const MessageReadSchema = Su.object({
+  conversationId: Su.string(),
+});
+
+export type MessageReadInput = SuInfer<typeof MessageReadSchema>;

@@ -63,14 +63,23 @@ WebSocket events (Socket.IO, room `user:<userId>`):
 - `message:created` (server→client) — new message payload (to sender + recipient rooms)
 - `message:read` (server→client) — `{ conversationId, readerId }`
 - `conversation:updated` (server→client) — `{ conversationId }`, last-message preview changed
+- `typing` (client↔server) — `{ conversationId, isTyping }` from the client; the server resolves the other participant (`ChatService.getOtherParticipant`) and relays `{ conversationId, userId, isTyping }` to that user's room only. Ephemeral, never persisted.
+- `message:delivered` (client↔server) — the recipient's app-wide socket (`useChatSocket`) emits `{ conversationId, messageId }` on receiving any `message:created` it didn't send; the server relays `{ conversationId, messageId, recipientId }` to the sender's room. "Delivered" therefore means *the recipient's app is connected* — it is **not persisted**, so on reload an unread-but-sent message conservatively shows the single "sent" tick.
 
 Send errors are returned in the ack as codes (e.g. `NO_LONGER_CONNECTED`, `MESSAGE_TOO_LONG`, `NOT_A_PARTICIPANT`) so the composer can disable / toast.
 
 ---
 
 ## UI
-- `/messages` — conversation list: avatar, name, last message preview, unread count badge, last-message timestamp.
-- `/messages/[id]` — thread: bubble list (own right, other left), auto-scroll to bottom on new message, composer input with Enter-to-send + Shift+Enter for newline, send button.
+
+The Messages experience is a **unified two-pane glass messenger** (`src/app/messages/messenger.tsx`) rendered by both `/messages` and `/messages/[id]`. On desktop the inbox rail and the open thread sit side-by-side inside one glass card (`grid md:grid-cols-[332px_1fr]`, `bg-white/70` + `backdrop-blur`); below `md` it collapses to a single pane (inbox → tap a row → thread, back arrow returns). Selecting a conversation updates the URL via `history.pushState` (no route remount); deep-loading `/messages/[id]` opens that thread directly; `popstate` keeps state and URL in sync. The global navbar + footer come from the root layout — the messenger renders only the card. `messenger.tsx` owns list fetch + active-conversation/pane state; `inbox.tsx` is the rail; `thread-pane.tsx` is the live thread.
+
+- **Inbox rail** (`inbox.tsx`) — gradient "Messages" title with an "N unread" count, a client-side **search** box, and conversation rows: avatar (hover/active ring), gradient unread pill overlaid on the avatar, name, relative timestamp, and last-message preview (prefixed `You:` for own). Active row is highlighted; empty inbox shows an orb + `/browse` CTA in the thread pane.
+- **Thread pane** (`thread-pane.tsx`) — grouped bubble list (own right with the brand gradient, other left as white card), **day dividers** (`Today` / `Yesterday` / weekday / date), per-group timestamp, auto-scroll to bottom on new message, composer (rounded field + emoji affordance + gradient send) with Enter-to-send + Shift+Enter for newline.
+  - **Partner header** links to the profile and shows the avatar with a live online dot, presence text (`Active now` / `Active …` from `lastSeenAt`), and two stat chips — **fame rating** (pink, `Sparkles`) and **likes received** (matcha, filled `Heart`) — backed by `GET /api/users/[id]` → `PublicProfile` (carries `likesCount`). Chips hide below `sm`.
+  - **Optimistic send** — the message is rendered immediately with a `sending` state, reconciled to the persisted row on ack/socket (deduped so the socket echo never double-renders).
+  - **Delivery / read receipts** (own messages only) — `sending` (spinner) → `sent` (single check) → `delivered` (double check, recipient app connected) → `read` (matcha double check, persisted via `readAt`).
+  - **Typing indicator** — an animated three-dot bubble shown when the other participant is typing, driven by the `typing` socket event; the composer throttles `typing:true` and auto-sends `typing:false` after 2.5s idle or on send.
 - Global header unread badge fed by zustand `useChatStore` (seeded from `GET /api/conversations/unread-count` on load, updated live by the socket).
 
 ---
@@ -113,13 +122,16 @@ Send errors are returned in the ack as codes (e.g. `NO_LONGER_CONNECTED`, `MESSA
 - [x] `getMessages(userId, conversationId, cursor, limit)` — verify participant, paginate
 - [x] `sendMessage(senderId, conversationId, body)` — verify participant + live match, validate body, insert; socket fans out `message:created`
 - [x] `markRead(userId, conversationId)` — verify participant, mark read, returns other party for socket `message:read`
+- [x] `getOtherParticipant(userId, conversationId)` — resolve the peer's id for `typing` / `message:delivered` relay
 - [x] Domain errors: `NotAParticipantError`, `NoLongerConnectedError`, `MessageTooLongError`
 
 ### Socket layer (`socket-server/`)
 - [x] Standalone Socket.IO server (`server.ts`) authenticating via the `session` cookie on handshake
 - [x] Join authenticated users to room `user:<id>` on connect
 - [x] `message:send` / `message:read` handlers reuse `ChatService`; dispatch `message:created`, `message:read`, `conversation:updated`
-- [x] Client singleton `src/lib/socket-client.ts` + `useChatSocket` hook + `ChatSocketProvider` mounted in layout
+- [x] `typing` relay handler — resolves the peer via `getOtherParticipant`, forwards to the peer room only (ephemeral)
+- [x] `message:delivered` relay handler — forwards delivery acks back to the sender room
+- [x] Client singleton `src/lib/socket-client.ts` (`emitTyping`, `emitDelivered`) + `useChatSocket` hook (emits delivery acks app-wide) + `ChatSocketProvider` mounted in layout
 - [ ] (n/a) online-presence toggle — presence is `lastSeenAt`-derived (PRD 05), no `is_online` column
 
 ### Routes (read-only + start)
@@ -132,12 +144,18 @@ Send errors are returned in the ack as codes (e.g. `NO_LONGER_CONNECTED`, `MESSA
 
 ### UI
 - [x] `useChatStore` (zustand) — `unreadTotal`, `unreadByConversation`, `activeConversationId`, actions: init, receiveMessage, markReadLocal, setActiveConversation
-- [x] `/messages` page — conversation list with real-time unread from store
-- [x] `/messages/[id]` page — bubbles, upward infinite scroll with scroll-position preservation, composer
+- [x] Unified two-pane messenger (`messenger.tsx` + `inbox.tsx` + `thread-pane.tsx`) rendered by both `/messages` and `/messages/[id]`; side-by-side on desktop, single-pane (inbox⇄thread with back) below `md`; URL synced via `history.pushState` + `popstate`
+- [x] Inbox rail — real-time unread from store, client-side conversation search, gradient unread pill
+- [x] Thread pane — bubbles, day dividers, upward infinite scroll with scroll-position preservation, composer
 - [x] Header unread badge — `NavLink href="/messages"` reads `useChatStore.unreadTotal`
 - [x] Composer: Enter to send, Shift+Enter for newline, disabled when not connected
 - [x] Auto-scroll to bottom on new incoming message when already near bottom
 - [x] `/matches` — "Message" button starts/opens a conversation (replaced the placeholder)
+- [x] Optimistic send with `sending → sent → delivered → read` reconciliation (socket-echo deduped)
+- [x] Per-message delivery/read status ticks on own messages
+- [x] Typing indicator bubble + throttled `typing` emission from the composer
+- [x] Partner header stats (fame rating + likes) from `PublicProfile.likesCount`
+- [x] Strawberry-matcha visual pass — two-pane glass messenger (Claude Design "Messages Page" handoff): glass card, day dividers, inbox search, presence + stat chips
 
 ### Tests
 - [x] Unit: `ChatService.sendMessage` — happy path, `NoLongerConnected`, `MessageTooLong`
@@ -153,3 +171,9 @@ Send errors are returned in the ack as codes (e.g. `NO_LONGER_CONNECTED`, `MESSA
 - Opening a thread marks messages as read server-side.
 - No N+1 queries on conversation list.
 - Message body rejected if > 2000 chars.
+- A sent message renders instantly (optimistic) and never double-renders when the socket echo arrives.
+- Own messages show the correct receipt: single check once persisted, double check once the recipient's app acks delivery, matcha double check once read.
+- The typing bubble appears for the recipient while the partner types and clears within ~2.5s of them stopping (≤6s hard cap if the stop event is lost).
+- The partner header shows the partner's fame rating and likes; `typing` is relayed only to the conversation peer, never broadcast.
+
+> **Cross-PRD note:** `PublicProfile` (PRD 05) gained a `likesCount` field (`SocialRepository.getLikesCount`) so the thread header can show likes without exposing the liker list. See PRD 05 if that DTO is revised.

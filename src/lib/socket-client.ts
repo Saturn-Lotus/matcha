@@ -39,3 +39,11 @@ export function emitSendMessage(
 export function emitMarkRead(conversationId: string): void {
   getSocket().emit('message:read', { conversationId });
 }
+
+export function emitTyping(conversationId: string, isTyping: boolean): void {
+  getSocket().emit('typing', { conversationId, isTyping });
+}
+
+export function emitDelivered(conversationId: string, messageId: string): void {
+  getSocket().emit('message:delivered', { conversationId, messageId });
+}

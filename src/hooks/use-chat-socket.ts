@@ -5,6 +5,7 @@ import { apiClient } from '@/lib/api';
 import {
   connectSocket,
   disconnectSocket,
+  emitDelivered,
   getSocket,
 } from '@/lib/socket-client';
 import { useChatStore } from '@/lib/stores/chat-store';
@@ -31,7 +32,12 @@ export function useChatSocket(userId: string) {
     })();
 
     const socket = connectSocket();
-    const onCreated = (message: MessageDTO) => receiveMessage(message);
+    const onCreated = (message: MessageDTO) => {
+      receiveMessage(message);
+      if (message.senderId !== userId) {
+        emitDelivered(message.conversationId, message.id);
+      }
+    };
     const onRead = (payload: { conversationId: string; readerId: string }) => {
       if (payload.readerId === userId) markReadLocal(payload.conversationId);
     };

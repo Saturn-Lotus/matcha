@@ -4,9 +4,12 @@ import { readFileSync } from 'node:fs';
 import { Server, type Socket } from 'socket.io';
 import { decrypt } from '@/lib/auth/session';
 import { getChatService } from '@/server/factories/chat-factory';
-import { SendMessageSchema, type SendMessageInput } from '@/server/schemas';
-
-type SafeParse<T> = { success: true; data: T } | { success: false; error: unknown };
+import {
+  SendMessageSchema,
+  TypingSchema,
+  MessageDeliveredSchema,
+  MessageReadSchema,
+} from '@/server/schemas';
 
 const PORT = Number(process.env.SOCKET_PORT ?? 4001);
 const CLIENT_URL = process.env.NEXT_PUBLIC_CLIENT_URL ?? 'http://localhost:3000';
@@ -103,10 +106,8 @@ export function startSocketServer() {
       'message:send',
       async (payload: unknown, ack?: (res: unknown) => void) => {
         try {
-          const parsed = SendMessageSchema.safeParse(
-            payload,
-          ) as SafeParse<SendMessageInput>;
-          if (!parsed.success) {
+          const parsed = SendMessageSchema.safeParse(payload);
+          if (!parsed.success || !parsed.data) {
             ack?.({ error: 'INVALID_PAYLOAD' });
             return;
           }
@@ -130,18 +131,56 @@ export function startSocketServer() {
       },
     );
 
+    socket.on('typing', async (payload: unknown) => {
+      try {
+        const parsed = TypingSchema.safeParse(payload);
+        if (!parsed.success || !parsed.data) return;
+        const { conversationId, isTyping } = parsed.data;
+        const otherUserId = await chatService.getOtherParticipant(
+          userId,
+          conversationId,
+        );
+        if (!otherUserId) return;
+        io.to(room(otherUserId)).emit('typing', {
+          conversationId,
+          userId,
+          isTyping,
+        });
+      } catch (error) {
+        console.error('typing relay failed', error);
+      }
+    });
+
+    socket.on('message:delivered', async (payload: unknown) => {
+      try {
+        const parsed = MessageDeliveredSchema.safeParse(payload);
+        if (!parsed.success || !parsed.data) return;
+        const { conversationId, messageId } = parsed.data;
+        const otherUserId = await chatService.getOtherParticipant(
+          userId,
+          conversationId,
+        );
+        if (!otherUserId) return;
+        io.to(room(otherUserId)).emit('message:delivered', {
+          conversationId,
+          messageId: messageId ?? null,
+          recipientId: userId,
+        });
+      } catch (error) {
+        console.error('message:delivered relay failed', error);
+      }
+    });
+
     socket.on(
       'message:read',
       async (payload: unknown, ack?: (res: unknown) => void) => {
         try {
-          const conversationId =
-            payload && typeof payload === 'object'
-              ? (payload as { conversationId?: unknown }).conversationId
-              : undefined;
-          if (typeof conversationId !== 'string') {
+          const parsed = MessageReadSchema.safeParse(payload);
+          if (!parsed.success || !parsed.data) {
             ack?.({ error: 'INVALID_PAYLOAD' });
             return;
           }
+          const { conversationId } = parsed.data;
           const { count, otherUserId } = await chatService.markRead(
             userId,
             conversationId,

@@ -65,6 +65,37 @@ export function formatDistanceKmShort(km: number | null): string | null {
   return `${Math.round(km)} km`;
 }
 
+export function formatClockTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString(undefined, {
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
+export function formatCompactNumber(value: number): string {
+  if (value < 1000) return `${Math.round(value)}`;
+  return new Intl.NumberFormat(undefined, {
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(value);
+}
+
+export function formatDayLabel(iso: string): string {
+  const d = new Date(iso);
+  const now = new Date();
+  const startOfDay = (x: Date) =>
+    new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const diffDays = Math.round((startOfDay(now) - startOfDay(d)) / 86_400_000);
+  if (diffDays === 0) return 'Today';
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7) return d.toLocaleDateString(undefined, { weekday: 'long' });
+  return d.toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    ...(d.getFullYear() === now.getFullYear() ? {} : { year: 'numeric' }),
+  });
+}
+
 export function formatMonthYear(iso: string | null): string | null {
   if (!iso) return null;
   return new Date(iso).toLocaleDateString(undefined, {

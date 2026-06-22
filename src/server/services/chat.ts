@@ -213,4 +213,16 @@ export class ChatService {
   getUnreadCount = async (userId: string): Promise<number> => {
     return this.messageRepository.unreadCount(userId);
   };
+
+  getOtherParticipant = async (
+    userId: string,
+    conversationId: string,
+  ): Promise<string | null> => {
+    const conversation =
+      await this.conversationRepository.findById(conversationId);
+    if (!conversation) return null;
+    if (conversation.userIdA === userId) return conversation.userIdB;
+    if (conversation.userIdB === userId) return conversation.userIdA;
+    return null;
+  };
 }

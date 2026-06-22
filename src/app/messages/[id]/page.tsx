@@ -1,6 +1,6 @@
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { ThreadContent } from './thread-content';
+import { Messenger } from '../messenger';
 
 export default async function ThreadPage({
   params,
@@ -11,5 +11,5 @@ export default async function ThreadPage({
   const userId = headersList.get('x-user-id');
   if (!userId) redirect('/login');
   const { id } = await params;
-  return <ThreadContent userId={userId} conversationId={id} />;
+  return <Messenger userId={userId} initialConversationId={id} />;
 }

@@ -211,7 +211,7 @@ export class SocialService {
       );
       if (blocked) throw new NotFoundException('User not found');
     }
-    const [user, profile, relation, distanceKm, targetLocation] =
+    const [user, profile, relation, distanceKm, targetLocation, likesCount] =
       await Promise.all([
         this.userRepository.findById(targetId),
         this.userRepository.findProfileByUserId(targetId),
@@ -227,6 +227,7 @@ export class SocialService {
           ? Promise.resolve(null)
           : this.locationRepository.distanceKmBetween(viewerId, targetId),
         this.locationRepository.findByUserId(targetId),
+        this.socialRepository.getLikesCount(targetId),
       ]);
     if (!user || !profile) throw new NotFoundException('User not found');
     const age = profile.birthDate
@@ -245,6 +246,7 @@ export class SocialService {
       interests: profile.interests,
       pictures: profile.pictures,
       fameRating: profile.fameRating,
+      likesCount,
       isOnline: profile.isOnline,
       lastSeenAt: profile.lastSeenAt?.toISOString() ?? null,
       distanceKm,
