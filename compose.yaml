@@ -13,6 +13,22 @@ services:
       - .:/app
       - /app/node_modules
 
+  socket:
+    build:
+      context: .
+      target: socket-dev
+      dockerfile: Dockerfile
+    platform: linux/arm64
+    env_file:
+      - .env
+    ports:
+      - '4001:4001'
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      - postgresDb
+
   postgresDb:
     image: postgis/postgis:latest
     platform: linux/amd64

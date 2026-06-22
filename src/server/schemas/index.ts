@@ -3,3 +3,4 @@ export * from './auth';
 export * from './location';
 export * from './browse';
 export * from './social';
+export * from './chat';

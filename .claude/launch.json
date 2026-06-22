@@ -9,6 +9,12 @@
       "autoPort": true
     },
     {
+      "name": "WebSocket Server",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": ["run", "dev:socket"],
+      "port": 4001
+    },
+    {
       "name": "Cypress E2E",
       "runtimeExecutable": "bun",
       "runtimeArgs": ["run", "cy:open"],

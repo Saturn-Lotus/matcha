@@ -3,6 +3,7 @@ import { Toaster } from '@/app/components/ui/sonner';
 import { NavigationBar } from '@/app/components/layout/navigation-bar';
 import { Footer } from '@/app/components/layout/footer';
 import { HeartbeatProvider } from '@/app/components/heartbeat-provider';
+import { ChatSocketProvider } from '@/app/components/chat-socket-provider';
 import { headers } from 'next/headers';
 import { Metadata } from 'next';
 
@@ -35,6 +36,7 @@ export default async function RootLayout({
         <main className="flex-1 w-screen flex flex-col">
           <Toaster />
           {isAuthenticated && <HeartbeatProvider />}
+          {isAuthenticated && userId && <ChatSocketProvider userId={userId} />}
           {children}
         </main>
         <Footer />

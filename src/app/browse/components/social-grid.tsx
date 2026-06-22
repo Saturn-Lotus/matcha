@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Clock, Eye, Heart } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { cn, relativeTime } from '@/lib/utils';
 import { apiClient } from '@/lib/api/client';
 
@@ -37,7 +38,10 @@ function SocialCard({
     `${entry.firstName?.[0] ?? ''}${entry.lastName?.[0] ?? ''}`.toUpperCase();
 
   return (
-    <div className="group flex flex-col bg-white rounded-2xl overflow-hidden shadow-sm border border-[#ffe4e6] hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer">
+    <Link
+      href={`/users/${entry.userId}`}
+      className="group flex flex-col bg-white rounded-2xl overflow-hidden shadow-sm border border-[#ffe4e6] hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+    >
       <div className="relative aspect-[3/4] bg-pink-50">
         {entry.avatarUrl ? (
           <Image
@@ -78,7 +82,7 @@ function SocialCard({
           </p>
         )}
       </div>
-    </div>
+    </Link>
   );
 }
 

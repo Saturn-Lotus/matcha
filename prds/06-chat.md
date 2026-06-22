@@ -20,41 +20,67 @@ Subject §IV.6. Real-time 1-on-1 chat between connected users (mutual likes, not
 
 ---
 
-## Transport decision
-**WebSocket** (preferred). Use the Node.js runtime on a dedicated route handler (`app/api/ws/route.ts`) or a standalone WS upgrade on the same port.  
-Fallback: Server-Sent Events for receive + `POST` for send (only if WS is blocked by environment).  
-Document the choice in the implementation PR and update this PRD.
+## Transport decision (implemented)
+**WebSocket via a standalone Socket.IO server** (`socket-server/`), run with `tsx` as a second process alongside `next dev`. App Router route handlers can't hold WebSocket upgrades and the app runs `next dev --turbopack` with no custom server, so a dedicated process is required.
+
+Key choices:
+- The socket server **imports the existing `ChatService`** (`@/server/factories` → `getChatService`) and both validates+persists and fans out in the same process — no cross-process bridge.
+- **Sends go over the socket** (`message:send`); Next.js REST routes are read-only (list, history, metadata) plus `POST /api/conversations` (start) and `GET /api/conversations/unread-count` (badge seed).
+- **No Redis.** A single Socket.IO instance with in-memory rooms (`user:<id>`) is sufficient for this project. Redis (the `socket.io-redis` adapter) is the scaling path only if multiple socket instances are ever run.
+- Auth: the handshake JWT is validated with `decrypt()`/`SESSION_SECRET`. The token may arrive either in the Socket.IO `auth` payload (`io(url, { auth: { token } })`) **or** as the httpOnly `session` cookie (browser clients use the cookie via `withCredentials`).
+- CORS: `credentials: true` with an allowlist from `SOCKET_CORS_ORIGIN` (comma-separated) falling back to `NEXT_PUBLIC_CLIENT_URL`.
+- Transport security (**wss**): when `SOCKET_TLS_CERT` + `SOCKET_TLS_KEY` are set the server runs over HTTPS (so clients connect via `wss://`); otherwise plain `ws://` for local dev. In production set those + point `NEXT_PUBLIC_SOCKET_URL` at `wss://…` (or terminate TLS at a reverse proxy).
+- Deployment: dedicated `socket-dev` / `socket-prod` stages in `Dockerfile` and a `socket` service in `compose.yaml` (port 4001), sharing `.env` with the app.
+- Env: `SOCKET_PORT` (default 4001), `NEXT_PUBLIC_SOCKET_URL` (default `http://localhost:4001`), `SOCKET_CORS_ORIGIN`, `SOCKET_TLS_CERT`, `SOCKET_TLS_KEY`. Scripts: `bun run dev:socket` / `bun run start:socket`.
 
 ---
 
-## Data model
-- `conversations` — id (uuid), user_a_id, user_b_id (always stored as `min(a,b)`, `max(a,b)` to enforce uniqueness), created_at. Unique `(user_a_id, user_b_id)`.
-- `messages` — id (uuid), conversation_id (FK), sender_id (FK), body (text, max 2000), created_at, read_at.
-  - Index `(conversation_id, created_at DESC)`.
-  - Index `(conversation_id, sender_id != viewer, read_at IS NULL)` for unread counts.
+## Data model (implemented)
+Relational `conversations` + `messages` (not JSONB — a message log is append-heavy and needs per-message `readAt` indexing and keyset pagination). Columns use the camelCase quoted convention and `gen_random_uuid()` PKs.
+
+- `conversations` — `id` uuid, `"userIdA"`, `"userIdB"` (stored as `LEAST`/`GREATEST` of the pair), `"createdAt"`. `UNIQUE ("userIdA","userIdB")`, `CHECK ("userIdA" < "userIdB")`. **FKs to `users`, not `matches`** — chat history is preserved when a pair disconnects.
+- `messages` — `id` uuid, `"conversationId"` (FK, `ON DELETE CASCADE`), `"senderId"` (FK), `body` text (`CHECK char_length BETWEEN 1 AND 2000`), `"createdAt"`, `"readAt"`.
+  - Index `("conversationId", "createdAt" DESC)` for reverse pagination.
+  - Partial index `("conversationId", "senderId") WHERE "readAt" IS NULL` for unread counts.
+
+**Disconnect behaviour:** `ChatService.sendMessage` gates new sends with `SocialRepository.areMatched` (a live `matches` row). Unlike/block both delete the `matches` row, so sending is disabled immediately while history remains.
 
 ---
 
-## API surface
+## API surface (implemented)
+REST (Next.js, read-only + start) — all auth'd via the `x-user-id` middleware header, wrapped in `withErrorHandler`:
 | Method | Route | Description |
 |--------|-------|-------------|
-| `GET`  | `/api/conversations` | List conversations with last message + unread count |
-| `GET`  | `/api/conversations/[id]` | Single conversation metadata |
-| `GET`  | `/api/conversations/[id]/messages` | Paginated messages (cursor) |
-| `POST` | `/api/conversations/[id]/messages` | Send a message |
-| `POST` | `/api/conversations/[id]/read` | Mark all messages as read |
+| `GET`  | `/api/conversations` | List conversations with last message + unread count (single query, no N+1) |
+| `POST` | `/api/conversations` | Start/find a conversation with a matched user → `{ id }` |
+| `GET`  | `/api/conversations/[id]` | Conversation metadata (other user + `connected`) |
+| `GET`  | `/api/conversations/[id]/messages` | Paginated messages (keyset cursor, newest-first) |
+| `GET`  | `/api/conversations/unread-count` | Total unread across conversations (badge seed) |
 
-WebSocket events (channel `user:<userId>`):
-- `message.created` — new message payload
-- `message.read` — messages marked read
-- `conversation.updated` — last message preview changed
+WebSocket events (Socket.IO, room `user:<userId>`):
+- `message:send` (client→server, with ack) — validate + persist via `ChatService`, then fan out
+- `message:read` (client→server, with ack) — mark the other party's messages read
+- `message:created` (server→client) — new message payload (to sender + recipient rooms)
+- `message:read` (server→client) — `{ conversationId, readerId }`
+- `conversation:updated` (server→client) — `{ conversationId }`, last-message preview changed
+- `typing` (client↔server) — `{ conversationId, isTyping }` from the client; the server resolves the other participant (`ChatService.getOtherParticipant`) and relays `{ conversationId, userId, isTyping }` to that user's room only. Ephemeral, never persisted.
+- `message:delivered` (client↔server) — the recipient's app-wide socket (`useChatSocket`) emits `{ conversationId, messageId }` on receiving any `message:created` it didn't send; the server relays `{ conversationId, messageId, recipientId }` to the sender's room. "Delivered" therefore means *the recipient's app is connected* — it is **not persisted**, so on reload an unread-but-sent message conservatively shows the single "sent" tick.
+
+Send errors are returned in the ack as codes (e.g. `NO_LONGER_CONNECTED`, `MESSAGE_TOO_LONG`, `NOT_A_PARTICIPANT`) so the composer can disable / toast.
 
 ---
 
 ## UI
-- `/messages` — conversation list: avatar, name, last message preview, unread count badge, last-message timestamp.
-- `/messages/[id]` — thread: bubble list (own right, other left), auto-scroll to bottom on new message, composer input with Enter-to-send + Shift+Enter for newline, send button.
-- Global header unread badge fed by zustand `useChatStore` (initialised from session, updated by WebSocket).
+
+The Messages experience is a **unified two-pane glass messenger** (`src/app/messages/messenger.tsx`) rendered by both `/messages` and `/messages/[id]`. On desktop the inbox rail and the open thread sit side-by-side inside one glass card (`grid md:grid-cols-[332px_1fr]`, `bg-white/70` + `backdrop-blur`); below `md` it collapses to a single pane (inbox → tap a row → thread, back arrow returns). Selecting a conversation updates the URL via `history.pushState` (no route remount); deep-loading `/messages/[id]` opens that thread directly; `popstate` keeps state and URL in sync. The global navbar + footer come from the root layout — the messenger renders only the card. `messenger.tsx` owns list fetch + active-conversation/pane state; `inbox.tsx` is the rail; `thread-pane.tsx` is the live thread.
+
+- **Inbox rail** (`inbox.tsx`) — gradient "Messages" title with an "N unread" count, a client-side **search** box, and conversation rows: avatar (hover/active ring), gradient unread pill overlaid on the avatar, name, relative timestamp, and last-message preview (prefixed `You:` for own). Active row is highlighted; empty inbox shows an orb + `/browse` CTA in the thread pane.
+- **Thread pane** (`thread-pane.tsx`) — grouped bubble list (own right with the brand gradient, other left as white card), **day dividers** (`Today` / `Yesterday` / weekday / date), per-group timestamp, auto-scroll to bottom on new message, composer (rounded field + emoji affordance + gradient send) with Enter-to-send + Shift+Enter for newline.
+  - **Partner header** links to the profile and shows the avatar with a live online dot, presence text (`Active now` / `Active …` from `lastSeenAt`), and two stat chips — **fame rating** (pink, `Sparkles`) and **likes received** (matcha, filled `Heart`) — backed by `GET /api/users/[id]` → `PublicProfile` (carries `likesCount`). Chips hide below `sm`.
+  - **Optimistic send** — the message is rendered immediately with a `sending` state, reconciled to the persisted row on ack/socket (deduped so the socket echo never double-renders).
+  - **Delivery / read receipts** (own messages only) — `sending` (spinner) → `sent` (single check) → `delivered` (double check, recipient app connected) → `read` (matcha double check, persisted via `readAt`).
+  - **Typing indicator** — an animated three-dot bubble shown when the other participant is typing, driven by the `typing` socket event; the composer throttles `typing:true` and auto-sends `typing:false` after 2.5s idle or on send.
+- Global header unread badge fed by zustand `useChatStore` (seeded from `GET /api/conversations/unread-count` on load, updated live by the socket).
 
 ---
 
@@ -76,51 +102,65 @@ WebSocket events (channel `user:<userId>`):
 ## Tasks
 
 ### Migrations
-- [ ] Migration `create-conversations-table` — id uuid, user_a_id FK, user_b_id FK, created_at; unique `(user_a_id, user_b_id)`
-- [ ] Migration `create-messages-table` — id uuid, conversation_id FK, sender_id FK, body text (check length ≤ 2000), created_at, read_at; indexes
+- [x] Migration `create-conversations-table` — `id` uuid, `"userIdA"`/`"userIdB"` FK, `"createdAt"`; unique + `CHECK ("userIdA" < "userIdB")`
+- [x] Migration `create-messages-table` — `id` uuid, `"conversationId"` FK, `"senderId"` FK, `body` text (`CHECK char_length BETWEEN 1 AND 2000`), `"createdAt"`, `"readAt"`; indexes
 
 ### Repository — `ConversationRepository`
-- [ ] `findOrCreate(userA, userB)` — canonical sorted pair; upsert `ON CONFLICT DO NOTHING RETURNING *`
-- [ ] `findByUser(userId)` — list with last message + unread count (single query with subqueries)
-- [ ] `findById(id)` — with participant check
+- [x] `findOrCreate(userA, userB)` — canonical sorted pair; upsert `ON CONFLICT DO NOTHING` then select
+- [x] `findByUser(userId)` — list with last message (LATERAL) + unread count (LATERAL), single query
+- [x] `findById(id)` / `isParticipant(id, userId)` / `findMetaForUser(id, userId)` (thread header + connection state)
 
 ### Repository — `MessageRepository`
-- [ ] `create(conversationId, senderId, body)` — insert
-- [ ] `listByCursor(conversationId, cursor, limit)` — oldest-first cursor pagination
-- [ ] `markRead(conversationId, readerId)` — `UPDATE messages SET read_at = NOW() WHERE conversation_id = $1 AND sender_id != $2 AND read_at IS NULL`
-- [ ] `unreadCount(userId)` — total unread across all conversations
+- [x] `create(conversationId, senderId, body)` — insert `RETURNING *`
+- [x] `listByCursor(conversationId, cursor, limit)` — newest-first keyset pagination (reverse scroll-up)
+- [x] `markRead(conversationId, readerId)` — `UPDATE ... SET "readAt" = NOW() WHERE "senderId" <> $2 AND "readAt" IS NULL`
+- [x] `unreadCount(userId)` — total unread across all conversations
 
 ### Service — `ChatService`
-- [ ] `getConversations(userId)` — list DTOs
-- [ ] `getMessages(userId, conversationId, cursor)` — verify participant, paginate
-- [ ] `sendMessage(senderId, conversationId, body)` — verify connection still active (not blocked, still mutual likes), validate body, insert, push WS event `message.created`
-- [ ] `markRead(userId, conversationId)` — call repo, push WS event `message.read`
-- [ ] Define domain errors: `NotAParticipant`, `NoLongerConnected`, `MessageTooLong`
+- [x] `getConversations(userId)` — list DTOs
+- [x] `getConversationMeta(userId, conversationId)` — other user + `connected`
+- [x] `getMessages(userId, conversationId, cursor, limit)` — verify participant, paginate
+- [x] `sendMessage(senderId, conversationId, body)` — verify participant + live match, validate body, insert; socket fans out `message:created`
+- [x] `markRead(userId, conversationId)` — verify participant, mark read, returns other party for socket `message:read`
+- [x] `getOtherParticipant(userId, conversationId)` — resolve the peer's id for `typing` / `message:delivered` relay
+- [x] Domain errors: `NotAParticipantError`, `NoLongerConnectedError`, `MessageTooLongError`
 
-### WebSocket layer
-- [ ] `src/lib/socket.ts` — singleton WS server; authenticate via session cookie on upgrade
-- [ ] Subscribe authenticated users to channel `user:<id>` on connect
-- [ ] Dispatch `message.created`, `message.read`, `conversation.updated` events
-- [ ] On `logout` or socket close, set `users.is_online = false` (reuse from PRD 05 online presence)
+### Socket layer (`socket-server/`)
+- [x] Standalone Socket.IO server (`server.ts`) authenticating via the `session` cookie on handshake
+- [x] Join authenticated users to room `user:<id>` on connect
+- [x] `message:send` / `message:read` handlers reuse `ChatService`; dispatch `message:created`, `message:read`, `conversation:updated`
+- [x] `typing` relay handler — resolves the peer via `getOtherParticipant`, forwards to the peer room only (ephemeral)
+- [x] `message:delivered` relay handler — forwards delivery acks back to the sender room
+- [x] Client singleton `src/lib/socket-client.ts` (`emitTyping`, `emitDelivered`) + `useChatSocket` hook (emits delivery acks app-wide) + `ChatSocketProvider` mounted in layout
+- [ ] (n/a) online-presence toggle — presence is `lastSeenAt`-derived (PRD 05), no `is_online` column
 
-### Routes
-- [ ] `GET /api/conversations` — call service, return list
-- [ ] `GET /api/conversations/[id]/messages` — parse cursor, call service, return page
-- [ ] `POST /api/conversations/[id]/messages` — validate body, call service, return 201
-- [ ] `POST /api/conversations/[id]/read` — call service, return 204
+### Routes (read-only + start)
+- [x] `GET /api/conversations` — list
+- [x] `POST /api/conversations` — start/find conversation → `{ id }`
+- [x] `GET /api/conversations/[id]` — metadata
+- [x] `GET /api/conversations/[id]/messages` — cursor page
+- [x] `GET /api/conversations/unread-count` — badge seed
+- (send/read are socket events, not REST)
 
 ### UI
-- [ ] `useChatStore` (zustand) — conversations map, unread totals, actions: init, receiveMessage, markRead
-- [ ] `/messages` page — conversation list with real-time unread update from store
-- [ ] `/messages/[id]` page — message bubbles, infinite scroll upward for history, composer
-- [ ] Header unread badge component reads from `useChatStore`
-- [ ] Composer: Enter to send, Shift+Enter for newline, disabled + tooltip when not connected
-- [ ] Auto-scroll to bottom on new incoming message when already at bottom
+- [x] `useChatStore` (zustand) — `unreadTotal`, `unreadByConversation`, `activeConversationId`, actions: init, receiveMessage, markReadLocal, setActiveConversation
+- [x] Unified two-pane messenger (`messenger.tsx` + `inbox.tsx` + `thread-pane.tsx`) rendered by both `/messages` and `/messages/[id]`; side-by-side on desktop, single-pane (inbox⇄thread with back) below `md`; URL synced via `history.pushState` + `popstate`
+- [x] Inbox rail — real-time unread from store, client-side conversation search, gradient unread pill
+- [x] Thread pane — bubbles, day dividers, upward infinite scroll with scroll-position preservation, composer
+- [x] Header unread badge — `NavLink href="/messages"` reads `useChatStore.unreadTotal`
+- [x] Composer: Enter to send, Shift+Enter for newline, disabled when not connected
+- [x] Auto-scroll to bottom on new incoming message when already near bottom
+- [x] `/matches` — "Message" button starts/opens a conversation (replaced the placeholder)
+- [x] Optimistic send with `sending → sent → delivered → read` reconciliation (socket-echo deduped)
+- [x] Per-message delivery/read status ticks on own messages
+- [x] Typing indicator bubble + throttled `typing` emission from the composer
+- [x] Partner header stats (fame rating + likes) from `PublicProfile.likesCount`
+- [x] Strawberry-matcha visual pass — two-pane glass messenger (Claude Design "Messages Page" handoff): glass card, day dividers, inbox search, presence + stat chips
 
 ### Tests
-- [ ] Unit: `ChatService.sendMessage` — happy path, `NoLongerConnected` (unlike scenario), `MessageTooLong`
-- [ ] Unit: `MessageRepository.markRead` — only marks other sender's messages
-- [ ] Unit: `ConversationRepository.findOrCreate` — canonical pair ordering
+- [x] Unit: `ChatService.sendMessage` — happy path, `NoLongerConnected`, `MessageTooLong`
+- [x] Unit: `MessageRepository.markRead` — only marks other sender's messages
+- [x] Unit: `ConversationRepository.findOrCreate` — canonical pair ordering
 - [ ] E2E: two users connect → send message → recipient sees message within 10s → unread badge appears
 
 ---
@@ -131,3 +171,9 @@ WebSocket events (channel `user:<userId>`):
 - Opening a thread marks messages as read server-side.
 - No N+1 queries on conversation list.
 - Message body rejected if > 2000 chars.
+- A sent message renders instantly (optimistic) and never double-renders when the socket echo arrives.
+- Own messages show the correct receipt: single check once persisted, double check once the recipient's app acks delivery, matcha double check once read.
+- The typing bubble appears for the recipient while the partner types and clears within ~2.5s of them stopping (≤6s hard cap if the stop event is lost).
+- The partner header shows the partner's fame rating and likes; `typing` is relayed only to the conversation peer, never broadcast.
+
+> **Cross-PRD note:** `PublicProfile` (PRD 05) gained a `likesCount` field (`SocialRepository.getLikesCount`) so the thread header can show likes without exposing the liker list. See PRD 05 if that DTO is revised.

@@ -3,28 +3,38 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import {
   Clock,
   HeartHandshake,
   MessageCircle,
   User as UserIcon,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { relativeTime } from '@/lib/utils';
 import { apiClient } from '@/lib/api/client';
 import type { MatchEntry, PaginatedResult } from '@/server/types';
 
 const PAGE_SIZE = 20;
 
-function MatchCard({ entry }: { entry: MatchEntry }) {
+function MatchCard({
+  entry,
+  onMessage,
+  starting,
+}: {
+  entry: MatchEntry;
+  onMessage: (userId: string) => void;
+  starting: boolean;
+}) {
   const initials =
     `${entry.firstName?.[0] ?? ''}${entry.lastName?.[0] ?? ''}`.toUpperCase();
 
   return (
-    <Link
-      href={`/users/${entry.userId}`}
-      className="group flex flex-col bg-white rounded-2xl overflow-hidden shadow-sm border border-[#ffe4e6] hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
-    >
-      <div className="relative aspect-[3/4] bg-pink-50">
+    <div className="group flex flex-col bg-white rounded-2xl overflow-hidden shadow-sm border border-[#ffe4e6] hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+      <Link
+        href={`/users/${entry.userId}`}
+        className="relative aspect-[3/4] bg-pink-50 block"
+      >
         {entry.avatarUrl ? (
           <Image
             src={entry.avatarUrl}
@@ -41,17 +51,28 @@ function MatchCard({ entry }: { entry: MatchEntry }) {
         <div className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center shadow-sm strawberry-matcha-btn text-white">
           <HeartHandshake className="w-3.5 h-3.5" />
         </div>
+      </Link>
+      <div className="px-3 py-2.5 flex flex-col gap-1.5">
+        <Link href={`/users/${entry.userId}`} className="flex flex-col gap-0.5">
+          <p className="text-sm font-semibold text-gray-800 truncate">
+            {entry.firstName} {entry.lastName}
+          </p>
+          <p className="text-xs text-gray-400 flex items-center gap-1">
+            <Clock className="w-3 h-3" />
+            Matched {relativeTime(entry.matchedAt)}
+          </p>
+        </Link>
+        <button
+          type="button"
+          onClick={() => onMessage(entry.userId)}
+          disabled={starting}
+          className="mt-1 inline-flex items-center justify-center gap-1.5 rounded-lg strawberry-matcha-btn text-white text-xs font-semibold h-8 hover:opacity-90 disabled:opacity-50 transition-opacity"
+        >
+          <MessageCircle className="w-3.5 h-3.5" />
+          Message
+        </button>
       </div>
-      <div className="px-3 py-2.5 flex flex-col gap-0.5">
-        <p className="text-sm font-semibold text-gray-800 truncate">
-          {entry.firstName} {entry.lastName}
-        </p>
-        <p className="text-xs text-gray-400 flex items-center gap-1">
-          <Clock className="w-3 h-3" />
-          Matched {relativeTime(entry.matchedAt)}
-        </p>
-      </div>
-    </Link>
+    </div>
   );
 }
 
@@ -60,10 +81,29 @@ export function MatchesContent({ userId }: { userId: string }) {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [startingWith, setStartingWith] = useState<string | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const inFlightRef = useRef(false);
+  const router = useRouter();
 
   const endpoint = `/users/${userId}/matches`;
+
+  const startConversation = useCallback(
+    async (otherUserId: string) => {
+      if (startingWith) return;
+      setStartingWith(otherUserId);
+      try {
+        const { id } = await apiClient.post<{ id: string }>('/conversations', {
+          userId: otherUserId,
+        });
+        router.push(`/messages/${id}`);
+      } catch {
+        toast.error('Could not start the conversation.');
+        setStartingWith(null);
+      }
+    },
+    [router, startingWith],
+  );
 
   const loadMore = useCallback(
     async (targetPage: number) => {
@@ -155,23 +195,18 @@ export function MatchesContent({ userId }: { userId: string }) {
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
           {entries.map((entry) => (
-            <MatchCard key={entry.userId} entry={entry} />
+            <MatchCard
+              key={entry.userId}
+              entry={entry}
+              onMessage={startConversation}
+              starting={startingWith === entry.userId}
+            />
           ))}
           {hasMore && (
             <div ref={sentinelRef} className="col-span-full h-8" aria-hidden />
           )}
         </div>
       )}
-
-      <section className="mt-2 rounded-2xl border border-dashed border-[#ffd0d6] bg-white/60 px-6 py-8 flex flex-col items-center text-center gap-2">
-        <span className="w-11 h-11 rounded-full strawberry-matcha-btn flex items-center justify-center text-white">
-          <MessageCircle className="w-5 h-5" />
-        </span>
-        <p className="text-sm font-semibold text-gray-700">Chat coming soon</p>
-        <p className="text-xs text-gray-500 max-w-[260px]">
-          Messaging your matches is on the way. Hang tight!
-        </p>
-      </section>
     </div>
   );
 }

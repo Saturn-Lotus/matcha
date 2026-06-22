@@ -313,6 +313,19 @@ export class SocialRepository {
     );
   }
 
+  /** Whether a live match still connects the pair (block/unlike both remove it). */
+  async areMatched(userA: string, userB: string): Promise<boolean> {
+    const rows = await this.db.query<{ exists: boolean }>(
+      `SELECT EXISTS(
+         SELECT 1 FROM matches
+         WHERE "userIdA" = LEAST($1::uuid, $2::uuid)
+           AND "userIdB" = GREATEST($1::uuid, $2::uuid)
+       ) AS exists;`,
+      [userA, userB],
+    );
+    return rows[0]?.exists ?? false;
+  }
+
   async getMatchesCount(userId: string): Promise<number> {
     const rows = await this.db.query<{ count: string }>(
       `SELECT COUNT(*) AS count FROM matches
