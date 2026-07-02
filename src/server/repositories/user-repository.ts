@@ -408,6 +408,19 @@ export class UserRepository extends BaseRepositoryClass<User> {
     );
   }
 
+  async searchTags(query: string, limit: number): Promise<string[]> {
+    const rows = await this.db.query<{ tag: string }>(
+      `SELECT tag
+       FROM user_profiles up, unnest(up.interests) AS tag
+       WHERE $1 = '' OR tag ILIKE $2
+       GROUP BY tag
+       ORDER BY COUNT(*) DESC, tag ASC
+       LIMIT $3;`,
+      [query, `%${query}%`, limit],
+    );
+    return rows.map((row) => row.tag);
+  }
+
   async getSearchPreferences(
     userId: string,
   ): Promise<StoredSearchPreferences | null> {

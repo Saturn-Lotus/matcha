@@ -330,6 +330,10 @@ export class UserService {
     return this.userRepository.search(query, limit, viewerId);
   };
 
+  searchTags = async (query: string, limit: number): Promise<string[]> => {
+    return this.userRepository.searchTags(query.trim().toLowerCase(), limit);
+  };
+
   changePassword = async (
     userId: string,
     oldPassword: string,
