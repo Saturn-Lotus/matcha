@@ -77,7 +77,7 @@ Subject-wide constraints that apply to every feature. These are mandatory and ev
 ### Security baseline
 - [ ] Audit all repository methods — every interpolated value uses `$N` parameterised syntax
 - [ ] Add `Content-Security-Policy` and `X-Content-Type-Options` headers via Next.js config
-- [ ] File upload helper validates MIME via magic bytes (not just extension) and rejects > 5MB
+- [x] File upload helper validates MIME via magic bytes (not just extension) and rejects > 5MB — `assertImageSignature` in `src/lib/validator/parsers.ts`, enforced in `UserService` before every `bulkUploadFiles` call (PNG/JPEG/WEBP signatures)
 - [ ] Add server-side `zxcvbn` check in `AuthService` (client-only is not enough)
 
 ### Testing infrastructure

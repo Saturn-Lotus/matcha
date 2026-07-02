@@ -14,7 +14,7 @@ import { UserRepository } from '@/server/repositories/user-repository';
 import { NotFoundException } from '@/lib/exception-http-mapper';
 import { IStorage } from '@/server/storage';
 import { getUserProfilePicturesPath } from '@/server/storage/utils/path';
-import { ValidationError } from '@/lib/validator';
+import { ValidationError, assertImageSignature } from '@/lib/validator';
 import type { AuthService } from '@/server/services/auth';
 import {
   BrowseSuggestion,
@@ -142,6 +142,7 @@ export class UserService {
     const avatarIndex = profileData.pictures.findIndex(
       (pic) => pic.name === profileData.avatar,
     );
+    await Promise.all(profileData.pictures.map(assertImageSignature));
     const uploadedPictures = await this.storage.bulkUploadFiles(
       profileData.pictures,
       storagePath,
@@ -192,6 +193,7 @@ export class UserService {
       }
     }
 
+    await Promise.all(newPictures.map(assertImageSignature));
     const uploadedPictures =
       newPictures.length > 0
         ? await this.storage.bulkUploadFiles(newPictures, storagePath)

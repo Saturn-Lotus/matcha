@@ -143,7 +143,7 @@ All routes: thin, `withErrorHandler`, call one `AuthService` method. Services ow
 ### Validation schemas (`src/server/schemas/`)
 
 - [ ] `registerSchema` — email format, username alphanumeric 3–30, names 1–50, password min 8
-- [ ] `loginSchema` — username + password required
+- [x] `loginSchema` (`CredentialsSchema`) — username + password required; no strength/zxcvbn check at login (strength is enforced at register/reset only — otherwise legacy or seeded accounts could never sign in)
 - [ ] `resetPasswordSchema` — password + confirmPassword match, min 8
 
 ### Tests

@@ -536,7 +536,7 @@ export type GetUsersWithProfilesParams = {
 };
 
 const RELEVANCE_ORDER =
-  '"distanceKm" ASC NULLS LAST, "sharedTagCount" DESC, id ASC';
+  '"distanceKm" ASC NULLS LAST, "sharedTagCount" DESC, "fameRating" DESC, id ASC';
 
 const ORDER_FRAGMENTS: Record<SortBy, Record<SortDirection, string>> = {
   relevance: {

@@ -11,7 +11,7 @@ Subject §IV.3. Users land on a feed of "interesting" profiles that match their 
   - Homosexual → same gender only.
   - Bisexual (or unset → treated as bisexual) → both genders.
   - A candidate is only shown if their own `sexualPreference` includes the viewer's gender (null preference is treated as `'both'`).
-- Intelligent ranking across multiple criteria simultaneously:
+- Intelligent ranking across multiple criteria simultaneously (default `relevance` sort: distance ASC, shared tags DESC, fame rating DESC):
   - Proximity to the viewer's location (highest priority).
   - Number of shared tags.
   - Fame rating.
