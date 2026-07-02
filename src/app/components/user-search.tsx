@@ -37,7 +37,7 @@ export function UserSearch() {
     if (!q) return;
 
     let cancelled = false;
-    (async () => {
+    const loadResults = async () => {
       if (!cancelled) setLoading(true);
       try {
         const data = await apiClient.get<UserSearchResult[]>(
@@ -49,7 +49,8 @@ export function UserSearch() {
       } finally {
         if (!cancelled) setLoading(false);
       }
-    })();
+    };
+    loadResults();
     return () => {
       cancelled = true;
     };

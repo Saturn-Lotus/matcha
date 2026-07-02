@@ -6,3 +6,4 @@ export * from './location-factory';
 export * from './db-factory';
 export * from './fame-factory';
 export * from './chat-factory';
+export * from './notification-factory';

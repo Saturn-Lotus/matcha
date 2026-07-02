@@ -269,10 +269,10 @@ export function DiscoverFeed({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
-
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    const loadInitial = async () => {
+    
       try {
         const [data, profile] = await Promise.all([
           apiClient.get<BrowseResponse>(`/users?${initialQuery}`),
@@ -294,7 +294,8 @@ export function DiscoverFeed({
       } finally {
         if (!cancelled) setLoading(false);
       }
-    })();
+    };
+    loadInitial();
     return () => {
       cancelled = true;
     };

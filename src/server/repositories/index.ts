@@ -4,3 +4,4 @@ export * from './social-repository';
 export * from './location-repository';
 export * from './conversation-repository';
 export * from './message-repository';
+export * from './notification-repository';

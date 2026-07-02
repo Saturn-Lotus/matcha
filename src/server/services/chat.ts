@@ -18,6 +18,7 @@ import {
   SendMessageResult,
 } from '../types';
 import { MESSAGE_BODY_MAX } from '../schemas';
+import { NotificationService } from './notification';
 
 @HTTPError(403)
 export class NotAParticipantError extends Error {
@@ -84,6 +85,7 @@ export class ChatService {
     private readonly conversationRepository: ConversationRepository,
     private readonly messageRepository: MessageRepository,
     private readonly socialRepository: SocialRepository,
+    private readonly notificationService: NotificationService,
   ) {}
 
   startConversation = async (
@@ -191,6 +193,9 @@ export class ChatService {
       senderId,
       trimmed,
     );
+    await this.notificationService.emit(recipientId, 'message', senderId, {
+      conversationId,
+    });
     return { message: toMessageDTO(message), recipientId };
   };
 

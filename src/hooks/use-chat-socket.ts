@@ -20,7 +20,7 @@ export function useChatSocket(userId: string) {
     let cancelled = false;
     init(userId, 0);
 
-    (async () => {
+    const loadUnreadCount = async () => {
       try {
         const { count } = await apiClient.get<{ count: number }>(
           '/conversations/unread-count',
@@ -29,7 +29,8 @@ export function useChatSocket(userId: string) {
       } catch {
         // keep the optimistic zero
       }
-    })();
+    };
+    loadUnreadCount();
 
     const socket = connectSocket();
     const onCreated = (message: MessageDTO) => {

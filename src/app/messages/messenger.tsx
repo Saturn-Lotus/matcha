@@ -36,7 +36,7 @@ export function Messenger({
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    const getConversations = async () => {
       try {
         const data =
           await apiClient.get<ConversationListItem[]>('/conversations');
@@ -54,7 +54,8 @@ export function Messenger({
       } finally {
         if (!cancelled) setLoading(false);
       }
-    })();
+    };
+    getConversations();
     return () => {
       cancelled = true;
     };

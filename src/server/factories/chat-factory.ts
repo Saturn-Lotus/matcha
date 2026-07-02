@@ -6,6 +6,7 @@ import {
 } from '../repositories';
 import { ChatService } from '../services/chat';
 import { getPostgresDB } from './db-factory';
+import { getNotificationService } from './notification-factory';
 
 export const getConversationRepository = (
   db?: PostgresDB,
@@ -22,5 +23,6 @@ export const getChatService = (): ChatService => {
     getConversationRepository(),
     getMessageRepository(),
     new SocialRepository(getPostgresDB()),
+    getNotificationService(),
   );
 };
