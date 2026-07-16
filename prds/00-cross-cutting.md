@@ -69,10 +69,8 @@ Subject-wide constraints that apply to every feature. These are mandatory and ev
 - [ ] Mobile-first media queries verified in Chrome DevTools at 375px, 768px, 1280px
 
 ### Database seed
-- [ ] Write `scripts/seed.ts` — generates 500 unique users with randomised gender, preferences, location, tags, pictures, and computed fame rating
-- [ ] Seed is idempotent (uses `ON CONFLICT DO NOTHING` or explicit upsert)
-- [ ] Add `"db:seed": "bun run scripts/seed.ts"` to `package.json`
-- [ ] Verify seed runs cleanly on a fresh database after all migrations
+- [x] Seed of 500 unique users — `scripts/seed_users.sql` (PL/pgSQL loop: randomised gender, preferences, location around Paris, 3–5 tags, 2–4 photos, fame 10–500, verified + complete profiles) run via `scripts/seed_users.sh` (loads `.env`, `psql`, supports `--clean`); also seeds a `testuser` with matches/likes/views
+- [ ] Verify seed runs cleanly on a fresh database after all migrations (requires `pgcrypto` + `uuid-ossp` extensions)
 
 ### Security baseline
 - [ ] Audit all repository methods — every interpolated value uses `$N` parameterised syntax

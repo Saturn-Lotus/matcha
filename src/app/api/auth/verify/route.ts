@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthService, getUserRepository } from '@/server/factories';
 import { withErrorHandler } from '@/middlewares/routes-middlewares/withErrorHandler';
 import { cookies } from 'next/headers';
+import { SESSION_COOKIE_OPTIONS } from '@/lib/auth/session';
 
 export const GET = withErrorHandler(async (request: NextRequest) => {
   const searchParams = request.nextUrl.searchParams;
@@ -36,7 +37,7 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
       },
     );
     const cookieStore = await cookies();
-    cookieStore.set('session', session);
+    cookieStore.set('session', session, SESSION_COOKIE_OPTIONS);
   }
 
   const redirectPath = isEmailChange ? '/settings' : '/onboarding';

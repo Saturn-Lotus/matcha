@@ -1,6 +1,7 @@
 import { withErrorHandler } from '@/middlewares/routes-middlewares';
 import { getAuthService, getUserRepository } from '@/server/factories';
 import { CredentialsSchema } from '@/server/schemas';
+import { SESSION_COOKIE_OPTIONS } from '@/lib/auth/session';
 
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
@@ -21,6 +22,6 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     avatarUrl: profile?.avatarUrl ?? null,
   });
   const cookieStore = await cookies();
-  cookieStore.set('session', session);
+  cookieStore.set('session', session, SESSION_COOKIE_OPTIONS);
   return NextResponse.json({ id: user.id, email: user.email });
 });

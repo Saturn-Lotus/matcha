@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { withErrorHandler } from '@/middlewares/routes-middlewares';
 import { getAuthService, getUserService } from '@/server/factories';
+import { SESSION_COOKIE_OPTIONS } from '@/lib/auth/session';
 
 export const POST = withErrorHandler(async (request: NextRequest) => {
   const data = RegisterUserSchema.parse(await request.json());
@@ -32,7 +33,7 @@ export const POST = withErrorHandler(async (request: NextRequest) => {
     avatarUrl: null,
   });
   const cookieStore = await cookies();
-  cookieStore.set('session', session);
+  cookieStore.set('session', session, SESSION_COOKIE_OPTIONS);
 
   return NextResponse.json(
     { id: user.id, email: user.email, isVerified: false },
