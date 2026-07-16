@@ -159,6 +159,7 @@ All routes: thin, `withErrorHandler`, call one `AuthService` method. Services ow
 ## Acceptance criteria
 
 - User cannot log in before verifying email.
+  - **Implemented as: login succeeds, then middleware confines unverified sessions to `/pending-verification` and the verify/logout routes.** The auth service itself does not block unverified login; access control is at the middleware.
 - Verification and reset links work once and then fail with 410/400.
 - Password reset invalidates prior session tokens optionally (nice-to-have).
 - Logout clears cookie and any protected route responds 401 afterwards.
@@ -166,6 +167,16 @@ All routes: thin, `withErrorHandler`, call one `AuthService` method. Services ow
 
 ---
 
+## Audit findings (subject v6.1, 2026-07-16)
+
+- **Session cookie hardened** — the `session` JWT cookie is now set with `httpOnly` + `sameSite=lax` + `secure` (prod) via `SESSION_COOKIE_OPTIONS` in `src/lib/auth/session.ts` at all five set-session callsites. (Previously flagless.)
+- **Logout reachable from every page that shows the header.** The header (and its logout control, inside the avatar dropdown) is hidden on `NO_HEADER_ROUTES` — including `/onboarding` and `/pending-verification`, which are authenticated. Gap: an authenticated user on those two pages has no one-click logout. Subject IV.1 requires logout "from any page on the site".
+- **No rate limiting** on `/api/auth/signin`, `/register`, `/reset-password`, or `/resend-verification`. Not a hard subject requirement but called out in PRD security ("Rate-limit register / forgot-password endpoints") — still open.
+- Registration also collects `birthDate` (for the 18+ check) beyond the subject's five fields.
+
+---
+
 ## Open questions
 
 - Session TTL and refresh policy — currently inherited from existing `jose` implementation; confirm during build.
+- Add a logout affordance (or redirect-to-logout) on `/onboarding` and `/pending-verification` to satisfy "logout from any page".
