@@ -337,6 +337,43 @@ export class FileParser implements Parser<File> {
   };
 }
 
+const IMAGE_SIGNATURES: Array<(bytes: Uint8Array) => boolean> = [
+  // PNG: 89 50 4E 47 0D 0A 1A 0A
+  (b) =>
+    b[0] === 0x89 &&
+    b[1] === 0x50 &&
+    b[2] === 0x4e &&
+    b[3] === 0x47 &&
+    b[4] === 0x0d &&
+    b[5] === 0x0a &&
+    b[6] === 0x1a &&
+    b[7] === 0x0a,
+  // JPEG: FF D8 FF
+  (b) => b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff,
+  // WEBP: "RIFF" .... "WEBP"
+  (b) =>
+    b[0] === 0x52 &&
+    b[1] === 0x49 &&
+    b[2] === 0x46 &&
+    b[3] === 0x46 &&
+    b[8] === 0x57 &&
+    b[9] === 0x45 &&
+    b[10] === 0x42 &&
+    b[11] === 0x50,
+];
+
+// MIME types from the multipart payload are client-controlled; the file's
+// leading bytes are the only trustworthy signal of its real format.
+export async function assertImageSignature(file: File): Promise<void> {
+  const bytes = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+  if (!IMAGE_SIGNATURES.some((matches) => matches(bytes))) {
+    throw new CheckValidationError(
+      file.name,
+      'file content is not a supported image format',
+    );
+  }
+}
+
 export class ArrayParser<T> implements Parser<T[]> {
   private readonly itemParser: Parser<T>;
   private readonly checks: CheckFunc<T[]>[];

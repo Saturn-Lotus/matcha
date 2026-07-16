@@ -31,6 +31,13 @@ export const SearchQuerySchema = Su.object({
 
 export type SearchQuery = SuInfer<typeof SearchQuerySchema>;
 
+export const TagsQuerySchema = Su.object({
+  q: Su.optional(Su.string().length({ max: 50 })),
+  limit: Su.optional(Su.number().min(1).max(50)),
+});
+
+export type TagsQuery = SuInfer<typeof TagsQuerySchema>;
+
 export const SearchPreferencesSchema = Su.object({
   prefMinAge: Su.optional(Su.null(Su.number().min(18).max(120))),
   prefMaxAge: Su.optional(Su.null(Su.number().min(18).max(120))),

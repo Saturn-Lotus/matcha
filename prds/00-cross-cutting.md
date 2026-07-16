@@ -57,10 +57,10 @@ Subject-wide constraints that apply to every feature. These are mandatory and ev
 ## Tasks
 
 ### Foundation
-- [ ] Confirm `withErrorHandler` is applied on every existing route handler
-- [ ] Add a global error boundary component for unexpected client-side throws
-- [ ] Audit all existing API routes: any route missing `withErrorHandler` → fix it
-- [ ] Add a 404 page (`app/not-found.tsx`) and a 500 fallback (`app/error.tsx`)
+- [x] Confirm `withErrorHandler` is applied on every existing route handler
+- [x] Add a global error boundary component for unexpected client-side throws (`app/error.tsx`)
+- [x] Audit all existing API routes: any route missing `withErrorHandler` → fix it (only the static `/api` health route lacks it — it cannot throw)
+- [x] Add a 404 page (`app/not-found.tsx`) and a 500 fallback (`app/error.tsx`)
 
 ### Layout shell
 - [ ] Implement persistent `<Header>` with nav links and auth controls (login/logout, notification bell, chat badge)
@@ -77,7 +77,7 @@ Subject-wide constraints that apply to every feature. These are mandatory and ev
 ### Security baseline
 - [ ] Audit all repository methods — every interpolated value uses `$N` parameterised syntax
 - [ ] Add `Content-Security-Policy` and `X-Content-Type-Options` headers via Next.js config
-- [ ] File upload helper validates MIME via magic bytes (not just extension) and rejects > 5MB
+- [x] File upload helper validates MIME via magic bytes (not just extension) and rejects > 5MB — `assertImageSignature` in `src/lib/validator/parsers.ts`, enforced in `UserService` before every `bulkUploadFiles` call (PNG/JPEG/WEBP signatures)
 - [ ] Add server-side `zxcvbn` check in `AuthService` (client-only is not enough)
 
 ### Testing infrastructure

@@ -15,7 +15,7 @@ export const ResetPasswordSchema = Su.object({
 
 export const CredentialsSchema = Su.object({
   username: Su.string(),
-  password: Su.string().password(),
+  password: Su.string().length({ min: 1, max: 200 }),
 });
 
 export const ForgotPasswordSchema = Su.object({

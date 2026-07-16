@@ -46,14 +46,14 @@ Profile read surface:
 | `PATCH` | `/api/users/profiles/[id]` | Update identity + profile fields (multipart) |
 | `PATCH` | `/api/users/location` | Update location (GPS or manual) |
 | `GET`   | `/api/users/[id]/avatar` | Proxy storage-backed profile picture |
-| `GET`   | `/api/tags?q=` | Interest autocomplete (prefix search over distinct values already in `user_profiles.interests`) |
+| `GET`   | `/api/users/tags?q=&limit=` | Interest autocomplete — distinct tags from `user_profiles.interests`, ILIKE match, ordered by usage count (default limit 20, max 50) |
 
 ---
 
 ## UI
 - `/settings` with tabs: **Profile** (identity + bio + gender + preferences), **Pictures**, **Interests**, **Location**, **Security**.
 - GPS consent dialog; clear explanation + manual fallback if declined.
-- Interest input: client-side autocomplete from `/api/tags?q=`; add new value on Enter (trimmed, lowercased). Rendered as a badge list with remove buttons.
+- Interest input: popular-tag chips loaded from `/api/users/tags` (falls back to a static list on empty DB); debounced autocomplete suggestions from `/api/users/tags?q=` while typing; add new value on Enter (trimmed, lowercased). Rendered as a badge list with remove buttons.
 - Picture grid: upload zone, trash button to delete, star button to set as profile picture (`avatarUrl`). Up to 5 pictures enforced.
 
 ---
@@ -118,7 +118,7 @@ fame = max(0, view_count * VIEW_WEIGHT + active_likes_count * LIKE_WEIGHT)
 ### Service — `UserService` (extend)
 - [ ] `changePassword(userId, oldPassword, newPassword)` — `bcrypt.compare` old, hash new, call `UserRepository.update`
 - [ ] Verify email-change flow end-to-end: `updateUserProfile` already sets `pendingEmail` and sends a verification email; confirm the verification callback updates `users.email` and clears `pendingEmail`
-- [ ] Interest autocomplete endpoint: `GET /api/tags?q=` — query distinct values from `user_profiles.interests` with `ILIKE '%q%' LIMIT 20`
+- [x] Interest autocomplete endpoint: `GET /api/users/tags?q=` — distinct values from `user_profiles.interests` with `ILIKE '%q%'`, ordered by usage, `LIMIT 20`
 
 ### Routes
 - [ ] `POST /api/users/[id]/change-password` — parse `{ oldPassword, newPassword }`, call `UserService.changePassword`
