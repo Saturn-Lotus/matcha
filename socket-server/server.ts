@@ -4,6 +4,8 @@ import { readFileSync } from 'node:fs';
 import { Server, type Socket } from 'socket.io';
 import { decrypt } from '@/lib/auth/session';
 import { getChatService } from '@/server/factories/chat-factory';
+import { NotificationRepository } from '@/server/repositories/notification-repository';
+import { getPostgresDB } from '@/server/factories/db-factory';
 import {
   SendMessageSchema,
   TypingSchema,
@@ -12,7 +14,8 @@ import {
 } from '@/server/schemas';
 
 const PORT = Number(process.env.SOCKET_PORT ?? 4001);
-const CLIENT_URL = process.env.NEXT_PUBLIC_CLIENT_URL ?? 'http://localhost:3000';
+const CLIENT_URL =
+  process.env.NEXT_PUBLIC_CLIENT_URL ?? 'http://localhost:3000';
 
 // Comma-separated allowlist of browser origins permitted to connect.
 const CORS_ORIGINS = (process.env.SOCKET_CORS_ORIGIN ?? CLIENT_URL)
@@ -21,6 +24,7 @@ const CORS_ORIGINS = (process.env.SOCKET_CORS_ORIGIN ?? CLIENT_URL)
   .filter(Boolean);
 
 const chatService = getChatService();
+const notificationRepository = new NotificationRepository(getPostgresDB());
 
 // Serve over TLS (enabling wss://) when a cert + key are provided; otherwise
 // plain http (ws://) for local dev. In production, terminate TLS here or at a
@@ -75,6 +79,56 @@ export function startSocketServer() {
     cors: { origin: CORS_ORIGINS, credentials: true },
   });
 
+  // Internal HTTP endpoint for Next.js to push notifications to connected users.
+  // socket.io only handles requests to /socket.io/*, so this listener is safe to coexist.
+  httpServer.on('request', (req, res) => {
+    if (req.method !== 'POST' || req.url !== '/notify') return;
+    let body = '';
+    req.on('data', (chunk: Buffer) => {
+      body += chunk.toString();
+    });
+    req.on('end', async () => {
+      try {
+        const { secret, userId, notification } = JSON.parse(body) as {
+          secret: string;
+          userId: string;
+          notification: { id: string } & Record<string, unknown>;
+        };
+        if (
+          !process.env.SOCKET_INTERNAL_SECRET ||
+          secret !== process.env.SOCKET_INTERNAL_SECRET
+        ) {
+          res.writeHead(403).end();
+          return;
+        }
+        if (!userId || !notification?.id) {
+          res.writeHead(400).end();
+          return;
+        }
+        const roomName = room(userId);
+        const hasClients =
+          (io.sockets.adapter.rooms.get(roomName)?.size ?? 0) > 0;
+        let delivered = false;
+        if (hasClients) {
+          // Atomically claim the row — if the on-connect flush has already
+          // delivered it, claim returns false and we skip the duplicate emit.
+          const claimed = await notificationRepository.claimById(
+            userId,
+            notification.id,
+          );
+          if (claimed) {
+            io.to(roomName).emit('notification.created', notification);
+            delivered = true;
+          }
+        }
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ delivered }));
+      } catch {
+        res.writeHead(400).end();
+      }
+    });
+  });
+
   // Authenticate the session JWT on the handshake. The token may arrive either
   // in the `auth` payload (io(url, { auth: { token } })) or as the httpOnly
   // `session` cookie (browser clients with withCredentials).
@@ -101,6 +155,20 @@ export function startSocketServer() {
   io.on('connection', (socket: Socket) => {
     const userId = socket.data.userId as string;
     socket.join(room(userId));
+    const flushNotifications = async () => {
+      // Flush any notifications that arrived while the user was offline.
+      // claimAllUnread marks read and returns in a single statement so a
+      // concurrent /notify can't double-deliver the same row.
+      try {
+        const pending = await notificationRepository.claimAllUnread(userId);
+        if (pending.length > 0) {
+          socket.emit('notification.pending', pending);
+        }
+      } catch (error) {
+        console.error('notification flush failed', error);
+      }
+    };
+    flushNotifications();
 
     socket.on(
       'message:send',

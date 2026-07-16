@@ -4,6 +4,7 @@ import { NavigationBar } from '@/app/components/layout/navigation-bar';
 import { Footer } from '@/app/components/layout/footer';
 import { HeartbeatProvider } from '@/app/components/heartbeat-provider';
 import { ChatSocketProvider } from '@/app/components/chat-socket-provider';
+import { NotificationSocketProvider } from '@/app/components/notification-socket-provider';
 import { headers } from 'next/headers';
 import { Metadata } from 'next';
 
@@ -37,6 +38,9 @@ export default async function RootLayout({
           <Toaster />
           {isAuthenticated && <HeartbeatProvider />}
           {isAuthenticated && userId && <ChatSocketProvider userId={userId} />}
+          {isAuthenticated && userId && (
+            <NotificationSocketProvider userId={userId} />
+          )}
           {children}
         </main>
         <Footer />

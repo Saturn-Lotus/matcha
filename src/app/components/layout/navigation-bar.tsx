@@ -25,6 +25,7 @@ import Image from 'next/image';
 import { apiClient } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { useChatStore } from '@/lib/stores/chat-store';
+import { NotificationBell } from '@/app/components/notification-bell';
 
 const NO_HEADER_ROUTES = [
   '/login',
@@ -162,6 +163,7 @@ export const NavigationBar = ({
             </nav>
 
             <div className="flex items-center gap-1.5">
+              <NotificationBell />
               <UserSearch />
 
               <DropdownMenu modal={false}>

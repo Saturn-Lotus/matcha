@@ -158,6 +158,30 @@ export class StringParser implements Parser<string> {
     ]);
   }
 
+  uuid() {
+    const uuidPattern =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    return new StringParser([
+      ...this.checks,
+      (value: string) => {
+        if (!uuidPattern.test(value)) {
+          throw new CheckValidationError(value, 'not a valid uuid');
+        }
+      },
+    ]);
+  }
+
+  isoDate() {
+    return new StringParser([
+      ...this.checks,
+      (value: string) => {
+        if (Number.isNaN(Date.parse(value))) {
+          throw new CheckValidationError(value, 'not a valid date');
+        }
+      },
+    ]);
+  }
+
   match(strToMatch: string | undefined) {
     return new StringParser([
       ...this.checks,

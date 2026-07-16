@@ -124,7 +124,7 @@ export function SocialGrid({ userId, type }: SocialGridProps) {
   useEffect(() => {
     let cancelled = false;
     inFlightRef.current = true;
-    (async () => {
+    const loadInitial = async () => {
       try {
         const data = await apiClient.get<PaginatedResponse<SocialEntry>>(
           `${endpoint}?page=1&pageSize=${PAGE_SIZE}`,
@@ -143,7 +143,8 @@ export function SocialGrid({ userId, type }: SocialGridProps) {
         inFlightRef.current = false;
         if (!cancelled) setLoading(false);
       }
-    })();
+    };
+    loadInitial();
     return () => {
       cancelled = true;
     };

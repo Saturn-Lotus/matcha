@@ -7,6 +7,7 @@ import {
 import { SocialRepository, UserRepository } from '../repositories';
 import { LocationRepository } from '../repositories/location-repository';
 import { FameService } from './fame';
+import { NotificationService } from './notification';
 import {
   LikerEntry,
   MatchEntry,
@@ -32,17 +33,20 @@ export class SocialService {
   private readonly fameService: FameService;
   private readonly userRepository: UserRepository;
   private readonly locationRepository: LocationRepository;
+  private readonly notificationService: NotificationService;
 
   constructor(
     socialRepository: SocialRepository,
     fameService: FameService,
     userRepository: UserRepository,
     locationRepository: LocationRepository,
+    notificationService: NotificationService,
   ) {
     this.socialRepository = socialRepository;
     this.fameService = fameService;
     this.userRepository = userRepository;
     this.locationRepository = locationRepository;
+    this.notificationService = notificationService;
   }
 
   listLikers = async (
@@ -93,10 +97,21 @@ export class SocialService {
       throw new AlreadyExistsException('You have already liked this user');
     }
     await this.fameService.recompute(likedUserId);
+    await this.notificationService.emit(likedUserId, 'like', likerUserId);
+    if (matched) {
+      await Promise.all([
+        this.notificationService.emit(likedUserId, 'match', likerUserId),
+        this.notificationService.emit(likerUserId, 'match', likedUserId),
+      ]);
+    }
     return { matched };
   };
 
   unlikeUser = async (likerUserId: string, likedUserId: string) => {
+    const wasMatched = await this.socialRepository.areMatched(
+      likerUserId,
+      likedUserId,
+    );
     const deleted = await this.socialRepository.unlikeUser(
       likerUserId,
       likedUserId,
@@ -105,6 +120,9 @@ export class SocialService {
       throw new NotFoundException('You have not liked this user');
     }
     await this.fameService.recompute(likedUserId);
+    if (wasMatched) {
+      await this.notificationService.emit(likedUserId, 'unmatch', likerUserId);
+    }
   };
 
   listViewers = async (
@@ -168,6 +186,7 @@ export class SocialService {
 
     await this.socialRepository.recordView(viewerId, viewedUserId);
     await this.fameService.recompute(viewedUserId);
+    await this.notificationService.emit(viewedUserId, 'profile_view', viewerId);
   };
 
   blockUser = async (viewerId: string, targetId: string) => {

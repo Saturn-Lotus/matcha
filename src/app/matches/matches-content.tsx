@@ -127,7 +127,7 @@ export function MatchesContent({ userId }: { userId: string }) {
   useEffect(() => {
     let cancelled = false;
     inFlightRef.current = true;
-    (async () => {
+    const loadInitial = async () => {
       try {
         const data = await apiClient.get<PaginatedResult<MatchEntry>>(
           `${endpoint}?page=1&pageSize=${PAGE_SIZE}`,
@@ -146,7 +146,8 @@ export function MatchesContent({ userId }: { userId: string }) {
         inFlightRef.current = false;
         if (!cancelled) setLoading(false);
       }
-    })();
+    };
+    loadInitial();
     return () => {
       cancelled = true;
     };

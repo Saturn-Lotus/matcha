@@ -175,7 +175,7 @@ export function ThreadPane({
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    const getConversationAndMessages = async () => {
       setActiveConversation(conversationId);
       setLoading(true);
       setMessages([]);
@@ -203,7 +203,8 @@ export function ThreadPane({
       } finally {
         if (!cancelled) setLoading(false);
       }
-    })();
+    };
+    getConversationAndMessages();
     return () => {
       cancelled = true;
       setActiveConversation(null);

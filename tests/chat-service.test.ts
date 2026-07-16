@@ -21,12 +21,16 @@ function makeService() {
   const socialRepo = {
     areMatched: jest.fn(),
   };
+  const notificationService = {
+    emit: jest.fn(),
+  };
   const service = new ChatService(
     conversationRepo as never,
     messageRepo as never,
     socialRepo as never,
+    notificationService as never,
   );
-  return { service, conversationRepo, messageRepo, socialRepo };
+  return { service, conversationRepo, messageRepo, socialRepo, notificationService };
 }
 
 describe('ChatService.sendMessage', () => {
