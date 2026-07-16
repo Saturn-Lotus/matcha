@@ -94,7 +94,10 @@ export function startSocketServer() {
           userId: string;
           notification: { id: string } & Record<string, unknown>;
         };
-        if (secret !== process.env.SOCKET_INTERNAL_SECRET) {
+        if (
+          !process.env.SOCKET_INTERNAL_SECRET ||
+          secret !== process.env.SOCKET_INTERNAL_SECRET
+        ) {
           res.writeHead(403).end();
           return;
         }

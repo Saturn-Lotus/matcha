@@ -115,7 +115,11 @@ export default function NotificationsPage() {
 
   const handleMarkAllRead = async () => {
     clearAll();
-    await apiClient.post('/notifications/read', { ids: [] });
+    try {
+      await apiClient.post('/notifications/read', { ids: [] });
+    } catch {
+      // optimistic — badge already cleared locally
+    }
   };
 
   const groups = groupByDay(items);
