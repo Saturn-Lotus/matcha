@@ -143,5 +143,16 @@ fame = max(0, view_count * VIEW_WEIGHT + active_likes_count * LIKE_WEIGHT)
 
 ---
 
+## Audit findings (subject v6.1, 2026-07-16)
+
+- **Profile-write IDOR fixed** — `POST`/`PATCH /api/users/profiles/[id]` now reject when the middleware-set `x-user-id` ≠ `[id]` (previously any authenticated user could overwrite another user's profile and upload pictures into their account).
+- **Location is never collected at onboarding and has no fallback.** Onboarding (`onboarding-form.tsx`) has no location step; a user who never opens Settings → Location has no `user_locations` row. Browse still works (distance is `NULL`, sorted `NULLS LAST`), but distance filter/sort throws `ValidationError('Set your location before filtering or sorting by distance')`. Subject IV.2 requires manual location entry when GPS is declined and says it "is required for the application to function properly." **Gap: add a required location step to onboarding (GPS-with-consent or manual city/neighborhood).**
+- **Manual location still requires coordinates.** The "manual" mode saves a draggable-marker lat/lng, not a plain city name — acceptable, but note there is no city-name-only path.
+- **Fame scale mismatch** — `FameService` produces an unbounded score (seed data ranges 10–500), but the search-preference/filter sliders cap fame at 0–100 (`browse.ts`). A user filtering fame ≤ 100 silently excludes every profile above 100. **Gap: reconcile the fame scale (normalize to 0–100, or raise the filter ceiling).** See [[03-browsing]] / [[04-research]].
+- Interests/bio have no server-side minimum length (only pictures are bounded 1–5).
+
+---
+
 ## Open questions
 - Storage backend (local vs. Vercel Blob) — currently using Vercel Blob; confirm for production and update this PRD.
+- Where should the mandatory location step live — onboarding step 4, or a blocking gate before `/browse`?

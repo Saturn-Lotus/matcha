@@ -202,3 +202,14 @@ Stage 8 (feed card adoption of all the above) is a UI assembly step — no new u
 - Blocked users never appear in browse/search/notifications; `/users/[id]` returns 404 if blocked either direction.
 - Self-view is prevented: `/users/[id]` with the viewer's own id redirects to `/settings`.
 - Viewer must have a profile picture to like (enforced server-side; UI disables the button with a tooltip).
+
+---
+
+## Audit findings (subject v6.1, 2026-07-16)
+
+- **Unblock is not implemented.** `/api/users/[id]/block` exposes only `POST`; there is no `DELETE` route, no repository `unblock`, and no UI. A block is permanent. Subject IV.5 doesn't strictly require unblock, but PRD 05 lists it — **still open** (tasks `unblock(viewerId, targetId)` and `DELETE /block` remain unchecked, correctly).
+- **Unlike does not suppress future notifications.** Subject IV.5 says removing a like "will prevent further notifications from that user." Today `NotificationService.emit` suppresses only on **block**, not unlike — so after unliking, the other user's later views/likes still notify. **Gap: either suppress notifications between unmatched pairs, or confirm this reading of the subject.**
+- **"Message" button on the `/users/[id]` permalink is always disabled** (`onMessage` never passed; tooltip "Chat coming soon"). Chat is reachable only from `/matches`. Functionally chat works, but the profile-page affordance is dead. Cosmetic vs. subject, but worth wiring.
+- **Report/Block are fully wired end-to-end** (dialogs → API → transactional DB writes) — the earlier "stub/toast" note in the tasks list is stale; the live `safety-dialogs.tsx` path supersedes it.
+- **`profile-view.tsx` fires `POST /users/[id]/views` with no `.catch`** — an unhandled promise rejection on any failed view-record (the browse-feed equivalent has a `.catch`). Under the subject's "no unhandled errors" rule this should be caught. See [[00-cross-cutting]].
+- Presence is `lastSeenAt`-derived (`> NOW() - 5 min`), heartbeat every 60s — online/last-seen both satisfied.

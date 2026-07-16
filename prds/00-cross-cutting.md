@@ -90,3 +90,32 @@ Subject-wide constraints that apply to every feature. These are mandatory and ev
 - Unit tests for every service method (`npx jest`).
 - No console errors on any happy path in the browser.
 - Peer-evaluation security checklist fully covered.
+
+---
+
+## Audit findings (subject v6.1, 2026-07-16)
+
+Full static audit of merged `main`. Verified: `bun run lint` → 0 errors / 1 pre-existing warning (`carousel.tsx:98`, untouched); `bun x tsc --noEmit` clean; `bun x jest` → 70 passed, 25 integration tests skipped (need `INTEGRATION_TESTS=1` + DB).
+
+**Security (score-0 gates)**
+- ✅ Passwords bcrypt cost 10; seeds use pgcrypto bcrypt — no plaintext stored.
+- ✅ SQL: all repository queries parameterized. Only internal constants (`${this.table}`, allow-listed `ORDER BY` fragments validated by `Su.literal`) are interpolated. One dead `UserTokensRepository.update` interpolates values but has no callers — **recommend deleting it** to remove the footgun.
+- ✅ XSS: no `dangerouslySetInnerHTML` anywhere; JSX escaping throughout.
+- ✅ Uploads: magic-byte signature check + 5 MB cap + UUID object keys (filenames untrusted).
+- ✅ **Profile-write IDOR fixed** (see [[02-user-profile]]) and **session cookie hardened** (see [[01-registration-signin]]).
+- ⚠️ `.env.example` is tracked and contains real-looking `SESSION_SECRET` / `SALT` base64 values. Even as examples these should be obvious placeholders — **rotate/blank them** so a copy-paste deploy can't inherit a public secret.
+- ⚠️ No rate limiting on auth endpoints; no CSRF token (mitigated by `sameSite=lax` + JSON-only mutations, but `GET /api/auth/logout` and `GET /api/auth/verify` are state-changing GETs).
+
+**Unhandled-rejection sweep (subject: "no unhandled errors")** — fire-and-forget async without `.catch`/try-catch, worst first:
+1. `profile-view.tsx:67` — `POST /users/[id]/views`
+2. `notifications/page.tsx` — `loadInitial` / `loadMore` (try/finally, no catch)
+3. `matches-content.tsx` / `social-grid.tsx` — `loadMore` (try/finally, no catch)
+4. `navigation-bar.tsx` — `handleLogout` async onClick, no try/catch
+
+These do not surface a stack trace to the user (React error boundary + axios reject), but they are unhandled rejections and should be wrapped. **Open.**
+
+**Housekeeping**
+- `README.md` is untouched `create-next-app` boilerplate — documents none of the socket server, compose, migrations, env, or bun scripts. **Rewrite before defense.**
+- `compose.yaml` defines a `neo4jDb` service that nothing in `src/` uses — remove or document.
+- `Dockerfile` uses `npm i`/`npm run` while the project standard is Bun (`bun.lock` present). Align to avoid lockfile drift.
+- One `console.log` in `src/server/storage/minio.ts:57` (bucket bootstrap) — downgrade to `console.error` or remove.
