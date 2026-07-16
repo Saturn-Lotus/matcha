@@ -16,7 +16,7 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
+    <div className="flex flex-1 flex-col items-center justify-center px-4 py-24 text-center">
       <HeartCrack className="w-10 h-10 text-gray-300 mb-4" />
       <h1 className="text-xl font-bold text-gray-900 mb-1">
         Something went wrong

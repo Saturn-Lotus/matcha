@@ -5,6 +5,7 @@ import { Button } from '@/app/components/ui/button';
 import { X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { apiClient } from '@/lib/api';
+import { cn } from '@/lib/utils';
 
 const DEFAULT_INTERESTS = [
   'travel',
@@ -102,11 +103,12 @@ export function InterestsPicker({ selected, onChange }: InterestsPickerProps) {
             key={interest}
             type="button"
             onClick={() => toggle(interest)}
-            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+            className={cn(
+              'px-3 py-1.5 rounded-full text-sm font-medium transition-colors',
               selected.includes(interest)
                 ? 'strawberry-matcha-btn text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200',
+            )}
           >
             #{interest}
           </button>
