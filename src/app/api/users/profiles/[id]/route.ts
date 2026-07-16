@@ -4,6 +4,8 @@ import {
   CreateUserProfileSchema,
   UpdateUserProfileSchema,
 } from '@/server/schemas';
+import { SESSION_COOKIE_OPTIONS } from '@/lib/auth/session';
+import { UnauthorizedException } from '@/lib/exception-http-mapper';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -25,6 +27,9 @@ export const POST = withErrorHandler(
     context: { params: Promise<{ id: string }> },
   ) => {
     const { id } = await context.params;
+    if (request.headers.get('x-user-id') !== id) {
+      throw new UnauthorizedException('You can only edit your own profile');
+    }
 
     const formData = await request.formData();
     const rawProfileData = {
@@ -45,7 +50,7 @@ export const POST = withErrorHandler(
       isProfileComplete: true,
       avatarUrl: profile.avatarUrl ?? null,
     });
-    cookieStore.set('session', newSession);
+    cookieStore.set('session', newSession, SESSION_COOKIE_OPTIONS);
 
     return NextResponse.json(profile, { status: 201 });
   },
@@ -57,6 +62,9 @@ export const PATCH = withErrorHandler(
     context: { params: Promise<{ id: string }> },
   ) => {
     const { id } = await context.params;
+    if (request.headers.get('x-user-id') !== id) {
+      throw new UnauthorizedException('You can only edit your own profile');
+    }
 
     const formData = await request.formData();
     const rawData = {
@@ -81,7 +89,7 @@ export const PATCH = withErrorHandler(
         const newSession = await authService.refreshSession(currentToken, {
           isVerified: false,
         });
-        cookieStore.set('session', newSession);
+        cookieStore.set('session', newSession, SESSION_COOKIE_OPTIONS);
       }
     }
 
