@@ -30,8 +30,9 @@ Key choices:
 - Auth: the handshake JWT is validated with `decrypt()`/`SESSION_SECRET`. The token may arrive either in the Socket.IO `auth` payload (`io(url, { auth: { token } })`) **or** as the httpOnly `session` cookie (browser clients use the cookie via `withCredentials`).
 - CORS: `credentials: true` with an allowlist from `SOCKET_CORS_ORIGIN` (comma-separated) falling back to `NEXT_PUBLIC_CLIENT_URL`.
 - Transport security (**wss**): when `SOCKET_TLS_CERT` + `SOCKET_TLS_KEY` are set the server runs over HTTPS (so clients connect via `wss://`); otherwise plain `ws://` for local dev. In production set those + point `NEXT_PUBLIC_SOCKET_URL` at `wss://…` (or terminate TLS at a reverse proxy).
-- Deployment: dedicated `socket-dev` / `socket-prod` stages in `Dockerfile` and a `socket` service in `compose.yaml` (port 4001), sharing `.env` with the app.
-- Env: `SOCKET_PORT` (default 4001), `NEXT_PUBLIC_SOCKET_URL` (default `http://localhost:4001`), `SOCKET_CORS_ORIGIN`, `SOCKET_TLS_CERT`, `SOCKET_TLS_KEY`. Scripts: `bun run dev:socket` / `bun run start:socket`.
+- Deployment (local): dedicated `socket-dev` / `socket-prod` stages in `Dockerfile` and a `socket` service in `compose.yaml` (port 4001), sharing `.env` with the app.
+- Deployment (production): **Railway**, built from `socket-server/Dockerfile` per `railway.json`. Railway terminates TLS at its edge, so `SOCKET_TLS_CERT`/`SOCKET_TLS_KEY` stay unset and clients still get `wss://`. `GET /health` is the platform health check. See [[00-cross-cutting]] and `DEPLOYMENT.md`.
+- Env: `PORT` (platform-injected, takes precedence) then `SOCKET_PORT` (default 4001), `NEXT_PUBLIC_SOCKET_URL` (default `http://localhost:4001`), `SOCKET_CORS_ORIGIN`, `SOCKET_TLS_CERT`, `SOCKET_TLS_KEY`. Scripts: `bun run dev:socket` / `bun run start:socket`.
 
 ---
 

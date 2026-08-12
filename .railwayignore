@@ -1,0 +1,24 @@
+# Excluded from the `railway up` source upload. The Railway image only builds
+# socket-server/Dockerfile, which copies package.json, tsconfig.json, src/ and
+# socket-server/ — everything else is dead weight or must never leave the machine.
+node_modules
+.next
+.swc
+coverage
+.git
+
+.env
+.env.*
+!.env.example
+
+cypress
+tests
+migrations
+prds
+public
+scripts
+
+*.pdf
+*.tldr
+*.tsbuildinfo
+.DS_Store

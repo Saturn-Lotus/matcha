@@ -34,6 +34,15 @@ Subject-wide constraints that apply to every feature. These are mandatory and ev
 - All secrets live in `.env*` (already gitignored).
 - Validate every form input on both client (UX) and server (authority). Server validation lives in `src/server/schemas`.
 
+### Deployment topology
+- The app cannot ship as a single Vercel deployment: Vercel's serverless runtime hosts neither a long-lived WebSocket process nor Postgres. Production is split three ways.
+- Next.js app + image storage → **Vercel** (`STORAGE_TYPE=vercel-blob`); PostgreSQL + PostGIS → **Neon**; Socket.IO server (`socket-server/`) → **Railway** (Docker, `socket-server/Dockerfile` + `railway.json`).
+- Railway is **not** GitHub-connected: the repo belongs to the `Saturn-Lotus` org and installing Railway's GitHub App is owner-only. Deploys use `railway up` (source upload gated by `.railwayignore`, authenticated by a project token) from the `deploy-socket` CI job.
+- App → socket communication is a public HTTPS `POST /notify` authenticated by a shared `SOCKET_INTERNAL_SECRET`; no cross-provider private networking.
+- `SESSION_SECRET` must be identical on Vercel and Railway — the socket handshake verifies the app-issued session JWT.
+- CI order is `migrate-production` → (`deploy-app`, `deploy-socket`) so neither runtime observes a half-migrated schema.
+- Full runbook: `DEPLOYMENT.md`.
+
 ### Architecture (non-negotiable)
 - Route → Service → Repository layering. See `CLAUDE.md`.
 - Routes wrapped with `withErrorHandler`, use factories, no direct instantiation.
