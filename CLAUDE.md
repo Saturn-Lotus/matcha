@@ -1,28 +1,5 @@
 # Matcha — Project Rules for Claude
 
-## Stack
-- **Framework:** Next.js 15 (App Router), React 19, TypeScript
-- **Database:** PostgreSQL via `pg`, managed with `node-pg-migrate`
-- **Auth:** bcrypt for hashing, `jose` for JWT sessions
-- **Styling:** Tailwind CSS v4, Radix UI primitives, shadcn/ui components
-- **Testing:** Jest (unit), Cypress (e2e)
-- **Runtime:** Bun (lockfile), Node.js
-
-## Project Structure
-```
-src/
-  app/          # Next.js App Router — pages and API routes
-  lib/          # Shared utilities (auth, mailer, api client, exception mapper, validator)
-  server/       # Server-only code
-    db/         # PostgreSQL connection (postgres.ts)
-    repositories/   # Data access layer (extend BaseRepositoryClass)
-    services/       # Business logic (e.g. AuthService)
-    schemas/        # Validation schemas
-    factories/      # Service/repo factory functions (use these in routes)
-  middlewares/  # Route middlewares (e.g. withErrorHandler)
-  types/        # Shared TypeScript types
-```
-
 ## Architecture Rules
 
 ### Layered architecture — each layer owns exactly one concern
