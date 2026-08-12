@@ -13,7 +13,8 @@ import {
   MessageReadSchema,
 } from '@/server/schemas';
 
-const PORT = Number(process.env.SOCKET_PORT ?? 4001);
+// PORT is injected by the platform (Railway); SOCKET_PORT is the local/compose knob.
+const PORT = Number(process.env.PORT ?? process.env.SOCKET_PORT ?? 4001);
 const CLIENT_URL =
   process.env.NEXT_PUBLIC_CLIENT_URL ?? 'http://localhost:3000';
 
@@ -82,6 +83,11 @@ export function startSocketServer() {
   // Internal HTTP endpoint for Next.js to push notifications to connected users.
   // socket.io only handles requests to /socket.io/*, so this listener is safe to coexist.
   httpServer.on('request', (req, res) => {
+    if (req.method === 'GET' && req.url === '/health') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ status: 'ok' }));
+      return;
+    }
     if (req.method !== 'POST' || req.url !== '/notify') return;
     let body = '';
     req.on('data', (chunk: Buffer) => {
