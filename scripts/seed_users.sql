@@ -8,7 +8,7 @@
 -- Also creates a dedicated test account (username "testuser" / password
 -- "Test1234world") and seeds interactions against it: matches, one-directional
 -- likes, and profile views — so the matches/likers/visitors pages have data.
--- Run via: bash scripts/seed_users.sh
+-- Run via: bun run db:seed
 
 DO $$
 DECLARE

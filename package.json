@@ -14,7 +14,7 @@
     "db:create": "node-pg-migrate create",
     "db:migrate": "node-pg-migrate up ",
     "db:rollback": "node-pg-migrate down",
-    "db:seed": "./scripts/seed_users.sh",
+    "db:seed": "bun scripts/seed_users.ts",
     "cy:open": "cypress open",
     "test": "jest --runInBand"
   },
