@@ -24,7 +24,7 @@ import {
   SortDirection,
   UserSearchResult,
 } from '@/server/types';
-import { yearsBetween } from '@/lib/utils';
+import { blankToNull, yearsBetween } from '@/lib/utils';
 import { MAX_PROFILE_PICTURES } from '@/server/config';
 import { mergeProfilePictures } from '@/server/services/profile-pictures';
 import bcrypt from 'bcrypt';
@@ -412,7 +412,11 @@ export class UserService {
         'prefMinFame must be less than or equal to prefMaxFame',
       );
     }
-    return this.userRepository.updateSearchPreferences(userId, prefs);
+    return this.userRepository.updateSearchPreferences(userId, {
+      ...prefs,
+      prefCity:
+        prefs.prefCity === undefined ? undefined : blankToNull(prefs.prefCity),
+    });
   };
 
   resolveOrientation = (
@@ -439,16 +443,12 @@ export class UserService {
       filters.sortDirection ??
       (sortBy === 'sharedTagCount' || sortBy === 'fameRating' ? 'desc' : 'asc');
 
-    const needsLocation =
-      filters.maxDistanceKm !== undefined || sortBy === 'distance';
-    if (needsLocation) {
-      const viewerHasLocation =
-        await this.userRepository.userHasLocation(viewerId);
-      if (!viewerHasLocation) {
-        throw new ValidationError(
-          'Set your location before filtering or sorting by distance',
-        );
-      }
+    const viewerHasLocation =
+      await this.userRepository.userHasLocation(viewerId);
+    if (!viewerHasLocation) {
+      throw new ValidationError(
+        'Set your location in settings to see suggestions',
+      );
     }
 
     const allowedGenders = this.resolveOrientation(viewer.sexualPreference);
@@ -464,6 +464,7 @@ export class UserService {
       maxFameRating: filters.maxFameRating ?? null,
       age: filters.age ?? null,
       minAge: filters.minAge ?? null,
+      city: blankToNull(filters.city),
       sortBy,
       sortDirection,
     });

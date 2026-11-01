@@ -241,6 +241,7 @@ export class UserRepository extends BaseRepositoryClass<User> {
       maxFameRating,
       age,
       minAge,
+      city,
       sortBy,
       sortDirection,
     } = params;
@@ -252,7 +253,8 @@ export class UserRepository extends BaseRepositoryClass<User> {
       `WITH viewer AS (
          SELECT
            COALESCE(up.interests, '{}'::TEXT[]) AS interests,
-           ul.location AS location
+           ul.location AS location,
+           ul.city AS city
          FROM user_profiles up
          LEFT JOIN user_locations ul ON ul."userId" = up."userId"
          WHERE up."userId" = $1
@@ -270,7 +272,8 @@ export class UserRepository extends BaseRepositoryClass<User> {
            up.pictures,
            up.interests,
            up.bio,
-           ul.location AS location
+           ul.location AS location,
+           ul.city AS city
          FROM users u
          JOIN user_profiles up ON up."userId" = u.id
          LEFT JOIN user_locations ul ON ul."userId" = u.id
@@ -306,6 +309,12 @@ export class UserRepository extends BaseRepositoryClass<User> {
            c.pictures,
            c.interests,
            c.bio,
+           c.city,
+           CASE
+             WHEN c.city IS NOT NULL AND v.city IS NOT NULL
+               AND LOWER(c.city) = LOWER(v.city) THEN 0
+             ELSE 1
+           END AS "areaBand",
            EXTRACT(YEAR FROM AGE(c."birthDate"))::INT AS "age",
            cardinality(
              ARRAY(
@@ -345,13 +354,14 @@ export class UserRepository extends BaseRepositoryClass<User> {
            AND ($7::FLOAT IS NULL OR "fameRating" <= $7)
            AND ($8::INT IS NULL OR "age" <= $8)
            AND ($9::INT IS NULL OR "age" >= $9)
+           AND ($10::TEXT IS NULL OR LOWER(city) = LOWER($10))
        )
        SELECT
          *,
          (COUNT(*) OVER ())::INT AS "totalCount"
        FROM filtered
        ORDER BY ${orderSql}
-       LIMIT $10 OFFSET $11;`,
+       LIMIT $11 OFFSET $12;`,
       [
         viewerId,
         allowedGenders,
@@ -362,6 +372,7 @@ export class UserRepository extends BaseRepositoryClass<User> {
         maxFameRating,
         age,
         minAge,
+        city,
         pageSize,
         offset,
       ],
@@ -426,7 +437,7 @@ export class UserRepository extends BaseRepositoryClass<User> {
   ): Promise<StoredSearchPreferences | null> {
     const rows = await this.db.query<StoredSearchPreferences>(
       `SELECT "prefMinAge", "prefMaxAge", "prefMinFame", "prefMaxFame",
-              "prefMaxDistanceKm", "prefTags"
+              "prefMaxDistanceKm", "prefTags", "prefCity"
        FROM ${this.userProfilesTable}
        WHERE "userId" = $1
        LIMIT 1;`,
@@ -447,6 +458,7 @@ export class UserRepository extends BaseRepositoryClass<User> {
       'prefMaxFame',
       'prefMaxDistanceKm',
       'prefTags',
+      'prefCity',
     ];
     const entries = (
       Object.entries(prefs) as [
@@ -477,7 +489,7 @@ export class UserRepository extends BaseRepositoryClass<User> {
        SET ${setClause}
        WHERE "userId" = $1
        RETURNING "prefMinAge", "prefMaxAge", "prefMinFame", "prefMaxFame",
-                 "prefMaxDistanceKm", "prefTags";`,
+                 "prefMaxDistanceKm", "prefTags", "prefCity";`,
       params,
     );
     if (rows.length === 0) {
@@ -517,6 +529,8 @@ export type SuggestionRow = UserWithProfileRow & {
   targetViewedViewer: boolean;
   connected: boolean;
   age: number;
+  city: string | null;
+  areaBand: number;
 };
 
 export type GetUsersWithProfilesParams = {
@@ -531,12 +545,13 @@ export type GetUsersWithProfilesParams = {
   maxFameRating: number | null;
   age: number | null;
   minAge: number | null;
+  city: string | null;
   sortBy: SortBy;
   sortDirection: SortDirection;
 };
 
 const RELEVANCE_ORDER =
-  '"distanceKm" ASC NULLS LAST, "sharedTagCount" DESC, "fameRating" DESC, id ASC';
+  '"areaBand" ASC, "sharedTagCount" DESC, "fameRating" DESC, "distanceKm" ASC NULLS LAST, id ASC';
 
 const ORDER_FRAGMENTS: Record<SortBy, Record<SortDirection, string>> = {
   relevance: {

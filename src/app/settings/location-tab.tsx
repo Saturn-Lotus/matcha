@@ -8,7 +8,7 @@ import { Label } from '@/app/components/ui/label';
 import { AlertCircle, MapPin, Navigation } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/api/client';
-import { UserLocation } from '@/server/schemas/location';
+import { SetLocationInput, UserLocation } from '@/server/schemas/location';
 import { cn } from '@/lib/utils';
 
 const CASABLANCA_COORDS = { lat: 33.5731, lng: -7.5898 };
@@ -23,6 +23,53 @@ export interface LocationState {
   neighborhood: string;
   locationType: 'gps' | 'manual';
   consentGiven: boolean;
+}
+
+function formatAddress(location: LocationState): string {
+  return [location.neighborhood, location.city]
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .join(', ');
+}
+
+async function geocodeAddress(
+  address: string,
+): Promise<{ latitude: number; longitude: number }> {
+  if (typeof google === 'undefined' || !google.maps?.Geocoder) {
+    throw new Error('Maps is unavailable, so your city cannot be located');
+  }
+  try {
+    const { results } = await new google.maps.Geocoder().geocode({ address });
+    const { location } = results[0].geometry;
+    return { latitude: location.lat(), longitude: location.lng() };
+  } catch {
+    throw new Error(`Could not locate "${address}"`);
+  }
+}
+
+export async function buildLocationPayload(
+  location: LocationState,
+): Promise<SetLocationInput> {
+  const address = formatAddress(location);
+  const isManual = location.locationType === 'manual';
+  if (isManual && !address) {
+    throw new Error('Please enter your city or neighborhood');
+  }
+  const coordinates =
+    isManual && location.latitude === null
+      ? await geocodeAddress(address)
+      : { latitude: location.latitude, longitude: location.longitude };
+  if (coordinates.latitude === null || coordinates.longitude === null) {
+    throw new Error('Please set your location before saving');
+  }
+  return {
+    latitude: coordinates.latitude,
+    longitude: coordinates.longitude,
+    city: location.city.trim() || undefined,
+    neighborhood: location.neighborhood.trim() || undefined,
+    locationType: location.locationType,
+    consentGiven: location.consentGiven,
+  };
 }
 
 interface MapPreviewProps {
@@ -101,6 +148,11 @@ export function LocationTab({ userId, location, onChange }: LocationTabProps) {
 
   const set = (patch: Partial<LocationState>) =>
     onChange({ ...location, ...patch });
+
+  // Stale coordinates would otherwise be saved instead of geocoding the new text.
+  const setTypedPlace = (
+    patch: Pick<Partial<LocationState>, 'city' | 'neighborhood'>,
+  ) => set({ ...patch, latitude: null, longitude: null });
 
   const handleLocateMe = () => {
     if (!navigator.geolocation) {
@@ -233,7 +285,7 @@ export function LocationTab({ userId, location, onChange }: LocationTabProps) {
           <Input
             id="city"
             value={location.city}
-            onChange={(e) => set({ city: e.target.value })}
+            onChange={(e) => setTypedPlace({ city: e.target.value })}
             placeholder="e.g. Paris"
             disabled={location.locationType === 'gps'}
           />
@@ -243,7 +295,7 @@ export function LocationTab({ userId, location, onChange }: LocationTabProps) {
           <Input
             id="neighborhood"
             value={location.neighborhood}
-            onChange={(e) => set({ neighborhood: e.target.value })}
+            onChange={(e) => setTypedPlace({ neighborhood: e.target.value })}
             placeholder="e.g. Montmartre"
             disabled={location.locationType === 'gps'}
           />

@@ -5,7 +5,11 @@ import { MapPin, UserCircle, User, Images, Lock, Sliders } from 'lucide-react';
 import { toast } from 'sonner';
 import { UserProfile } from '@/server/schemas';
 import { PhotoGallery, PicturesState } from './photo-gallery';
-import { LocationTab, LocationState } from './location-tab';
+import {
+  LocationTab,
+  LocationState,
+  buildLocationPayload,
+} from './location-tab';
 import { InterestsPicker } from './interests-picker';
 import { PasswordInput } from './password-input';
 import {
@@ -85,6 +89,7 @@ export function SettingsForm({
     prefMaxFame: 100,
     prefMaxDistanceKm: 100,
     prefTags: [],
+    prefCity: '',
   });
   const [preferencesSubmitting, setPreferencesSubmitting] = useState(false);
 
@@ -98,6 +103,7 @@ export function SettingsForm({
         prefMaxFame: number | null;
         prefMaxDistanceKm: number | null;
         prefTags: string[] | null;
+        prefCity: string | null;
       }>('/users/me/search-preferences')
       .then((data) => {
         if (cancelled) return;
@@ -108,6 +114,7 @@ export function SettingsForm({
           prefMaxFame: data.prefMaxFame ?? 100,
           prefMaxDistanceKm: Math.min(data.prefMaxDistanceKm ?? 100, 100),
           prefTags: data.prefTags ?? [],
+          prefCity: data.prefCity ?? '',
         });
       })
       .catch(() => {});
@@ -126,6 +133,9 @@ export function SettingsForm({
 
     setSubmitting(true);
     try {
+      const locationPayload = location.consentGiven
+        ? await buildLocationPayload(location)
+        : null;
       const formData = new FormData();
 
       if (firstName) formData.append('firstName', firstName);
@@ -157,22 +167,12 @@ export function SettingsForm({
 
       await apiClient.patch(`/users/profiles/${userId}`, formData);
 
-      if (location.consentGiven) {
-        if (location.latitude === null || location.longitude === null) {
-          toast.error('Please set your location before saving');
-          return;
-        }
-        if (location.locationType === 'manual' && !location.city) {
-          toast.error('Please enter at least your city');
-          return;
-        }
-        await apiClient.patch('/users/location', {
-          latitude: location.latitude,
-          longitude: location.longitude,
-          city: location.city || null,
-          neighborhood: location.neighborhood || null,
-          locationType: location.locationType,
-          consentGiven: location.consentGiven,
+      if (locationPayload) {
+        await apiClient.patch('/users/location', locationPayload);
+        setLocation({
+          ...location,
+          latitude: locationPayload.latitude,
+          longitude: locationPayload.longitude,
         });
       }
 
@@ -195,6 +195,7 @@ export function SettingsForm({
         prefMaxFame: preferences.prefMaxFame,
         prefMaxDistanceKm: preferences.prefMaxDistanceKm,
         prefTags: preferences.prefTags.length > 0 ? preferences.prefTags : null,
+        prefCity: preferences.prefCity,
       });
       toast.success('Search preferences saved');
     } catch (err: unknown) {

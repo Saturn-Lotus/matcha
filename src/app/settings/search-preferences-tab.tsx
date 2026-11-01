@@ -1,5 +1,6 @@
 'use client';
 
+import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
 import { Slider } from '@/app/components/ui/slider';
 import { InterestsPicker } from './interests-picker';
@@ -18,6 +19,7 @@ export interface SearchPreferencesState {
   prefMaxFame: number;
   prefMaxDistanceKm: number;
   prefTags: string[];
+  prefCity: string;
 }
 
 interface SearchPreferencesTabProps {
@@ -118,6 +120,16 @@ export function SearchPreferencesTab({
           step={1}
           value={[value.prefMaxDistanceKm]}
           onValueChange={(next) => set({ prefMaxDistanceKm: next[0] })}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="pref-city">City</Label>
+        <Input
+          id="pref-city"
+          value={value.prefCity}
+          onChange={(e) => set({ prefCity: e.target.value })}
+          placeholder="Any city"
         />
       </div>
 
