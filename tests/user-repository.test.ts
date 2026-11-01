@@ -17,6 +17,7 @@ describe('UserRepository.getUsersWithProfiles', () => {
       maxFameRating: 90,
       age: 35,
       minAge: 25,
+      city: 'Paris',
       sortBy: 'relevance',
       sortDirection: 'asc',
     });
@@ -24,9 +25,7 @@ describe('UserRepository.getUsersWithProfiles', () => {
     expect(query).toHaveBeenCalledTimes(1);
     const [sql, params] = query.mock.calls[0];
 
-    expect(sql).toContain(
-      "$4::TEXT[] <@ COALESCE(interests, '{}'::TEXT[])",
-    );
+    expect(sql).toContain("$4::TEXT[] <@ COALESCE(interests, '{}'::TEXT[])");
     expect(sql).not.toContain('interests && $4::TEXT[]');
     expect(params).toEqual([
       'viewer-id',
@@ -38,6 +37,7 @@ describe('UserRepository.getUsersWithProfiles', () => {
       90,
       35,
       25,
+      'Paris',
       20,
       20,
     ]);

@@ -14,6 +14,11 @@ export function yearsBetween(from: Date, to: Date): number {
   return years;
 }
 
+export function blankToNull(value: string | null | undefined): string | null {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : null;
+}
+
 export function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const m = Math.floor(diff / 60_000);

@@ -11,6 +11,7 @@ const EMPTY_PREFS: StoredSearchPreferences = {
   prefMaxFame: null,
   prefMaxDistanceKm: null,
   prefTags: null,
+  prefCity: null,
 };
 
 export default async function BrowsePage() {

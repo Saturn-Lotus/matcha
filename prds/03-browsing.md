@@ -11,12 +11,14 @@ Subject §IV.3. Users land on a feed of "interesting" profiles that match their 
   - Homosexual → same gender only.
   - Bisexual (or unset → treated as bisexual) → both genders.
   - A candidate is only shown if their own `sexualPreference` includes the viewer's gender (null preference is treated as `'both'`).
-- Intelligent ranking across multiple criteria simultaneously (default `relevance` sort: distance ASC, shared tags DESC, fame rating DESC):
-  - Proximity to the viewer's location (highest priority).
-  - Number of shared tags.
-  - Fame rating.
+- Suggestions require the viewer to have a stored location (GPS or a manually typed city/neighborhood geocoded on save). Without one, `GET /api/users` returns 400 "Set your location in settings to see suggestions".
+- Intelligent ranking across multiple criteria simultaneously (default `relevance` sort):
+  - Same geographical area first: candidate city equals viewer city (case-insensitive). Exposed as a selected `areaBand` column (0 = same city, 1 = otherwise, including missing city on either side).
+  - Then number of shared tags (DESC).
+  - Then fame rating (DESC).
+  - Then distance (ASC, nulls last), then `id` as a stable tie-break.
 - Sortable by: age, distance, fame rating, shared-tag count.
-- Filterable by: age range, distance radius, fame rating range, tags.
+- Filterable by: age range, distance radius, fame rating range, tags, city (see PRD 04).
 - Pagination (cursor-based).
 
 ## Out of scope
@@ -58,7 +60,7 @@ Response item: `{ id, username, firstName, age, distanceKm, fameRating, sharedTa
 | # | As a… | I want… | So that… |
 |---|-------|---------|----------|
 | BR-1 | logged-in user | to see a list of profiles that match my gender preference | I don't waste time on irrelevant profiles |
-| BR-2 | logged-in user | nearby profiles to be shown first | I see people I could realistically meet |
+| BR-2 | logged-in user | profiles in my city to be shown first | I see people I could realistically meet |
 | BR-3 | logged-in user | profiles with more shared interests to rank higher | my matches are more relevant |
 | BR-4 | logged-in user | to filter results by age range | I see only the ages I'm interested in |
 | BR-5 | logged-in user | to filter by maximum distance | I only see people close to me |
@@ -86,6 +88,7 @@ Response item: `{ id, username, firstName, age, distanceKm, fameRating, sharedTa
 ### Service — `UserService` (will move to `SuggestionService` later)
 - [x] `resolveOrientation(sexualPreference)` — determine allowed candidate genders; null preference is treated as `'both'` (per scope) — implements **BR-1**
 - [x] `getUsersWithProfiles(viewerId)` — fetch viewer profile, resolve allowed genders, call repository, map to `BrowseSuggestion` DTO
+- [x] `getUsersWithProfiles` always requires a stored viewer location (`userHasLocation`), throwing `ValidationError` otherwise
 - [ ] `list(viewerId, query)` — validate query params, call repository, map to response DTO, compute `previewPictureUrl` via storage helper
 - [ ] `validateFilters(query)` — age min ≤ max, distance > 0, fame min ≤ max
 
@@ -119,6 +122,8 @@ Response item: `{ id, username, firstName, age, distanceKm, fameRating, sharedTa
 - Gender/orientation filter is applied server-side; never leaked client-side.
 - Blocked users never appear.
 - Results are deterministic given same filters + viewer state.
+- A viewer without a stored location gets 400, never an unranked list.
+- Default relevance order is `"areaBand" ASC, "sharedTagCount" DESC, "fameRating" DESC, "distanceKm" ASC NULLS LAST, id ASC`.
 - Default sort gives visibly better matches than `ORDER BY user_id`.
 - Pagination cursor works: second page never repeats first-page items.
 
@@ -126,8 +131,8 @@ Response item: `{ id, username, firstName, age, distanceKm, fameRating, sharedTa
 
 ## Audit findings (subject v6.1, 2026-07-16)
 - Orientation matching is correct **both directions** with bisexual default for unset preference (`resolveOrientation` + the candidate-preference SQL clause). Viewer must have a gender set.
-- Relevance sort implemented as a lexicographic `ORDER BY "distanceKm" ASC NULLS LAST, "sharedTagCount" DESC, "fameRating" DESC, id ASC` — satisfies "multiple criteria" (proximity → shared tags → fame). Same-area priority comes only from distance ordering; there is no explicit city/bucket boost.
-- All four sorts (age, distance, fame, shared tags) and all four filters (age, distance, fame, tags) are implemented. Filters are sourced from persisted search preferences (see [[04-research]]), not an on-feed filter panel.
+- Relevance sort is `ORDER BY "areaBand" ASC, "sharedTagCount" DESC, "fameRating" DESC, "distanceKm" ASC NULLS LAST, id ASC`. Previously distance led the order, and because it is a continuous float, shared tags and fame almost never mattered. Same city is now an explicit band, so tags and fame decide the order within an area.
+- All four sorts (age, distance, fame, shared tags) and five filters (age, distance, fame, tags, city) are implemented. Filters are sourced from persisted search preferences (see [[04-research]]), not an on-feed filter panel.
 - Pagination is **offset-based** (`page`/`pageSize`, `COUNT(*) OVER ()`), not the cursor scheme this PRD describes — update the PRD text or the impl to match. Infinite scroll is wired on top.
 - **Fame filter ceiling (100) < unbounded fame formula** — carries the [[02-user-profile]] fame-scale bug into browse: filtering fame ≤ 100 hides all high-fame profiles.
 

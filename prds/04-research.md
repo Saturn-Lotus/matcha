@@ -14,14 +14,18 @@ preferences) and sortable (via the popover).
 ---
 
 ## Scope
-- Persist four criteria on `user_profiles`: age range, fame rating range,
-  maximum distance (km), and interest tags (AND semantics).
+- Persist five criteria on `user_profiles`: age range, fame rating range,
+  maximum distance (km), a chosen city, and interest tags (AND semantics).
+  The city targets a place (case-insensitive equality on the candidate's
+  stored city), distinct from the radius around the viewer.
 - Edit preferences in a new **Search Preferences** section under `/settings`.
 - Apply preferences as the default filters on `/browse`.
 - Sort popover on the feed exposing the five sort keys (`relevance`,
   `sharedTagCount`, `distance`, `fameRating`, `age`) and the direction
   (`asc`/`desc`).
 - Extend the browse endpoint with `minAge` so a real age range is supported.
+- Extend the browse endpoint with `city`. An empty or blank city is treated as
+  unset.
 
 ## Out of scope
 - Standalone `/search` page or `SearchForm` component.
@@ -43,6 +47,7 @@ New columns on `user_profiles` (migration
 | `prefMaxFame` | `INT` | nullable; 0..100 enforced server-side |
 | `prefMaxDistanceKm` | `FLOAT` | nullable; 0..20000 enforced server-side |
 | `prefTags` | `TEXT[]` | nullable; max 20 items; AND semantics |
+| `prefCity` | `TEXT` | nullable; max 100 chars; blank stored as `NULL` (migration `1793533961513_add-search-pref-city.js`) |
 
 Index: `idx_user_profiles_pref_tags` (GIN on `prefTags`).
 
@@ -53,7 +58,7 @@ Index: `idx_user_profiles_pref_tags` (GIN on `prefTags`).
 |---|---|---|
 | `GET` | `/api/users/me/search-preferences` | Returns the viewer's stored prefs |
 | `PATCH` | `/api/users/me/search-preferences` | Updates one or more pref fields |
-| `GET` | `/api/users` | Browse — now also accepts `minAge` |
+| `GET` | `/api/users` | Browse — now also accepts `minAge` and `city` |
 
 `PATCH` body fields are all optional. Sending `null` clears a field; sending a
 value updates it. Cross-field validation enforces
@@ -64,6 +69,7 @@ value updates it. Cross-field validation enforces
 ## UI
 - **Settings → Search Preferences** (`/settings#preferences`)
   - Two number inputs for age range, two for fame range, one for max distance.
+  - Text input for city (empty = any city).
   - `InterestsPicker` for tags (reuses the existing component).
   - Dedicated "Save Preferences" button with its own toast.
 - **Browse feed** (`/browse`)
@@ -83,6 +89,7 @@ value updates it. Cross-field validation enforces
 | SR-2 | logged-in user | to set min/max fame rating in my preferences | the feed matches my activity expectations |
 | SR-3 | logged-in user | to set a maximum distance in my preferences | the feed shows people nearby |
 | SR-4 | logged-in user | to pick interest tags I require (AND) | the feed only shows people who share all of them |
+| SR-8 | logged-in user | to choose a city in my preferences | the feed shows people in that place, not only near me |
 | SR-5 | logged-in user | my preferences to persist across sessions | I don't have to reconfigure on every visit |
 | SR-6 | logged-in user | to change sort order from inside the feed | I can explore results without going to settings |
 | SR-7 | logged-in user | server-side validation of impossible ranges | I get a clear error instead of broken results |
@@ -93,6 +100,8 @@ value updates it. Cross-field validation enforces
 
 ### Migration
 - [x] `1779911702313_add-search-preferences-to-user-profiles.js` — six columns + GIN index on `prefTags`.
+- [x] `1793533961513_add-search-pref-city.js` — `prefCity TEXT NULL`.
+- [x] City filter: `city` on `BrowseQuerySchema`, `prefCity` on `SearchPreferencesSchema`; service normalizes blank to `NULL`; repository applies `LOWER(city) = LOWER($10)`; settings input + feed query param wired.
 
 ### Schemas — `src/server/schemas/browse.ts`
 - [x] Add `minAge` to `BrowseQuerySchema`.
@@ -141,11 +150,13 @@ value updates it. Cross-field validation enforces
   range; server rejects values outside 18..120.
 - Cross-field validation (`prefMinAge ≤ prefMaxAge`,
   `prefMinFame ≤ prefMaxFame`) returns 400.
+- A saved `prefCity` restricts the feed to candidates whose stored city matches
+  case-insensitively; an empty city leaves the feed unrestricted.
 
 ---
 
 ## Security
-- All ranges validated server-side (age 18..120, fame 0..100, distance 0..20000).
+- All ranges validated server-side (age 18..120, fame 0..100, distance 0..20000, city ≤ 100 chars).
 - Tags array capped at 20 items; each tag is parsed as a string.
 - `PATCH /api/users/me/search-preferences` is gated by `x-user-id` (auth
   middleware) — users cannot edit other users' preferences.

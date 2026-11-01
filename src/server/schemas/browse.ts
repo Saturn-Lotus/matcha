@@ -8,6 +8,7 @@ const SORT_KEYS = [
   'age',
 ] as const;
 const SORT_DIRECTIONS = ['asc', 'desc'] as const;
+const MAX_CITY_LENGTH = 100;
 
 export const BrowseQuerySchema = Su.object({
   page: Su.optional(Su.number().min(1)),
@@ -18,6 +19,7 @@ export const BrowseQuerySchema = Su.object({
   maxFameRating: Su.optional(Su.number().min(0).max(100)),
   minAge: Su.optional(Su.number().min(18).max(120)),
   age: Su.optional(Su.number().min(18).max(120)),
+  city: Su.optional(Su.string().length({ max: MAX_CITY_LENGTH })),
   sortBy: Su.optional(Su.literal(SORT_KEYS)),
   sortDirection: Su.optional(Su.literal(SORT_DIRECTIONS)),
 });
@@ -45,6 +47,7 @@ export const SearchPreferencesSchema = Su.object({
   prefMaxFame: Su.optional(Su.null(Su.number().min(0).max(100))),
   prefMaxDistanceKm: Su.optional(Su.null(Su.number().min(0).max(20000))),
   prefTags: Su.optional(Su.null(Su.array(Su.string()).length({ max: 20 }))),
+  prefCity: Su.optional(Su.null(Su.string().length({ max: MAX_CITY_LENGTH }))),
 });
 
 export type SearchPreferences = SuInfer<typeof SearchPreferencesSchema>;
@@ -56,4 +59,5 @@ export type StoredSearchPreferences = {
   prefMaxFame: number | null;
   prefMaxDistanceKm: number | null;
   prefTags: string[] | null;
+  prefCity: string | null;
 };

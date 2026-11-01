@@ -193,6 +193,7 @@ function buildBrowseQuery(
   if (prefs.prefTags && prefs.prefTags.length > 0) {
     for (const tag of prefs.prefTags) params.append('interests', tag);
   }
+  if (prefs.prefCity) params.set('city', prefs.prefCity);
   return params.toString();
 }
 
