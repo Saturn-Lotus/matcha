@@ -25,6 +25,8 @@ import {
   UserSearchResult,
 } from '@/server/types';
 import { yearsBetween } from '@/lib/utils';
+import { MAX_PROFILE_PICTURES } from '@/server/config';
+import { mergeProfilePictures } from '@/server/services/profile-pictures';
 import bcrypt from 'bcrypt';
 
 const MIN_REGISTRATION_AGE = 18;
@@ -202,6 +204,24 @@ export class UserService {
     return uploadedPictures;
   };
 
+  private mergeOrDiscardUploads = async (
+    remainingPictures: string[],
+    uploadedPictures: string[],
+  ): Promise<string[]> => {
+    try {
+      return mergeProfilePictures(
+        remainingPictures,
+        uploadedPictures,
+        MAX_PROFILE_PICTURES,
+      );
+    } catch (error) {
+      await Promise.allSettled(
+        uploadedPictures.map((url) => this.storage.deleteFile(url)),
+      );
+      throw error;
+    }
+  };
+
   updateUserProfile = async (id: string, profileData: UpdateUserProfile) => {
     const userProfile = await this.userRepository.findProfileByUserId(id);
     if (!userProfile) {
@@ -252,13 +272,15 @@ export class UserService {
       }
     }
 
-    // Build the final pictures list: keep existing minus removed, then append new uploads
     const currentPictures = userProfile.pictures || [];
     const removedSet = new Set(profileData.picturesToRemove || []);
     const remainingPictures = currentPictures.filter(
       (pic) => !removedSet.has(pic),
     );
-    const finalPictures = [...remainingPictures, ...uploadedPictures];
+    const finalPictures = await this.mergeOrDiscardUploads(
+      remainingPictures,
+      uploadedPictures,
+    );
 
     let emailChanged = false;
     if (profileData.email !== undefined) {

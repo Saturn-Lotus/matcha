@@ -24,9 +24,6 @@ interface SettingsFormProps {
 const GENDERS = [
   { value: 'male', label: 'Male' },
   { value: 'female', label: 'Female' },
-  { value: 'non_binary', label: 'Non-binary' },
-  { value: 'other', label: 'Other' },
-  { value: 'prefer_not_to_say', label: 'Prefer not to say' },
 ];
 
 const SEXUAL_PREFERENCES = [

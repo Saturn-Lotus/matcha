@@ -29,7 +29,7 @@ import {
   formatClockTime,
   formatCompactNumber,
   formatDayLabel,
-  relativeTime,
+  formatLastConnection,
 } from '@/lib/utils';
 import { useChatStore } from '@/lib/stores/chat-store';
 import {
@@ -446,7 +446,7 @@ export function ThreadPane({
   const presence = isOnline
     ? 'Active now'
     : profile?.lastSeenAt
-      ? `Active ${relativeTime(profile.lastSeenAt)}`
+      ? `Last seen ${formatLastConnection(profile.lastSeenAt)}`
       : 'Offline';
 
   return (

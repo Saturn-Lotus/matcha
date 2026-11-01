@@ -1,4 +1,9 @@
-import { GENDERS, MAX_FILE_SIZE, SEXUAL_PREFERENCES } from '@/server/config';
+import {
+  GENDERS,
+  MAX_FILE_SIZE,
+  MAX_PROFILE_PICTURES,
+  SEXUAL_PREFERENCES,
+} from '@/server/config';
 import { SuInfer, Su } from '@/lib/validator';
 
 // ***********************************
@@ -60,7 +65,7 @@ export const CreateUserProfileSchema = Su.object({
   avatar: Su.string(),
   pictures: Su.array(Su.file().image().sizeMax(MAX_FILE_SIZE)).length({
     min: 1,
-    max: 5,
+    max: MAX_PROFILE_PICTURES,
   }),
 });
 
@@ -76,10 +81,12 @@ export const UpdateUserProfileSchema = Su.object({
   avatar: Su.optional(Su.string()),
   newPictures: Su.optional(
     Su.array(Su.file().image().sizeMax(MAX_FILE_SIZE)).length({
-      max: 5,
+      max: MAX_PROFILE_PICTURES,
     }),
   ),
-  picturesToRemove: Su.optional(Su.array(Su.string()).length({ max: 5 })),
+  picturesToRemove: Su.optional(
+    Su.array(Su.string()).length({ max: MAX_PROFILE_PICTURES }),
+  ),
 });
 
 export const ChangePasswordSchema = Su.object({

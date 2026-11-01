@@ -26,6 +26,13 @@ export function relativeTime(iso: string): string {
   return new Date(iso).toLocaleDateString();
 }
 
+export function formatLastConnection(iso: string): string {
+  return new Date(iso).toLocaleString(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
+}
+
 export function formatGenderLabel(g: 'male' | 'female' | null): string | null {
   if (g === 'male') return 'Man';
   if (g === 'female') return 'Woman';
