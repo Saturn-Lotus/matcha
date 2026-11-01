@@ -91,3 +91,16 @@ describe('Su.object', () => {
     );
   });
 });
+
+describe('Su.string().password()', () => {
+  it('rejects a common French word', () => {
+    expect(() => Su.string().password().parse('Maintenant1')).toThrow(
+      ValidationError,
+    );
+  });
+  it('accepts a strong mixed password', () => {
+    expect(Su.string().password().parse('Tr0ub4dor&3xQz!')).toBe(
+      'Tr0ub4dor&3xQz!',
+    );
+  });
+});

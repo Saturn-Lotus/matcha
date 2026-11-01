@@ -1,10 +1,44 @@
 import { zxcvbn, zxcvbnOptions } from '@zxcvbn-ts/core';
 import * as zxcvbnCommonPackage from '@zxcvbn-ts/language-common';
+import * as zxcvbnDePackage from '@zxcvbn-ts/language-de';
+import * as zxcvbnEnPackage from '@zxcvbn-ts/language-en';
+import * as zxcvbnEsPackage from '@zxcvbn-ts/language-es-es';
+import * as zxcvbnFrPackage from '@zxcvbn-ts/language-fr';
+import * as zxcvbnItPackage from '@zxcvbn-ts/language-it';
+import * as zxcvbnNlPackage from '@zxcvbn-ts/language-nl-be';
+import * as zxcvbnPtBrPackage from '@zxcvbn-ts/language-pt-br';
 import { CheckValidationError, TypeValidationError } from './exceptions';
+
+type ZxcvbnDictionary = Record<string, (string | number)[]>;
+
+const languageDictionaries: Record<string, ZxcvbnDictionary> = {
+  de: zxcvbnDePackage.dictionary,
+  en: zxcvbnEnPackage.dictionary,
+  es: zxcvbnEsPackage.dictionary,
+  fr: zxcvbnFrPackage.dictionary,
+  it: zxcvbnItPackage.dictionary,
+  nl: zxcvbnNlPackage.dictionary,
+  'pt-br': zxcvbnPtBrPackage.dictionary,
+};
+
+// Language packages reuse keys like `commonWords`; namespacing keeps one from overwriting another.
+function namespaceDictionaries(
+  dictionaries: Record<string, ZxcvbnDictionary>,
+): ZxcvbnDictionary {
+  return Object.fromEntries(
+    Object.entries(dictionaries).flatMap(([language, dictionary]) =>
+      Object.entries(dictionary).map(([name, words]) => [
+        `${name}-${language}`,
+        words,
+      ]),
+    ),
+  );
+}
 
 zxcvbnOptions.setOptions({
   dictionary: {
     ...zxcvbnCommonPackage.dictionary,
+    ...namespaceDictionaries(languageDictionaries),
   },
   graphs: zxcvbnCommonPackage.adjacencyGraphs,
 });

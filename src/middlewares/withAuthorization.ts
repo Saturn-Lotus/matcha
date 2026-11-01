@@ -13,6 +13,7 @@ const publicRoutes = [
   '/api/auth/signin',
   '/api/auth/register',
   '/api/auth/reset-password',
+  '/api/auth/verify',
 ];
 
 export const withAuthorization: MiddlewareFactory = (next) => {

@@ -30,14 +30,17 @@ Subject §IV.1. Entry point for every user. Also covers email verification, logi
 
 ## API surface
 
-| Method | Route                                 | Description                                                  |
-| ------ | ------------------------------------- | ------------------------------------------------------------ |
-| `POST` | `/api/auth/register`                  | Create unverified user, issue verification token, send email |
-| `GET`  | `/api/auth/verify-email?token=…&id=…` | Consume token, set `email_verified_at`                       |
-| `POST` | `/api/auth/login`                     | Returns JWT session cookie                                   |
-| `POST` | `/api/auth/logout`                    | Clears session cookie                                        |
-| `POST` | `/api/auth/forgot-password`           | Issue reset token, send email                                |
-| `POST` | `/api/auth/reset-password`            | Consume token, update password                               |
+| Method  | Route                                   | Description                                                                     |
+| ------- | --------------------------------------- | ------------------------------------------------------------------------------- |
+| `POST`  | `/api/auth/register`                    | Create unverified user, issue verification token, send email                    |
+| `GET`   | `/api/auth/verify?token=…&id=…`         | Public email link: consume token, mark verified, set `session` cookie, redirect |
+| `POST`  | `/api/auth/resend-verification`         | Re-issue verification email                                                     |
+| `POST`  | `/api/auth/signin`                      | Returns JWT session cookie                                                      |
+| `GET`   | `/api/auth/logout`                      | Clears session cookie                                                           |
+| `POST`  | `/api/auth/reset-password`              | Issue reset token, send email                                                   |
+| `PATCH` | `/api/auth/reset-password?token=…&id=…` | Consume token, update password                                                  |
+
+`/api/auth/verify` is in the middleware `publicRoutes`: the link is opened from an email client, usually without a session cookie, so it must not redirect to `/login`.
 
 All routes: thin, `withErrorHandler`, call one `AuthService` method. Services own bcrypt + token issuance. Repositories own SQL.
 
@@ -49,13 +52,14 @@ All routes: thin, `withErrorHandler`, call one `AuthService` method. Services ow
 - shadcn `Input`, `Button`, and shared form rows. Inline validation; server errors surfaced in-context.
 - `/register` uses the recipe-card visual system: lined paper surface, ingredient-style labels, responsive two-column grouping on desktop, and the same required payload fields.
 - `/login` uses the same recipe-card visual system with username and password as the only submitted ingredients.
-- Logout button in the global header (authenticated layout).
+- One-click **Logout** button (not inside a menu) in the global header whenever the user is authenticated. On `/onboarding` and `/pending-verification` a slim header renders just that button. On `/login`, `/register`, `/reset-password` the header is hidden for anonymous users and shows the slim header for authenticated ones.
 
 ---
 
 ## Password policy
 
-- Reject via `zxcvbn` (already integrated) score < 3. Min length 8.
+- Must match the regex (lowercase, uppercase, digit, min length 8) and score ≥ 2 on `zxcvbn` (rejected when score < 2).
+- Dictionary words are rejected regardless of language: `@zxcvbn-ts/language-common` plus the en, fr, es-es, de, it, pt-br and nl-be packages. Each language's dictionaries are namespaced (`commonWords-fr`, …) because the packages share key names.
 - Client-side strength meter; server-side authoritative check.
 
 ---
@@ -124,7 +128,7 @@ All routes: thin, `withErrorHandler`, call one `AuthService` method. Services ow
 ### Routes
 
 - [ ] `POST /api/auth/register` — parse body, call `AuthService.register`, return 201
-- [ ] `GET  /api/auth/verify-email` — parse query params, call `AuthService.verifyEmail`, return 200 or redirect
+- [x] `GET  /api/auth/verify` — public route; parse query params, verify, set session, redirect
 - [ ] `POST /api/auth/login` — call service, set `session` cookie, return 200
 - [ ] `POST /api/auth/logout` — clear `session` cookie, return 200
 - [ ] `POST /api/auth/forgot-password` — call service, always return 200 (no enumeration)
@@ -138,7 +142,7 @@ All routes: thin, `withErrorHandler`, call one `AuthService` method. Services ow
 - [ ] `/login` page — username + password, forgot-password link
 - [ ] `/forgot-password` page — email field, success state regardless of email existence
 - [ ] `/reset-password` page — reads `?token=&id=` from URL, new password + confirm
-- [ ] Logout button in `<Header>` calling `POST /api/auth/logout` + redirect to `/login`
+- [x] One-click Logout button in `NavigationBar` calling `GET /api/auth/logout` + redirect to `/`
 
 ### Validation schemas (`src/server/schemas/`)
 
@@ -170,7 +174,9 @@ All routes: thin, `withErrorHandler`, call one `AuthService` method. Services ow
 ## Audit findings (subject v6.1, 2026-07-16)
 
 - **Session cookie hardened** — the `session` JWT cookie is now set with `httpOnly` + `sameSite=lax` + `secure` (prod) via `SESSION_COOKIE_OPTIONS` in `src/lib/auth/session.ts` at all five set-session callsites. (Previously flagless.)
-- **Logout reachable from every page that shows the header.** The header (and its logout control, inside the avatar dropdown) is hidden on `NO_HEADER_ROUTES` — including `/onboarding` and `/pending-verification`, which are authenticated. Gap: an authenticated user on those two pages has no one-click logout. Subject IV.1 requires logout "from any page on the site".
+- **Logout is one click from every authenticated page.** Fixed: the Logout button sits directly in the header (removed from the avatar dropdown), and `/onboarding` and `/pending-verification` render a slim header containing it.
+- **Verification link works without a session.** Fixed: `/api/auth/verify` added to middleware `publicRoutes`.
+- **Seed users** are inserted with `pendingEmail = NULL` so verify does not treat them as an email change.
 - **No rate limiting** on `/api/auth/signin`, `/register`, `/reset-password`, or `/resend-verification`. Not a hard subject requirement but called out in PRD security ("Rate-limit register / forgot-password endpoints") — still open.
 - Registration also collects `birthDate` (for the 18+ check) beyond the subject's five fields.
 
@@ -179,4 +185,3 @@ All routes: thin, `withErrorHandler`, call one `AuthService` method. Services ow
 ## Open questions
 
 - Session TTL and refresh policy — currently inherited from existing `jose` implementation; confirm during build.
-- Add a logout affordance (or redirect-to-logout) on `/onboarding` and `/pending-verification` to satisfy "logout from any page".

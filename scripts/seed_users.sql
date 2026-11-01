@@ -194,7 +194,7 @@ BEGIN
 
     -- ── users ──────────────────────────────────────────────────────────────
     INSERT INTO users (id, username, email, "pendingEmail", "passwordHash", "isVerified")
-    VALUES (uid, uname, uemail, uemail, pw_hash, TRUE)
+    VALUES (uid, uname, uemail, NULL, pw_hash, TRUE)
     ON CONFLICT DO NOTHING;
 
     -- ── user_profiles ──────────────────────────────────────────────────────
@@ -257,7 +257,7 @@ BEGIN
     test_uid := uuid_generate_v4();
 
     INSERT INTO users (id, username, email, "pendingEmail", "passwordHash", "isVerified")
-    VALUES (test_uid, test_username, test_email, test_email, pw_hash, TRUE);
+    VALUES (test_uid, test_username, test_email, NULL, pw_hash, TRUE);
 
     INSERT INTO user_profiles (
       "userId", "firstName", "lastName", "birthDate",

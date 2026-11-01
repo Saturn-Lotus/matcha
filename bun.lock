@@ -12,6 +12,13 @@
         "@vercel/blob": "^2.0.0",
         "@zxcvbn-ts/core": "^3.0.4",
         "@zxcvbn-ts/language-common": "^3.0.4",
+        "@zxcvbn-ts/language-de": "^3",
+        "@zxcvbn-ts/language-en": "^3",
+        "@zxcvbn-ts/language-es-es": "^3",
+        "@zxcvbn-ts/language-fr": "^3",
+        "@zxcvbn-ts/language-it": "^3",
+        "@zxcvbn-ts/language-nl-be": "^3",
+        "@zxcvbn-ts/language-pt-br": "^3",
         "axios": "^1.12.2",
         "bcrypt": "^6.0.0",
         "class-variance-authority": "^0.7.1",
@@ -720,6 +727,20 @@
     "@zxcvbn-ts/core": ["@zxcvbn-ts/core@3.0.4", "", { "dependencies": { "fastest-levenshtein": "1.0.16" } }, "sha512-aQeiT0F09FuJaAqNrxynlAwZ2mW/1MdXakKWNmGM1Qp/VaY6CnB/GfnMS2T8gB2231Esp1/maCWd8vTG4OuShw=="],
 
     "@zxcvbn-ts/language-common": ["@zxcvbn-ts/language-common@3.0.4", "", {}, "sha512-viSNNnRYtc7ULXzxrQIVUNwHAPSXRtoIwy/Tq4XQQdIknBzw4vz36lQLF6mvhMlTIlpjoN/Z1GFu/fwiAlUSsw=="],
+
+    "@zxcvbn-ts/language-de": ["@zxcvbn-ts/language-de@3.0.2", "", {}, "sha512-CPl2314qWtnJl4EkeEqFbL4unP6yEAHO976ER+df8CQcKsF4FxdZYEahkleWU66dhNI2VKnmJKNMzq8QtHQKcw=="],
+
+    "@zxcvbn-ts/language-en": ["@zxcvbn-ts/language-en@3.0.2", "", {}, "sha512-Zp+zL+I6Un2Bj0tRXNs6VUBq3Djt+hwTwUz4dkt2qgsQz47U0/XthZ4ULrT/RxjwJRl5LwiaKOOZeOtmixHnjg=="],
+
+    "@zxcvbn-ts/language-es-es": ["@zxcvbn-ts/language-es-es@3.0.2", "", {}, "sha512-5IbEduFuUtzA6fQtatPo8HIyuIyu6nqsEksz+jXwpFhNUqh+pplFLrpdHbdJ0RENrJ5uk+Fz1pPOTDgBbLPSZQ=="],
+
+    "@zxcvbn-ts/language-fr": ["@zxcvbn-ts/language-fr@3.0.2", "", {}, "sha512-Tj9jS/Z8mNBAD21pn8Mp4O86CPrwImysO1fM3DG+fsfk8W79/MDzqpFDBHiqpu69Uo3LPPctMHEEteakFWt4Qg=="],
+
+    "@zxcvbn-ts/language-it": ["@zxcvbn-ts/language-it@3.0.2", "", {}, "sha512-VMC7JJZ855wPhklADB43kxRVWpbWIsVWjvrC8EACBoNqcFyk2DLD+WeoAtazM08ovM0wi/mN+wc0Sa5iFtOtvQ=="],
+
+    "@zxcvbn-ts/language-nl-be": ["@zxcvbn-ts/language-nl-be@3.0.2", "", {}, "sha512-TxMA71FRSjxpS6KzdVp2k20Ct2fxokK/cdn5h7xgLpFvDZMyM1qT8j46Sk+cvk16hYAzU2kS7NXiVG5E8NCvVw=="],
+
+    "@zxcvbn-ts/language-pt-br": ["@zxcvbn-ts/language-pt-br@3.0.2", "", {}, "sha512-qlA5zR6K0FWQxjYh86HsOyRuPYyUXqqdGzpuZSLPaFO9qge4B/AopnL0anWp3WJkLNPGsxLmDFaAZn8EsbbZhA=="],
 
     "@zxing/text-encoding": ["@zxing/text-encoding@0.9.0", "", {}, "sha512-U/4aVJ2mxI0aDNI8Uq0wEhMgY+u4CNtEb0om3+y3+niDAsoTCOB33UF0sxpzqzdqXLqmvc+vZyAt4O8pPdfkwA=="],
 

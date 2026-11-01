@@ -272,7 +272,6 @@ export function DiscoverFeed({
   useEffect(() => {
     let cancelled = false;
     const loadInitial = async () => {
-    
       try {
         const [data, profile] = await Promise.all([
           apiClient.get<BrowseResponse>(`/users?${initialQuery}`),

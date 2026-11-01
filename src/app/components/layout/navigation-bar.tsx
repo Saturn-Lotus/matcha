@@ -14,7 +14,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/app/components/ui/dropdown-menu';
 import Link from 'next/link';
@@ -27,13 +26,8 @@ import { cn } from '@/lib/utils';
 import { useChatStore } from '@/lib/stores/chat-store';
 import { NotificationBell } from '@/app/components/notification-bell';
 
-const NO_HEADER_ROUTES = [
-  '/login',
-  '/register',
-  '/reset-password',
-  '/onboarding',
-  '/pending-verification',
-];
+const AUTH_ROUTES = ['/login', '/register', '/reset-password'];
+const SLIM_HEADER_ROUTES = ['/onboarding', '/pending-verification'];
 
 interface NavigationBarProps {
   isAuthenticated: boolean;
@@ -98,6 +92,26 @@ const NavLink = ({
   </Link>
 );
 
+const LogoutButton = ({ onLogout }: { onLogout: () => void }) => (
+  <Button
+    variant="ghost"
+    size="sm"
+    onClick={onLogout}
+    className="h-8 px-2.5 text-sm font-medium text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-1.5"
+  >
+    <LogOut className="w-3.5 h-3.5" />
+    Logout
+  </Button>
+);
+
+const SlimHeader = ({ onLogout }: { onLogout: () => void }) => (
+  <div className="sticky top-0 z-50 w-full px-4 pt-3 pb-1.5">
+    <header className="max-w-5xl mx-auto flex items-center justify-end h-10">
+      <LogoutButton onLogout={onLogout} />
+    </header>
+  </div>
+);
+
 export const NavigationBar = ({
   isAuthenticated,
   avatarSrc,
@@ -113,8 +127,8 @@ export const NavigationBar = ({
     router.refresh();
   };
 
-  if (NO_HEADER_ROUTES.includes(pathName)) {
-    return null;
+  if (AUTH_ROUTES.includes(pathName) || SLIM_HEADER_ROUTES.includes(pathName)) {
+    return isAuthenticated ? <SlimHeader onLogout={handleLogout} /> : null;
   }
 
   return (
@@ -190,17 +204,10 @@ export const NavigationBar = ({
                       Settings
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator className="my-1" />
-                  <DropdownMenuItem
-                    variant="destructive"
-                    className="flex items-center gap-2 cursor-pointer rounded-lg px-2.5 py-2 text-sm"
-                    onClick={handleLogout}
-                  >
-                    <LogOut className="w-4 h-4" />
-                    Logout
-                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+
+              <LogoutButton onLogout={handleLogout} />
 
               <Button
                 size="sm"
