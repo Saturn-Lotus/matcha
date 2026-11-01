@@ -95,6 +95,7 @@ export class ChatService {
     if (userId === otherUserId) {
       throw new SelfActionForbiddenException('Cannot message yourself');
     }
+    await this.assertNotBlocked(userId, otherUserId);
     const matched = await this.socialRepository.areMatched(userId, otherUserId);
     if (!matched) throw new NoLongerConnectedError();
     const conversation = await this.conversationRepository.findOrCreate(
@@ -120,6 +121,7 @@ export class ChatService {
       userId,
     );
     if (!meta) throw new NotAParticipantError();
+    await this.assertNotBlocked(userId, meta.otherUserId);
     const connected = await this.socialRepository.areMatched(
       userId,
       meta.otherUserId,
@@ -142,11 +144,9 @@ export class ChatService {
     cursor: string | null,
     limit: number = DEFAULT_PAGE_SIZE,
   ): Promise<MessagesPage> => {
-    const isParticipant = await this.conversationRepository.isParticipant(
-      conversationId,
-      userId,
-    );
-    if (!isParticipant) throw new NotAParticipantError();
+    const otherUserId = await this.getOtherParticipant(userId, conversationId);
+    if (!otherUserId) throw new NotAParticipantError();
+    await this.assertNotBlocked(userId, otherUserId);
     const rows = await this.messageRepository.listByCursor(
       conversationId,
       cursor,
@@ -233,5 +233,16 @@ export class ChatService {
     if (conversation.userIdA === userId) return conversation.userIdB;
     if (conversation.userIdB === userId) return conversation.userIdA;
     return null;
+  };
+
+  private assertNotBlocked = async (
+    userId: string,
+    otherUserId: string,
+  ): Promise<void> => {
+    const blocked = await this.socialRepository.isBlockedEitherDirection(
+      userId,
+      otherUserId,
+    );
+    if (blocked) throw new NoLongerConnectedError();
   };
 }

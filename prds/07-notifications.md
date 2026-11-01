@@ -18,20 +18,20 @@ Users must be able to see unread count from **any page**. They must also access 
 ---
 
 ## Data model
-- `notifications` — id (uuid), userId (FK), type (enum: `like` | `profile_view` | `message` | `match` | `unmatch`), actorId (FK → users), payload (jsonb — e.g. `{ conversationId }`), readAt (timestamptz), createdAt.
+- `notifications` — id (uuid), userId (FK), type (enum: `like` | `profile_view` | `message` | `match` | `unmatch`), actorId (FK → users), payload (jsonb — e.g. `{ conversationId }`), readAt (timestamptz), deliveredAt (timestamptz — socket delivery dedup, independent of read state), createdAt.
   - Index `(userId, createdAt DESC) WHERE readAt IS NULL` — for fast unread count + feed.
   - Index `(userId, createdAt DESC)` — for full paginated history.
 
 ---
 
 ## Delivery model
-**Delivery = read**: a notification is marked read the moment a valid WebSocket client receives it. There is no separate user-triggered read action.
+**Delivery ≠ read**: delivery is tracked in `deliveredAt`, read state in `readAt`. A notification stays unread (and counted in the badge) until the user explicitly marks it read, across reloads and pages.
 
-Both delivery paths use **atomic claim** (`UPDATE notifications SET readAt = NOW() WHERE ... AND readAt IS NULL RETURNING …`) so concurrent flush and `/notify` calls cannot double-deliver the same row — only the writer that flipped `readAt` from NULL emits.
+`claimById` atomically sets `deliveredAt` (`... WHERE deliveredAt IS NULL RETURNING id`) so concurrent flush and `/notify` calls cannot double-emit the same row — only the writer that flipped `deliveredAt` from NULL emits. Neither claim touches `readAt`.
 
 - **Online user**: `NotificationService.emit()` inserts the row, then calls `POST /notify` on the socket server (internal HTTP) with the recipient `userId` and the notification DTO. The socket server attempts `claimById(userId, notification.id)` — if it wins the race, it emits `notification.created` to the `user:<id>` room.
-- **Offline user**: row stays unread. On next connect, the socket server calls `notificationRepository.claimAllUnread(userId)` (atomic mark-and-return), then emits `notification.pending` with the claimed rows.
-- **Badge**: driven by `useNotificationStore` (zustand). Incremented on `notification.created` WS event; bulk-set on `notification.pending`. Cleared when user clicks "Mark all read".
+- **On connect**: the socket server calls `notificationRepository.claimAllUnread(userId)`, which returns every row with `readAt IS NULL` and stamps `deliveredAt` on them, then emits `notification.pending` with that full unread set.
+- **Badge**: driven by `useNotificationStore` (zustand). Seeded from `GET /unread-count` (`readAt IS NULL`); incremented on `notification.created`; replaced (not added to) on `notification.pending`, since that payload is the full unread set. Cleared only when the user clicks "Mark all read".
 
 ---
 
@@ -66,6 +66,7 @@ Emitted from **service layer** via `NotificationService.emit(userId, type, actor
 - `SocialService.recordView` → emits `profile_view` to target (rate-limited: once per viewer per 24h, checked via recent notification row)
 - `ChatService.sendMessage` → emits `message` to recipient with `{ conversationId }` payload
 - All emissions: check `isBlockedEitherDirection` — never emit to a user who has blocked the actor
+- All emissions: check `isNotificationMuted(recipient, actor)` — after A unlikes B, nothing from B reaches A (`notification_mutes`, written by `unlikeUser`, cleared by `likeUser`). B still receives notifications from A.
 
 ---
 
@@ -114,15 +115,15 @@ Notification rendering:
 - [x] `create(userId, type, actorId, payload?)` — insert + LEFT JOIN actor profile (tolerates actor with no profile row)
 - [x] `listByUser(userId, cursor, limit)` — keyset paginated
 - [x] `listUnread(userId)` — non-mutating read of unread rows
-- [x] `claimById(userId, id)` — atomic `UPDATE … RETURNING id`; true iff this caller flipped the row from unread → read
-- [x] `claimAllUnread(userId)` — atomic bulk mark-and-return for on-connect flush
+- [x] `claimById(userId, id)` — atomic `UPDATE … RETURNING id`; true iff this caller flipped `deliveredAt` from NULL; `readAt` untouched
+- [x] `claimAllUnread(userId)` — returns all `readAt IS NULL` rows and stamps `deliveredAt`; `readAt` untouched
 - [x] `unreadCount(userId)` — COUNT WHERE readAt IS NULL
 - [x] `markRead(userId, ids[])` — UPDATE by id array (user-triggered)
 - [x] `markAllRead(userId)` — bulk UPDATE (user-triggered)
 - [x] `findRecentViewNotification(actorId, userId)` — 24h rate-limit check
 
 ### Service — `NotificationService`
-- [x] `emit(userId, type, actorId, payload?)` — block check, rate-limit, insert, fire-and-forget push. **Never throws** — any failure is logged and swallowed so caller flows (sendMessage / likeUser / recordView) stay clean.
+- [x] `emit(userId, type, actorId, payload?)` — block check, unlike-mute check, rate-limit, insert, fire-and-forget push. **Never throws** — any failure is logged and swallowed so caller flows (sendMessage / likeUser / recordView) stay clean.
 - [x] Push body includes the recipient `userId` so the socket server can route to `user:<id>` (the DTO itself does not expose userId).
 - [x] `list(userId, cursor, limit)` — paginated list
 - [x] `unreadCount(userId)` — fast count
@@ -159,6 +160,7 @@ Notification rendering:
 - `profile_view` notifications are deduplicated: same viewer → same target within 24h emits only one notification.
 - Unread badge updates via WebSocket within 10s.
 - Blocks suppress notifications for both directions.
-- Notifications survive reloads (persisted in DB, not only in-memory).
-- Offline notifications are delivered on next connect via `notification.pending`.
+- Unliking a user suppresses that user's later notifications to the unliker; liking again restores them.
+- Notifications survive reloads (persisted in DB, not only in-memory), and unread ones stay unread after delivery until marked read.
+- Unread notifications are re-sent on every connect via `notification.pending`.
 - Mark-read endpoints only affect rows owned by the authenticated user.

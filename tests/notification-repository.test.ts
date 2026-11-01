@@ -176,8 +176,8 @@ describeIntegration('NotificationRepository (integration)', () => {
     });
   });
 
-  describe('claimById — atomic single-row claim', () => {
-    it('returns true and marks read on first call, false on second (idempotent)', async () => {
+  describe('claimById — atomic single-row delivery claim', () => {
+    it('marks delivered (not read) on first call, false on second (idempotent)', async () => {
       const target = await createTestUser();
       const actor = await createTestUser();
       const row = await repo.create(target, 'like', actor);
@@ -188,7 +188,20 @@ describeIntegration('NotificationRepository (integration)', () => {
       expect(first).toBe(true);
       expect(second).toBe(false);
       const after = await fetchNotificationRow(row.id);
-      expect(after!.readAt).not.toBeNull();
+      expect(after!.deliveredAt).not.toBeNull();
+      expect(after!.readAt).toBeNull();
+    });
+
+    it('keeps the notification unread until markRead', async () => {
+      const target = await createTestUser();
+      const actor = await createTestUser();
+      const row = await repo.create(target, 'like', actor);
+
+      await repo.claimById(target, row.id);
+      expect(await repo.unreadCount(target)).toBe(1);
+
+      await repo.markRead(target, [row.id]);
+      expect(await repo.unreadCount(target)).toBe(0);
     });
 
     it('will not claim another user’s notification even with a matching id', async () => {
@@ -201,7 +214,7 @@ describeIntegration('NotificationRepository (integration)', () => {
 
       expect(claimed).toBe(false);
       const after = await fetchNotificationRow(row.id);
-      expect(after!.readAt).toBeNull();
+      expect(after!.deliveredAt).toBeNull();
     });
 
     it('serializes concurrent claims — exactly one caller wins', async () => {
@@ -218,8 +231,8 @@ describeIntegration('NotificationRepository (integration)', () => {
     });
   });
 
-  describe('claimAllUnread — atomic bulk claim for on-connect flush', () => {
-    it('marks-and-returns every unread row in a single statement', async () => {
+  describe('claimAllUnread — on-connect flush of the unread set', () => {
+    it('returns every unread row, marks it delivered, and leaves it unread', async () => {
       const target = await createTestUser();
       const actor = await createTestUser();
       const a = await repo.create(target, 'like', actor);
@@ -230,7 +243,35 @@ describeIntegration('NotificationRepository (integration)', () => {
       expect(new Set(claimed.map((n) => n.id))).toEqual(
         new Set([a.id, b.id]),
       );
-      expect(await repo.unreadCount(target)).toBe(0);
+      expect(await repo.unreadCount(target)).toBe(2);
+      const rowA = await fetchNotificationRow(a.id);
+      expect(rowA!.deliveredAt).not.toBeNull();
+      expect(rowA!.readAt).toBeNull();
+    });
+
+    it('stops a later /notify claim from delivering the same row again', async () => {
+      const target = await createTestUser();
+      const actor = await createTestUser();
+      const row = await repo.create(target, 'like', actor);
+
+      await repo.claimAllUnread(target);
+
+      expect(await repo.claimById(target, row.id)).toBe(false);
+    });
+
+    it('returns the same unread set on every flush until markRead', async () => {
+      const target = await createTestUser();
+      const actor = await createTestUser();
+      const row = await repo.create(target, 'like', actor);
+
+      const first = await repo.claimAllUnread(target);
+      const second = await repo.claimAllUnread(target);
+      await repo.markRead(target, [row.id]);
+      const third = await repo.claimAllUnread(target);
+
+      expect(first.map((n) => n.id)).toEqual([row.id]);
+      expect(second.map((n) => n.id)).toEqual([row.id]);
+      expect(third).toEqual([]);
     });
 
     it('is a no-op that returns [] when nothing is unread', async () => {
@@ -241,26 +282,17 @@ describeIntegration('NotificationRepository (integration)', () => {
       expect(claimed).toEqual([]);
     });
 
-    it('two concurrent flushes hand out disjoint row sets — nothing is double-claimed', async () => {
+    it('preserves the first deliveredAt across repeated flushes', async () => {
       const target = await createTestUser();
       const actor = await createTestUser();
-      await Promise.all([
-        repo.create(target, 'like', actor),
-        repo.create(target, 'profile_view', actor),
-        repo.create(target, 'match', actor),
-      ]);
+      const row = await repo.create(target, 'like', actor);
 
-      const [first, second] = await Promise.all([
-        repo.claimAllUnread(target),
-        repo.claimAllUnread(target),
-      ]);
+      await repo.claimAllUnread(target);
+      const firstDelivery = (await fetchNotificationRow(row.id))!.deliveredAt;
+      await repo.claimAllUnread(target);
+      const secondDelivery = (await fetchNotificationRow(row.id))!.deliveredAt;
 
-      const seen = new Set<string>();
-      for (const n of [...first, ...second]) {
-        expect(seen.has(n.id)).toBe(false);
-        seen.add(n.id);
-      }
-      expect(seen.size).toBe(3);
+      expect(secondDelivery).toEqual(firstDelivery);
     });
   });
 

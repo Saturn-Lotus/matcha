@@ -91,20 +91,22 @@ export class NotificationRepository {
     return parseInt(rows[0]?.count ?? '0', 10);
   }
 
+  /** Mark a notification delivered. Returns true only for the caller that delivered it. */
   async claimById(userId: string, id: string): Promise<boolean> {
     const rows = await this.db.query<{ id: string }>(
-      `UPDATE notifications SET "readAt" = NOW()
-       WHERE "userId" = $1 AND id = $2 AND "readAt" IS NULL
+      `UPDATE notifications SET "deliveredAt" = NOW()
+       WHERE "userId" = $1 AND id = $2 AND "deliveredAt" IS NULL
        RETURNING id;`,
       [userId, id],
     );
     return rows.length > 0;
   }
 
+  /** Return every unread notification and mark it delivered. Read state is untouched. */
   async claimAllUnread(userId: string): Promise<NotificationDTO[]> {
     const rows = await this.db.query<NotificationRow>(
       `WITH claimed AS (
-         UPDATE notifications SET "readAt" = NOW()
+         UPDATE notifications SET "deliveredAt" = COALESCE("deliveredAt", NOW())
          WHERE "userId" = $1 AND "readAt" IS NULL
          RETURNING *
        )

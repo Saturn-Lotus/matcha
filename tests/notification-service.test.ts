@@ -16,6 +16,7 @@ function makeService() {
   };
   const socialRepo = {
     isBlockedEitherDirection: jest.fn(),
+    isNotificationMuted: jest.fn().mockResolvedValue(false),
   };
   const service = new NotificationService(
     notificationRepo as never,
@@ -56,6 +57,24 @@ describe('NotificationService.emit', () => {
     await service.emit('target-1', 'like', 'actor-1');
 
     expect(socialRepo.isBlockedEitherDirection).toHaveBeenCalledWith(
+      'target-1',
+      'actor-1',
+    );
+    expect(notificationRepo.create).not.toHaveBeenCalled();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('skips creation when the recipient unliked the actor (muted)', async () => {
+    const { service, notificationRepo, socialRepo } = makeService();
+    socialRepo.isBlockedEitherDirection.mockResolvedValue(false);
+    socialRepo.isNotificationMuted.mockResolvedValue(true);
+    const fetchSpy = jest.spyOn(global, 'fetch').mockResolvedValue(
+      new Response(null, { status: 200 }),
+    );
+
+    await service.emit('target-1', 'profile_view', 'actor-1');
+
+    expect(socialRepo.isNotificationMuted).toHaveBeenCalledWith(
       'target-1',
       'actor-1',
     );

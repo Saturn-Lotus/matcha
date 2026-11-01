@@ -129,7 +129,7 @@ Stage 8 (feed card adoption of all the above) is a UI assembly step — no new u
 - [ ] `getVisitors(userId, limit, cursor)` — paginated visit history
 - [ ] `getLikers(userId, limit, cursor)` — paginated list of who liked the user
 - [x] `likeUser(likerId, likedId)` — insert like + create `matches` row when it becomes mutual (transaction); returns `{ inserted, matched }`
-- [x] `unlikeUser(likerId, likedId)` — delete like + delete the match (transaction)
+- [x] `unlikeUser(likerId, likedId)` — delete like + delete the match + insert `notification_mutes (likerId → likedId)` (transaction); `likeUser` deletes that mute
 - [x] `getMatches(userId, { limit, offset })` / `getMatchesCount(userId)` — paginated list of the user's matches (the other party), newest first
 - [x] `getRelationState` — `connected` now reads `EXISTS` against `matches`
 
@@ -208,8 +208,8 @@ Stage 8 (feed card adoption of all the above) is a UI assembly step — no new u
 ## Audit findings (subject v6.1, 2026-07-16)
 
 - **Unblock is not implemented.** `/api/users/[id]/block` exposes only `POST`; there is no `DELETE` route, no repository `unblock`, and no UI. A block is permanent. Subject IV.5 doesn't strictly require unblock, but PRD 05 lists it — **still open** (tasks `unblock(viewerId, targetId)` and `DELETE /block` remain unchecked, correctly).
-- **Unlike does not suppress future notifications.** Subject IV.5 says removing a like "will prevent further notifications from that user." Today `NotificationService.emit` suppresses only on **block**, not unlike — so after unliking, the other user's later views/likes still notify. **Gap: either suppress notifications between unmatched pairs, or confirm this reading of the subject.**
-- **"Message" button on the `/users/[id]` permalink is always disabled** (`onMessage` never passed; tooltip "Chat coming soon"). Chat is reachable only from `/matches`. Functionally chat works, but the profile-page affordance is dead. Cosmetic vs. subject, but worth wiring.
+- **Unlike suppresses future notifications — fixed.** `unlikeUser` inserts a `notification_mutes` row (`muterUserId` = unliker, `mutedUserId` = unliked) in the same transaction; `NotificationService.emit` drops any notification addressed to the muter whose actor is the muted user. One direction only. A later like by the unliker deletes the mute.
+- **"Message" button on the `/users/[id]` permalink — fixed.** `ProfileView` passes `onMessage`, which `POST /api/conversations` with `{ userId }` and routes to `/messages/[id]` (toast on failure, same as `/matches`). Enabled when connected; "Connect first to message" otherwise.
 - **Report/Block are fully wired end-to-end** (dialogs → API → transactional DB writes) — the earlier "stub/toast" note in the tasks list is stale; the live `safety-dialogs.tsx` path supersedes it.
 - **`profile-view.tsx` fires `POST /users/[id]/views` with no `.catch`** — an unhandled promise rejection on any failed view-record (the browse-feed equivalent has a `.catch`). Under the subject's "no unhandled errors" rule this should be caught. See [[00-cross-cutting]].
 - Presence is `lastSeenAt`-derived (`> NOW() - 5 min`), heartbeat every 60s — online/last-seen both satisfied.

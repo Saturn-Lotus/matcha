@@ -68,20 +68,6 @@ export class ConversationRepository {
     return rows[0] ?? null;
   }
 
-  async isParticipant(
-    conversationId: string,
-    userId: string,
-  ): Promise<boolean> {
-    const rows = await this.db.query<{ exists: boolean }>(
-      `SELECT EXISTS(
-         SELECT 1 FROM conversations
-         WHERE id = $1 AND ("userIdA" = $2 OR "userIdB" = $2)
-       ) AS exists;`,
-      [conversationId, userId],
-    );
-    return rows[0]?.exists ?? false;
-  }
-
   /** Conversation header info for a participant, or null if not a participant. */
   async findMetaForUser(
     conversationId: string,
@@ -132,7 +118,12 @@ export class ConversationRepository {
            AND m."senderId" <> $1
            AND m."readAt" IS NULL
        ) uc ON TRUE
-       WHERE c."userIdA" = $1 OR c."userIdB" = $1
+       WHERE (c."userIdA" = $1 OR c."userIdB" = $1)
+         AND NOT EXISTS (
+           SELECT 1 FROM user_blocks ub
+           WHERE (ub."blockerUserId" = $1 AND ub."blockedUserId" = other."userId")
+              OR (ub."blockerUserId" = other."userId" AND ub."blockedUserId" = $1)
+         )
        ORDER BY COALESCE(lm."createdAt", c."createdAt") DESC;`,
       [userId],
     );

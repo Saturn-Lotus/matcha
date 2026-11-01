@@ -85,6 +85,12 @@ export class SocialRepository {
       );
       if (rows.length === 0) return { inserted: false, matched: false };
 
+      await tx.query(
+        `DELETE FROM notification_mutes
+         WHERE "muterUserId" = $1 AND "mutedUserId" = $2;`,
+        [likerUserId, likedUserId],
+      );
+
       const reciprocal = await tx.query<{ exists: boolean }>(
         `SELECT EXISTS(
            SELECT 1 FROM user_likes
@@ -105,7 +111,8 @@ export class SocialRepository {
     });
   }
 
-  /** Delete a like row and any match between the pair. Returns false if no like existed. */
+  /** Delete a like row and any match between the pair, and mute the unliked user's
+   *  notifications to the unliker. Returns false if no like existed. */
   async unlikeUser(likerUserId: string, likedUserId: string): Promise<boolean> {
     return this.db.transaction(async (tx) => {
       const rows = await tx.query<{ likerUserId: string }>(
@@ -119,8 +126,28 @@ export class SocialRepository {
          WHERE "userIdA" = LEAST($1::uuid, $2::uuid) AND "userIdB" = GREATEST($1::uuid, $2::uuid);`,
         [likerUserId, likedUserId],
       );
+      await tx.query(
+        `INSERT INTO notification_mutes ("muterUserId", "mutedUserId")
+         VALUES ($1, $2)
+         ON CONFLICT DO NOTHING;`,
+        [likerUserId, likedUserId],
+      );
       return true;
     });
+  }
+
+  async isNotificationMuted(
+    muterUserId: string,
+    mutedUserId: string,
+  ): Promise<boolean> {
+    const rows = await this.db.query<{ exists: boolean }>(
+      `SELECT EXISTS(
+         SELECT 1 FROM notification_mutes
+         WHERE "muterUserId" = $1 AND "mutedUserId" = $2
+       ) AS exists;`,
+      [muterUserId, mutedUserId],
+    );
+    return rows[0]?.exists ?? false;
   }
 
   /** Get people who liked a user, most recent first */

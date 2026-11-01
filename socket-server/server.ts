@@ -116,8 +116,9 @@ export function startSocketServer() {
           (io.sockets.adapter.rooms.get(roomName)?.size ?? 0) > 0;
         let delivered = false;
         if (hasClients) {
-          // Atomically claim the row — if the on-connect flush has already
-          // delivered it, claim returns false and we skip the duplicate emit.
+          // Atomically mark the row delivered — if the on-connect flush has
+          // already delivered it, claim returns false and we skip the duplicate
+          // emit. Read state is left to the explicit mark-read action.
           const claimed = await notificationRepository.claimById(
             userId,
             notification.id,
@@ -162,9 +163,8 @@ export function startSocketServer() {
     const userId = socket.data.userId as string;
     socket.join(room(userId));
     const flushNotifications = async () => {
-      // Flush any notifications that arrived while the user was offline.
-      // claimAllUnread marks read and returns in a single statement so a
-      // concurrent /notify can't double-deliver the same row.
+      // Hand the client the full unread set. claimAllUnread marks those rows
+      // delivered (not read) in one statement so a concurrent /notify skips them.
       try {
         const pending = await notificationRepository.claimAllUnread(userId);
         if (pending.length > 0) {

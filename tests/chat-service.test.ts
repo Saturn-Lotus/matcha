@@ -2,12 +2,12 @@ import {
   ChatService,
   NoLongerConnectedError,
   MessageTooLongError,
+  NotAParticipantError,
 } from '@/server/services/chat';
 
 function makeService() {
   const conversationRepo = {
     findById: jest.fn(),
-    isParticipant: jest.fn(),
     findByUser: jest.fn(),
     findOrCreate: jest.fn(),
     findMetaForUser: jest.fn(),
@@ -20,6 +20,7 @@ function makeService() {
   };
   const socialRepo = {
     areMatched: jest.fn(),
+    isBlockedEitherDirection: jest.fn().mockResolvedValue(false),
   };
   const notificationService = {
     emit: jest.fn(),
@@ -33,14 +34,14 @@ function makeService() {
   return { service, conversationRepo, messageRepo, socialRepo, notificationService };
 }
 
-describe('ChatService.sendMessage', () => {
-  const conversation = {
-    id: 'c1',
-    userIdA: 'a',
-    userIdB: 'b',
-    createdAt: new Date(),
-  };
+const conversation = {
+  id: 'c1',
+  userIdA: 'a',
+  userIdB: 'b',
+  createdAt: new Date(),
+};
 
+describe('ChatService.sendMessage', () => {
   it('trims, persists, and returns the message with the recipient', async () => {
     const { service, conversationRepo, messageRepo, socialRepo } =
       makeService();
@@ -90,5 +91,70 @@ describe('ChatService.sendMessage', () => {
       MessageTooLongError,
     );
     expect(conversationRepo.findById).not.toHaveBeenCalled();
+  });
+});
+
+describe('ChatService.getMessages', () => {
+  it('returns history for a participant with no block', async () => {
+    const { service, conversationRepo, messageRepo } = makeService();
+    conversationRepo.findById.mockResolvedValue(conversation);
+    messageRepo.listByCursor.mockResolvedValue([]);
+
+    const page = await service.getMessages('a', 'c1', null);
+
+    expect(page).toEqual({ items: [], nextCursor: null });
+  });
+
+  it('throws NotAParticipant for an outsider', async () => {
+    const { service, conversationRepo, messageRepo } = makeService();
+    conversationRepo.findById.mockResolvedValue(conversation);
+
+    await expect(
+      service.getMessages('z', 'c1', null),
+    ).rejects.toBeInstanceOf(NotAParticipantError);
+    expect(messageRepo.listByCursor).not.toHaveBeenCalled();
+  });
+
+  it('throws NoLongerConnected when either user blocked the other', async () => {
+    const { service, conversationRepo, messageRepo, socialRepo } =
+      makeService();
+    conversationRepo.findById.mockResolvedValue(conversation);
+    socialRepo.isBlockedEitherDirection.mockResolvedValue(true);
+
+    await expect(
+      service.getMessages('a', 'c1', null),
+    ).rejects.toBeInstanceOf(NoLongerConnectedError);
+    expect(socialRepo.isBlockedEitherDirection).toHaveBeenCalledWith('a', 'b');
+    expect(messageRepo.listByCursor).not.toHaveBeenCalled();
+  });
+});
+
+describe('ChatService.getConversationMeta', () => {
+  it('throws NoLongerConnected when the pair is blocked', async () => {
+    const { service, conversationRepo, socialRepo } = makeService();
+    conversationRepo.findMetaForUser.mockResolvedValue({
+      id: 'c1',
+      otherUserId: 'b',
+      firstName: 'B',
+      lastName: 'B',
+      avatarUrl: null,
+    });
+    socialRepo.isBlockedEitherDirection.mockResolvedValue(true);
+
+    await expect(
+      service.getConversationMeta('a', 'c1'),
+    ).rejects.toBeInstanceOf(NoLongerConnectedError);
+  });
+});
+
+describe('ChatService.startConversation', () => {
+  it('throws NoLongerConnected when the pair is blocked', async () => {
+    const { service, conversationRepo, socialRepo } = makeService();
+    socialRepo.isBlockedEitherDirection.mockResolvedValue(true);
+
+    await expect(
+      service.startConversation('a', 'b'),
+    ).rejects.toBeInstanceOf(NoLongerConnectedError);
+    expect(conversationRepo.findOrCreate).not.toHaveBeenCalled();
   });
 });
