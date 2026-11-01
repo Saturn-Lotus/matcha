@@ -133,4 +133,26 @@ describeIntegration('NotificationService (integration)', () => {
 
     expect(await service.unreadCount(target)).toBe(1);
   });
+
+  it('unlike mutes the unliked user toward the unliker only; a new like unmutes', async () => {
+    const unliker = await createTestUser();
+    const unliked = await createTestUser();
+    const social = new SocialRepository(getDb());
+    jest
+      .spyOn(global, 'fetch')
+      .mockResolvedValue(new Response(null, { status: 200 }));
+
+    await social.likeUser(unliker, unliked);
+    await social.unlikeUser(unliker, unliked);
+    await service.emit(unliker, 'profile_view', unliked);
+    await service.emit(unliked, 'profile_view', unliker);
+
+    expect(await repo.listByUser(unliker, null, 20)).toHaveLength(0);
+    expect(await repo.listByUser(unliked, null, 20)).toHaveLength(1);
+
+    await social.likeUser(unliker, unliked);
+    await service.emit(unliker, 'like', unliked);
+
+    expect(await repo.listByUser(unliker, null, 20)).toHaveLength(1);
+  });
 });

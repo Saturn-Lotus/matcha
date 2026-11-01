@@ -21,6 +21,12 @@ export class NotificationService {
       );
       if (blocked) return;
 
+      const muted = await this.socialRepository.isNotificationMuted(
+        userId,
+        actorId,
+      );
+      if (muted) return;
+
       if (type === 'profile_view') {
         const recent =
           await this.notificationRepository.findRecentViewNotification(

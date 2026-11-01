@@ -31,14 +31,20 @@ export const useNotificationStore = create<NotificationState>((set) => ({
       hydrated: true,
     })),
 
+  // Every flush is the full server-side unread set, so it replaces the count
+  // rather than adding to it — a reconnect must not double count.
   addPending: (ns) =>
-    set((state) => ({
-      // First WS hydration replaces (pending IS the authoritative unread set).
-      // Subsequent flushes (e.g. after a reconnect) add to the count.
-      unreadCount: state.hydrated ? state.unreadCount + ns.length : ns.length,
-      recent: [...ns, ...state.recent].slice(0, 5),
-      hydrated: true,
-    })),
+    set((state) => {
+      const pendingIds = new Set(ns.map((n) => n.id));
+      return {
+        unreadCount: ns.length,
+        recent: [
+          ...ns,
+          ...state.recent.filter((n) => !pendingIds.has(n.id)),
+        ].slice(0, 5),
+        hydrated: true,
+      };
+    }),
 
   clearAll: () => set((state) => ({ ...state, unreadCount: 0 })),
 

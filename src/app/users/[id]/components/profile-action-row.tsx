@@ -60,7 +60,7 @@ export function ProfileActionRow({
         onClick={onMessage}
         disabled={!isConnected || !onMessage}
         variant="secondary"
-        tooltip={isConnected ? 'Chat coming soon' : 'Connect first to message'}
+        tooltip={isConnected ? undefined : 'Connect first to message'}
       >
         <MessageCircle className="w-5 h-5" />
       </ActionButton>

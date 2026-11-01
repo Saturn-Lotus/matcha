@@ -100,10 +100,11 @@ export async function fetchNotificationRow(id: string): Promise<{
   actorId: string;
   payload: Record<string, unknown> | null;
   readAt: Date | null;
+  deliveredAt: Date | null;
   createdAt: Date;
 } | null> {
   const rows = await getDb().query(
-    `SELECT id, "userId", type, "actorId", payload, "readAt", "createdAt"
+    `SELECT id, "userId", type, "actorId", payload, "readAt", "deliveredAt", "createdAt"
      FROM notifications WHERE id = $1;`,
     [id],
   );

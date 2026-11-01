@@ -53,13 +53,17 @@ describe('useNotificationStore', () => {
     expect(useNotificationStore.getState().unreadCount).toBe(3);
   });
 
-  it('addPending is additive on subsequent hydration (reconnect flush)', () => {
+  it('addPending replaces on reconnect — the flush is the full unread set', () => {
     useNotificationStore.getState().addPending([makeNotif('a'), makeNotif('b')]);
     expect(useNotificationStore.getState().unreadCount).toBe(2);
 
-    useNotificationStore.getState().addPending([makeNotif('c')]);
+    useNotificationStore
+      .getState()
+      .addPending([makeNotif('a'), makeNotif('b'), makeNotif('c')]);
 
-    expect(useNotificationStore.getState().unreadCount).toBe(3);
+    const state = useNotificationStore.getState();
+    expect(state.unreadCount).toBe(3);
+    expect(state.recent.map((n) => n.id)).toEqual(['a', 'b', 'c']);
   });
 
   it('init is a no-op once pending has hydrated, even with a stale higher count', () => {

@@ -44,7 +44,7 @@ Relational `conversations` + `messages` (not JSONB — a message log is append-h
   - Index `("conversationId", "createdAt" DESC)` for reverse pagination.
   - Partial index `("conversationId", "senderId") WHERE "readAt" IS NULL` for unread counts.
 
-**Disconnect behaviour:** `ChatService.sendMessage` gates new sends with `SocialRepository.areMatched` (a live `matches` row). Unlike/block both delete the `matches` row, so sending is disabled immediately while history remains.
+**Disconnect behaviour:** `ChatService.sendMessage` gates new sends with `SocialRepository.areMatched` (a live `matches` row). Unlike/block both delete the `matches` row, so sending is disabled immediately. After an unlike, history remains readable. After a **block** (either direction), the thread is hidden: `findByUser` excludes it, and `getMessages`, `getConversationMeta`, and `startConversation` throw `NoLongerConnectedError` (403).
 
 ---
 
@@ -108,7 +108,7 @@ The Messages experience is a **unified two-pane glass messenger** (`src/app/mess
 
 ### Repository — `ConversationRepository`
 - [x] `findOrCreate(userA, userB)` — canonical sorted pair; upsert `ON CONFLICT DO NOTHING` then select
-- [x] `findByUser(userId)` — list with last message (LATERAL) + unread count (LATERAL), single query
+- [x] `findByUser(userId)` — list with last message (LATERAL) + unread count (LATERAL), single query; excludes pairs with a `user_blocks` row in either direction
 - [x] `findById(id)` / `isParticipant(id, userId)` / `findMetaForUser(id, userId)` (thread header + connection state)
 
 ### Repository — `MessageRepository`
@@ -168,6 +168,7 @@ The Messages experience is a **unified two-pane glass messenger** (`src/app/mess
 
 ## Acceptance criteria
 - Unliking or blocking immediately disables send; in-flight message returns 403.
+- Blocking (either direction) removes the thread from the inbox and makes its history return 403.
 - Unread badge updates within 10s on any open page.
 - Opening a thread marks messages as read server-side.
 - No N+1 queries on conversation list.

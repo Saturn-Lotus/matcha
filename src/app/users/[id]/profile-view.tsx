@@ -92,6 +92,18 @@ export function ProfileView({
     }
   };
 
+  const openConversation = async () => {
+    try {
+      const { id: conversationId } = await apiClient.post<{ id: string }>(
+        '/conversations',
+        { userId: id },
+      );
+      router.push(`/messages/${conversationId}`);
+    } catch {
+      toast.error('Could not start the conversation.');
+    }
+  };
+
   if (notFound) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3 text-center px-6">
@@ -243,6 +255,7 @@ export function ProfileView({
             likeDisabled={likeDisabled}
             isConnected={profile.connected}
             onPass={() => router.back()}
+            onMessage={openConversation}
             onLike={toggleLike}
             onReport={openReport}
             onBlock={openBlock}
