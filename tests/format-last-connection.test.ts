@@ -4,12 +4,7 @@ describe('formatLastConnection', () => {
   const iso = '2024-03-15T14:30:00.000Z';
 
   it('formats the instant with both date and time', () => {
-    expect(formatLastConnection(iso)).toBe(
-      new Date(iso).toLocaleString(undefined, {
-        dateStyle: 'medium',
-        timeStyle: 'short',
-      }),
-    );
+    expect(formatLastConnection(iso)).toBe('Mar 15, 2024, 14:30 UTC');
   });
 
   it('includes the year and a clock time', () => {

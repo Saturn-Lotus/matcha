@@ -19,7 +19,7 @@ Actions available from both surfaces:
 - **Like** a profile (mutual like = connection). Requires viewer to have a profile picture.
 - **Unlike** (breaks connection, disables chat, suppresses further notifications from that user).
 - **Check fame rating**.
-- **See online status**; if offline, display the absolute date and time of the last connection (`formatLastConnection`, e.g. "Last seen Mar 15, 2024, 2:30 PM"), not a relative "3h ago".
+- **See online status**; if offline, display the absolute UTC date and time of the last connection (`formatLastConnection`, e.g. "Last seen Mar 15, 2024, 14:30 UTC"), not a relative "3h ago". The string is built from UTC fields so server and browser render the same text.
 - **Report** as a fake account.
 - **Block** (removes from search/suggestions/notifications, disables chat).
 
