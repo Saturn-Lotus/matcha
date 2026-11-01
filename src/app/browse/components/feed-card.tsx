@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Heart, MoreVertical, User as UserIcon, X } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { cn, relativeTime } from '@/lib/utils';
+import { cn, formatLastConnection } from '@/lib/utils';
 import { ProgressSegments } from './progress-segments';
 import {
   Tooltip,
@@ -185,7 +185,7 @@ export function FeedCard({
           ) : (
             <span>
               {profile.lastSeenAt
-                ? `Active ${relativeTime(profile.lastSeenAt)}`
+                ? `Last seen ${formatLastConnection(profile.lastSeenAt)}`
                 : 'Recently active'}
             </span>
           )}

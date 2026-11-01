@@ -19,7 +19,7 @@ import {
   RelationBadge,
   type RelationBadgeVariant,
 } from '@/app/components/ui/relation-badge';
-import { cn, formatDistanceKmShort, relativeTime } from '@/lib/utils';
+import { cn, formatDistanceKmShort, formatLastConnection } from '@/lib/utils';
 
 interface ProfileHeroPhotoProps {
   photos: string[];
@@ -126,7 +126,7 @@ export function ProfileHeroPhoto({
             </span>
           ) : lastSeenAt ? (
             <span className="inline-flex items-center gap-1.5 bg-white/95 text-foreground/80 text-[11px] font-semibold px-2.5 h-7 rounded-full shadow-sm">
-              Active {relativeTime(lastSeenAt)}
+              Last seen {formatLastConnection(lastSeenAt)}
             </span>
           ) : null}
         </div>

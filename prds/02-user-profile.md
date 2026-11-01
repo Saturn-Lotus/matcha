@@ -7,11 +7,11 @@ Subject §IV.2. After login, users complete a profile that powers matching, brow
 
 ## Scope
 Required fields (editable at any time):
-- Gender.
+- Gender: `male` or `female` (server enum `GENDERS`); the onboarding and settings selectors offer only these two values.
 - Sexual preferences (heterosexual / homosexual / bisexual). Default = bisexual if unset.
 - Biography (free text, length-bounded).
 - Interests as a free-text array stored on the profile (e.g. `["vegan", "hiking"]`). Not a shared tag table — plain `text[]` column on `user_profiles`.
-- Up to 5 pictures stored as storage keys in a `text[]` column on `user_profiles`; one key designated as `avatarUrl` (the profile picture).
+- Up to 5 pictures (`MAX_PROFILE_PICTURES`) stored as storage keys in a `text[]` column on `user_profiles`; one key designated as `avatarUrl` (the profile picture).
 - Editable identity fields: first name, last name, email (email change issues a new verification to the pending address; the live `email` field is not updated until the user clicks the link).
 - Location: GPS with explicit consent; manual fallback (city/neighborhood) if declined. User can modify location any time.
 
@@ -54,7 +54,7 @@ Profile read surface:
 - `/settings` with tabs: **Profile** (identity + bio + gender + preferences), **Pictures**, **Interests**, **Location**, **Security**.
 - GPS consent dialog; clear explanation + manual fallback if declined.
 - Interest input: popular-tag chips loaded from `/api/users/tags` (falls back to a static list on empty DB); debounced autocomplete suggestions from `/api/users/tags?q=` while typing; add new value on Enter (trimmed, lowercased). Rendered as a badge list with remove buttons.
-- Picture grid: upload zone, trash button to delete, star button to set as profile picture (`avatarUrl`). Up to 5 pictures enforced.
+- Picture grid: upload zone, trash button to delete, star button to set as profile picture (`avatarUrl`). Up to 5 pictures enforced server-side on both create and update: on `PATCH`, the kept pictures plus new uploads must total ≤ 5, otherwise the request fails with 400 and the new uploads are deleted.
 
 ---
 
@@ -149,7 +149,7 @@ fame = max(0, view_count * VIEW_WEIGHT + active_likes_count * LIKE_WEIGHT)
 - **Location is never collected at onboarding and has no fallback.** Onboarding (`onboarding-form.tsx`) has no location step; a user who never opens Settings → Location has no `user_locations` row. Browse still works (distance is `NULL`, sorted `NULLS LAST`), but distance filter/sort throws `ValidationError('Set your location before filtering or sorting by distance')`. Subject IV.2 requires manual location entry when GPS is declined and says it "is required for the application to function properly." **Gap: add a required location step to onboarding (GPS-with-consent or manual city/neighborhood).**
 - **Manual location still requires coordinates.** The "manual" mode saves a draggable-marker lat/lng, not a plain city name — acceptable, but note there is no city-name-only path.
 - **Fame scale mismatch** — `FameService` produces an unbounded score (seed data ranges 10–500), but the search-preference/filter sliders cap fame at 0–100 (`browse.ts`). A user filtering fame ≤ 100 silently excludes every profile above 100. **Gap: reconcile the fame scale (normalize to 0–100, or raise the filter ceiling).** See [[03-browsing]] / [[04-research]].
-- Interests/bio have no server-side minimum length (only pictures are bounded 1–5).
+- Interests/bio have no server-side minimum length (only pictures are bounded: 1–5 on create, ≤ 5 total after update).
 
 ---
 

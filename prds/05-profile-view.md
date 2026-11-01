@@ -19,7 +19,7 @@ Actions available from both surfaces:
 - **Like** a profile (mutual like = connection). Requires viewer to have a profile picture.
 - **Unlike** (breaks connection, disables chat, suppresses further notifications from that user).
 - **Check fame rating**.
-- **See online status**; if offline, display last-seen timestamp.
+- **See online status**; if offline, display the absolute UTC date and time of the last connection (`formatLastConnection`, e.g. "Last seen Mar 15, 2024, 14:30 UTC"), not a relative "3h ago". The string is built from UTC fields so server and browser render the same text.
 - **Report** as a fake account.
 - **Block** (removes from search/suggestions/notifications, disables chat).
 
@@ -176,7 +176,7 @@ Stage 8 (feed card adoption of all the above) is a UI assembly step — no new u
 - [x] Like button gated when viewer has no profile picture — server-side via `CannotLikeWithoutPictureError` in `SocialService.likeUser`, client-side via `viewerHasAvatar` prop drilled from `browse/page.tsx` and `users/[id]/page.tsx` with `Tooltip` + Sonner toast
 - [x] `RelationBadge` component — `connected` / `liked-you` / `viewed-you` variants ([src/app/components/ui/relation-badge.tsx](src/app/components/ui/relation-badge.tsx)); shared between feed card and permalink
 - [x] Friendly label helpers — `formatGenderLabel`, `formatPreferenceLabel`, `formatOrientationLabel`, `formatDistanceKm` in [src/lib/utils.ts](src/lib/utils.ts) so raw enum values (`male`/`female`/`both`) never reach the UI
-- [ ] `OnlineIndicator` component — green dot or "Last seen X ago"
+- [ ] `OnlineIndicator` component — green dot or "Last seen <date, time>"
 - [x] Overflow menu with "Block" + "Report" items (UI only — stubs that toast "coming soon"; live in both the subnav kebab and the `More` action button on [profile-view.tsx](src/app/users/[id]/profile-view.tsx)); confirm dialogs + wired actions still pending
 - [ ] Notifications and chat headers link to `/users/[id]` (deep-link target)
 - [x] `MatchCelebration` overlay ([src/app/components/match-celebration.tsx](src/app/components/match-celebration.tsx)) — full-screen branded "It's a Match!" modal (both avatars, animated hearts, CTA to `/matches`); fires when a like returns `matched: true` from both the feed (`discover-feed.tsx`) and the permalink (`profile-view.tsx`)

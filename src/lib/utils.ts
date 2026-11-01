@@ -26,6 +26,31 @@ export function relativeTime(iso: string): string {
   return new Date(iso).toLocaleDateString();
 }
 
+const UTC_MONTHS = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+] as const;
+
+export function formatLastConnection(iso: string): string {
+  const date = new Date(iso);
+  const month = UTC_MONTHS[date.getUTCMonth()];
+  const day = date.getUTCDate();
+  const year = date.getUTCFullYear();
+  const hours = String(date.getUTCHours()).padStart(2, '0');
+  const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+  return `${month} ${day}, ${year}, ${hours}:${minutes} UTC`;
+}
+
 export function formatGenderLabel(g: 'male' | 'female' | null): string | null {
   if (g === 'male') return 'Man';
   if (g === 'female') return 'Woman';

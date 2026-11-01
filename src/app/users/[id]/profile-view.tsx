@@ -14,10 +14,10 @@ import { toast } from 'sonner';
 import {
   formatDistanceKm,
   formatGenderLabel,
+  formatLastConnection,
   formatMonthYear,
   formatOrientationLabel,
   formatPreferenceLabel,
-  relativeTime,
 } from '@/lib/utils';
 import { Button } from '@/app/components/ui/button';
 import { pickRelationVariant } from '@/app/components/ui/relation-badge';
@@ -185,7 +185,7 @@ export function ProfileView({
           Online now
         </span>
       ) : (
-        <>Active {relativeTime(profile.lastSeenAt!)}</>
+        <>Last seen {formatLastConnection(profile.lastSeenAt!)}</>
       ),
       accent: 'pink' as const,
     },
